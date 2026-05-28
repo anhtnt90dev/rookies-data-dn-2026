@@ -1,7 +1,19 @@
-# 11. Pull Request (PR) Process
+#  Pull Request (PR) Process
 All changes to `develop` and `main` must go through a Pull Request. **No direct pushes to protected branches — ever.**
 
-### 11.1 PR Size Guideline
+###  Pull Request (PR) title
+
+**Pattern**
+
+`type(scope): description`
+
+- **type**: One of `feat`, `fix`, `docs`, `refactor`, `chore`, `test`
+- **scope** (optional): The module/component being affected
+- **description**: Short, imperative, present-tense summary
+
+Example: `feat(ingestion): add incremental load for claims`
+
+###  PR Size Guideline
 
 | PR Size | Guideline |
 |---|---|
@@ -9,7 +21,7 @@ All changes to `develop` and `main` must go through a Pull Request. **No direct 
 | Medium | Multiple related changes (e.g. notebook + pipeline for same feature). Acceptable. |
 | Large | Many unrelated changes bundled together. Split into smaller PRs. |
 
-### 11.2 PR Description Template
+###  PR Description Template
 
 Copy this template when opening a new PR:
 

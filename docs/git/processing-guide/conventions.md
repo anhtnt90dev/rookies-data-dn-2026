@@ -10,15 +10,17 @@
 - `feature/*` — normal day-to-day work (branch from `develop`, PR back to `develop`)
 - `release/*` — UAT / stabilisation (branch from `develop`, PR to `main` + back-merge to `develop`)
 - `hotfix/*` — urgent production fixes (branch from `main`, PR to `main` + back-merge to `develop`)
+- `doc/*` — document for project
 
 ### Naming format
 
 `type/short-description-with-hyphens`
 
 **Rules (always):**
-- Lowercase + hyphens only (no spaces, no underscores, no capitals)
+- Lowercase + Number + hyphens only (no spaces, no underscores, no capitals)
 - Keep it short but meaningful (about 3–6 words)
 - One branch per task/ticket (don’t bundle unrelated work)
+- Relevant with name ticket on Azure Assign
 
 ### Examples
 

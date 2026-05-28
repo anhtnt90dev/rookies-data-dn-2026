@@ -1,19 +1,16 @@
 # Promotion Flow
 
-```
-[Feature Development]
-feature/xxx ──PR──► develop
-                       │
-              [Dev Workspace tests pass]
-                       │
-                       ▼
-              release/v1.2.0 ──► UAT Workspace connected to this branch
-                       │
-              [UAT sign-off from stakeholders]
-                       │
-                       ▼
-              PR: release/v1.2.0 ──► main
-                                        │
-                                   [Prod Workspace]
-                                   + Git tag v1.2.0
+```mermaid
+flowchart TD
+     A[Feature Development]
+     A --> B[feature/xxx]
+     B -->|PR| C[Reviewed & Approved]
+     C --> D[dev]
+     D --> E[Dev Workspace tests pass]
+     E --> F[release/v1.2.0]
+     F --> G[UAT Workspace connected to this branch]
+     G --> H[UAT sign-off from stakeholders]
+     H -->|Merge| I[main]
+     I --> J[Prod Workspace]
+     J --> K[Git tag v1.2.0]
 ```

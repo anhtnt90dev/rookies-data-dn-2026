@@ -20,7 +20,7 @@
 - Lowercase + Number + hyphens only (no spaces, no underscores, no capitals)
 - Keep it short but meaningful (about 3–6 words)
 - One branch per task/ticket (don’t bundle unrelated work)
-- Relevant with name ticket on Azure Assign
+- Relevant with name ticket on Azure Devops assigned
 
 ### Examples
 

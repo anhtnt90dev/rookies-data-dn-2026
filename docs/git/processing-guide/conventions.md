@@ -46,11 +46,13 @@ release/v1.3.1
 ### Format
 
 ```
-<type>: <short summary>
+<type>: <short summary> (#<work-item-id>)
 
 [Optional: why we changed it (not how)]
 
 [Optional: ticket reference]
+
+[Optional]: work-item-id
 ```
 
 ### Types
@@ -68,7 +70,7 @@ release/v1.3.1
 ### Good examples
 
 ```bash
-feat: add bronze ingestion notebook for sales orders from Azure SQL
+feat: add bronze ingestion notebook for sales orders from Azure SQL (#124)
 fix: handle null values in order_date column during silver transform
 schema: add tax_amount column to warehouse fact_transactions table
 config: parameterise storage account name in daily pipeline

@@ -14,7 +14,7 @@
 
 ### Naming format
 
-`type/short-description-with-hyphens`
+`[type]/task-[taskID]-short-description-with-hyphens`
 
 **Rules (always):**
 - Lowercase + Number + hyphens only (no spaces, no underscores, no capitals)

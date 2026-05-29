@@ -1,41 +1,26 @@
-# Rookie Data DN 2026 - MockProject
+# Rookie Data DN 2026
 
-## 1. Project Overview
+## Project Overview
 
-This repository is used to manage documentation, source code, SQL scripts, Fabric-related assets, configuration files, tests, and final deliverables for the MockProject insurance analytics solution.
+This repository is used to manage documentation, source code, SQL scripts, configuration files, test assets, and project deliverables for the MockProject insurance analytics solution.
 
-The project uses Microsoft Fabric for pipeline execution, Lakehouse storage, semantic model development, and analytics delivery. GitHub is used as the central version control system so that all project artifacts can be reviewed, tracked, and merged through Pull Requests.
+Pipeline implementation and execution will happen in Microsoft Fabric. GitHub is used as the main version control location for project artifacts. All meaningful changes should be committed through branches and reviewed by Pull Request before being merged.
 
-The purpose of this repository structure is to:
-
-- Keep project documents, diagrams, SQL scripts, code, and Fabric assets organized.
-- Avoid duplicated or scattered files across different branches.
-- Reduce merge conflicts caused by inconsistent folder structures.
-- Make Pull Requests easier to review.
-- Support smooth collaboration across all team members.
-- Prepare a clear structure for future Fabric deployment and source control alignment.
-
----
-
-## 2. Repository Structure
+## Repository Structure
 
 ```text
 rookie-data-dn-2026/
 |-- README.md
+|-- .gitignore
 |-- docs/
 |   |-- business-process/
-|                   |-- diagrams/
+|   |   `-- diagrams/
 |   |-- architecture/
 |   |-- data-modeling/
 |   |-- source-to-target-mapping/
 |   |-- project-management/
 |   `-- final-deliverables/
 |-- fabric/
-|   |-- pipelines/
-|   |-- notebooks/
-|   |-- lakehouse/
-|   |-- semantic-model/
-|   `-- deployment/
 |-- sql/
 |   |-- source/
 |   |-- lakehouse/
@@ -54,534 +39,140 @@ rookie-data-dn-2026/
 `-- archive/
 ```
 
----
+## Folder Usage
 
-## 3. Folder Usage Guideline
+### `docs/`
 
-### 3.1 `docs/`
+Stores project documentation and reviewable deliverables.
 
-The `docs/` folder stores project documentation and analysis artifacts. Files in this folder should describe business understanding, solution design, architecture decisions, data modeling, mapping logic, project management notes, and final deliverables.
+| Folder                            | Purpose                                                                                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `docs/business-process/`          | Business process notes, lifecycle documentation, and business flow explanations.                         |
+| `docs/business-process/diagrams/` | Business process diagrams, sequence diagrams, BPMN diagrams, and exported images.                        |
+| `docs/architecture/`              | Solution architecture, data platform architecture, workspace design, and layer responsibility documents. |
+| `docs/data-modeling/`             | Star schema design, dimension/fact design, grain definition, and ERD-related documents.                  |
+| `docs/source-to-target-mapping/`  | Source-to-target mapping documents and mapping specifications.                                           |
+| `docs/project-management/`        | Project conventions, planning documents, task guidelines, and team working agreements.                   |
+| `docs/final-deliverables/`        | Final reviewed outputs prepared for PO, Tech Lead, PM, or client review.                                 |
 
-#### `docs/business-process/`
+### `fabric/`
 
-Stores documents related to the insurance business process, including quotation, policy issuance, payment, cancellation, refund, and business rule analysis.
+Stores Microsoft Fabric items synchronized or exported through Fabric Git Integration.
 
-Example files:
+Do not manually split this folder into many custom subfolders. Fabric will manage its own Git Integration structure. Keeping only the root-level `fabric/` folder prevents conflicts between manually created folders and Fabric-generated folders.
 
-```text
-business-process-overview.md
-quotation-policy-payment-lifecycle.md
-business-rules-and-assumptions.md
-```
+Examples of Fabric-related assets may include:
 
-#### `docs/business-process/diagrams/`
+- Data pipelines
+- Notebooks
+- Lakehouse-related metadata
+- Semantic model artifacts
+- Deployment-related Fabric items
 
-Stores business process diagrams and related visual files.
+### `sql/`
 
-Example files:
+Stores SQL scripts used for source setup, lakehouse objects, ETL control, and validation.
 
-```text
-sequence_diagram_insurance_processes_version3.png
-insurance_business_process.puml
-bpmn_insurance_process.drawio
-```
+| Folder             | Purpose                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| `sql/source/`      | Source database schema scripts, source table creation scripts, and seed data scripts.         |
+| `sql/lakehouse/`   | Lakehouse table creation scripts and analytical table definitions.                            |
+| `sql/etl-control/` | ETL control tables, audit tables, pipeline controller scripts, and related stored procedures. |
+| `sql/validation/`  | SQL scripts for reconciliation, row count checks, duplicate checks, and data validation.      |
 
-#### `docs/architecture/`
+### `src/`
 
-Stores solution architecture documents, data platform design, Fabric workspace design, Lakehouse architecture, security/access design, and deployment architecture.
+Stores reusable source code that is not directly managed as a Fabric item.
 
-Example files:
+| Folder                | Purpose                                                                 |
+| --------------------- | ----------------------------------------------------------------------- |
+| `src/ingestion/`      | Ingestion logic, helper scripts, and reusable ingestion modules.        |
+| `src/transformation/` | Transformation logic and reusable business/data transformation modules. |
+| `src/quality/`        | Data quality checks, validation helpers, and rule-based quality code.   |
+| `src/utilities/`      | Common utilities, shared functions, and helper code.                    |
 
-```text
-solution-architecture.md
-data-platform-accessibility-design.md
-fabric-workspace-and-lakehouse-design.md
-```
+### `config/`
 
-#### `docs/data-modeling/`
+Stores configuration templates and non-sensitive configuration files.
 
-Stores dimensional modeling documents, star schema design, fact/dimension definitions, surrogate key strategy, ERD, and KPI grain definitions.
-
-Example files:
-
-```text
-dimension-design.md
-fact-table-design.md
-star-schema-erd.png
-surrogate-key-strategy.md
-```
-
-#### `docs/source-to-target-mapping/`
-
-Stores mapping documents between source systems and target Lakehouse or analytical tables.
-
-Example files:
+Do not commit secrets, passwords, tokens, access keys, or private connection strings. Use sample/template files when needed, such as:
 
 ```text
-source-to-target-mapping-customer.md
-source-to-target-mapping-quotation.md
-source-to-target-mapping-policy-payment.md
+config/pipeline_config.example.json
+config/source_config.example.json
 ```
 
-#### `docs/project-management/`
+### `tests/`
 
-Stores task descriptions, acceptance criteria, sprint notes, review notes, and project coordination documents.
+Stores test scripts and test assets.
 
-Example files:
+| Folder                  | Purpose                                              |
+| ----------------------- | ---------------------------------------------------- |
+| `tests/data-quality/`   | Data quality test cases.                             |
+| `tests/reconciliation/` | Source-to-target reconciliation tests.               |
+| `tests/pipeline-tests/` | Pipeline test cases and execution validation assets. |
+
+### `archive/`
+
+Stores deprecated or replaced project files that should be kept for traceability but should not be used as the current version.
+
+## Empty Folder Tracking
+
+Git does not track empty folders. To keep the agreed structure visible in GitHub, each empty folder contains a `.gitkeep` file.
+
+When a folder later contains real files, the `.gitkeep` file can be removed if it is no longer needed.
+
+## Naming Rules
+
+Use consistent names for folders and files:
+
+- Use lowercase letters.
+- Use hyphens for folder and file names where possible.
+- Avoid spaces in file names.
+- Keep names short but meaningful.
+- Include task ID or version when useful.
+
+Examples:
 
 ```text
 task-112-description-ac.md
-sprint-1-planning-notes.md
-review-comments-summary.md
-```
-
-#### `docs/final-deliverables/`
-
-Stores final reviewed deliverables that are ready for submission or PO/PM review.
-
-Example files:
-
-```text
-final_output_v2.docx
 project-structure-and-folder-organization-guideline.docx
-final-architecture-design.pdf
-```
-
----
-
-### 3.2 `fabric/`
-
-The `fabric/` folder stores assets related to Microsoft Fabric development and deployment. This folder should reflect the work that will be implemented or synchronized with Fabric where applicable.
-
-#### `fabric/pipelines/`
-
-Stores pipeline definitions, exported pipeline metadata, or documentation related to Fabric Data Pipelines.
-
-Example files:
-
-```text
-customer-ingestion-pipeline.json
-quotation-ingestion-pipeline.json
-pipeline-dependency-notes.md
-```
-
-#### `fabric/notebooks/`
-
-Stores Fabric notebooks or notebook-related source files used for ingestion, transformation, validation, and utility processing.
-
-Example files:
-
-```text
-bronze_to_silver_customer.ipynb
-silver_to_gold_policy.ipynb
-data_quality_validation.ipynb
-```
-
-#### `fabric/lakehouse/`
-
-Stores Lakehouse-related definitions, table design notes, folder path conventions, and Delta table maintenance notes.
-
-Example files:
-
-```text
-lakehouse-folder-convention.md
-bronze-silver-gold-table-list.md
-delta-maintenance-strategy.md
-```
-
-#### `fabric/semantic-model/`
-
-Stores semantic model documentation, model relationship notes, measure definitions, hierarchy design, and Power BI/Fabric model-related files.
-
-Example files:
-
-```text
-semantic-model-relationships.md
-kpi-measures.md
-rls-design.md
-```
-
-#### `fabric/deployment/`
-
-Stores deployment-related documentation or scripts for moving assets between environments or preparing deployment packages.
-
-Example files:
-
-```text
-deployment-checklist.md
-fabric-deployment-notes.md
-environment-configuration.md
-```
-
----
-
-### 3.3 `sql/`
-
-The `sql/` folder stores SQL scripts used for source simulation, Lakehouse table creation, ETL control, and validation.
-
-#### `sql/source/`
-
-Stores SQL scripts used to create or simulate source operational systems.
-
-Example files:
-
-```text
-insurance_source_db_task_115_ver2.sql
-create_source_customer_table.sql
-create_source_quotation_table.sql
-```
-
-#### `sql/lakehouse/`
-
-Stores SQL scripts for Lakehouse tables, analytical schemas, dimensional tables, and Gold layer structures.
-
-Example files:
-
-```text
-create_bronze_tables.sql
-create_silver_tables.sql
-create_gold_fact_policy.sql
-create_gold_dim_customer.sql
-```
-
-#### `sql/etl-control/`
-
-Stores SQL scripts for ETL configuration, pipeline control, audit logging, error logging, retry handling, and execution tracking.
-
-Example files:
-
-```text
-create_etl_config_table.sql
-create_pipeline_controller_table.sql
-create_etl_audit_log_table.sql
-create_error_log_table.sql
-```
-
-#### `sql/validation/`
-
-Stores SQL scripts used for data validation, reconciliation, duplicate checks, null checks, and KPI validation.
-
-Example files:
-
-```text
-validate_row_count_reconciliation.sql
-validate_duplicate_customer.sql
-validate_policy_payment_consistency.sql
-```
-
----
-
-### 3.4 `src/`
-
-The `src/` folder stores reusable source code for ingestion, transformation, data quality, and utilities. Code in this folder should be version-controlled and reviewed before being used in Fabric pipelines or notebooks.
-
-#### `src/ingestion/`
-
-Stores reusable ingestion logic for loading source data into Bronze or raw zones.
-
-Example files:
-
-```text
-ingest_customer.py
-ingest_quotation.py
-ingest_policy_json.py
-```
-
-#### `src/transformation/`
-
-Stores reusable transformation logic for Bronze to Silver and Silver to Gold processing.
-
-Example files:
-
-```text
-transform_customer.py
-transform_policy.py
-build_gold_fact_payment.py
-```
-
-#### `src/quality/`
-
-Stores reusable data quality rules, validation functions, and reconciliation logic.
-
-Example files:
-
-```text
-quality_rules.py
-row_count_reconciliation.py
-business_rule_validation.py
-```
-
-#### `src/utilities/`
-
-Stores helper functions shared across ingestion, transformation, and validation logic.
-
-Example files:
-
-```text
-logging_utils.py
-config_loader.py
-date_utils.py
-```
-
----
-
-### 3.5 `config/`
-
-The `config/` folder stores configuration files used by pipelines, notebooks, scripts, and deployment processes.
-
-Example files:
-
-```text
-dev_config.yml
-pipeline_config.yml
-source_system_config.json
-lakehouse_paths.yml
-```
-
-Rules:
-
-- Do not store passwords, secrets, tokens, or private credentials in this folder.
-- Use placeholder values for sensitive settings.
-- Keep environment-specific configuration clearly named.
-
----
-
-### 3.6 `tests/`
-
-The `tests/` folder stores test cases and validation assets used to verify data quality, reconciliation, and pipeline behavior.
-
-#### `tests/data-quality/`
-
-Stores data quality test cases.
-
-Example files:
-
-```text
-test_customer_null_check.sql
-test_policy_status_values.sql
-test_payment_amount_validation.sql
-```
-
-#### `tests/reconciliation/`
-
-Stores reconciliation tests between source, Bronze, Silver, Gold, and reporting layers.
-
-Example files:
-
-```text
-test_source_to_bronze_row_count.sql
-test_silver_to_gold_reconciliation.sql
-```
-
-#### `tests/pipeline-tests/`
-
-Stores pipeline test cases, sample test inputs, and expected output notes.
-
-Example files:
-
-```text
-test_incremental_load_policy.md
-test_pipeline_retry_behavior.md
-```
-
----
-
-### 3.7 `archive/`
-
-The `archive/` folder stores outdated files that are no longer actively used but may need to be kept for historical reference.
-
-Rules:
-
-- Only move files to `archive/` when they are replaced by a newer version.
-- Add a short note when archiving important documents.
-- Do not use archived files as the current source of truth.
-
-Example files:
-
-```text
-old_sequence_diagram_version1.png
-old_dimension_design_draft.docx
-```
-
----
-
-## 4. File Placement Rules
-
-Use the following rules when adding new files:
-
-| File Type                           | Target Folder                     |
-| ----------------------------------- | --------------------------------- |
-| Business process documents          | `docs/business-process/`          |
-| Business diagrams                   | `docs/business-process/diagrams/` |
-| Architecture documents              | `docs/architecture/`              |
-| Data modeling documents             | `docs/data-modeling/`             |
-| Source-to-target mapping documents  | `docs/source-to-target-mapping/`  |
-| Task descriptions and AC documents  | `docs/project-management/`        |
-| Final reviewed deliverables         | `docs/final-deliverables/`        |
-| Fabric pipeline assets              | `fabric/pipelines/`               |
-| Fabric notebooks                    | `fabric/notebooks/`               |
-| Lakehouse design notes              | `fabric/lakehouse/`               |
-| Semantic model design notes         | `fabric/semantic-model/`          |
-| Deployment notes                    | `fabric/deployment/`              |
-| Source database SQL scripts         | `sql/source/`                     |
-| Lakehouse or analytical SQL scripts | `sql/lakehouse/`                  |
-| ETL control SQL scripts             | `sql/etl-control/`                |
-| Validation SQL scripts              | `sql/validation/`                 |
-| Ingestion code                      | `src/ingestion/`                  |
-| Transformation code                 | `src/transformation/`             |
-| Data quality code                   | `src/quality/`                    |
-| Shared helper code                  | `src/utilities/`                  |
-| Config files                        | `config/`                         |
-| Test files                          | `tests/`                          |
-| Outdated files                      | `archive/`                        |
-
----
-
-## 5. Naming Convention
-
-### 5.1 General File Naming
-
-Use lowercase words separated by hyphens for new files.
-
-Recommended format:
-
-```text
-short-description-version-or-purpose.extension
-```
-
-Examples:
-
-```text
-business-process-overview.md
+sequence-diagram-insurance-process-v3.png
 source-to-target-mapping-customer.md
-create-gold-fact-policy.sql
-bronze-to-silver-customer.py
-data-quality-validation.ipynb
 ```
 
-### 5.2 Versioned Deliverables
-
-For reviewed deliverables or diagrams that need version tracking, use a clear version suffix.
-
-Examples:
-
-```text
-sequence-diagram-insurance-processes-v3.png
-final-output-v2.docx
-dimension-design-v1.docx
-```
-
-### 5.3 Avoid
-
-Do not use:
-
-```text
-New Document.docx
-final_final.docx
-abc.sql
-test.py
-my_file_latest_updated_v2_final.docx
-```
-
----
-
-## 6. Git Branch and Pull Request Workflow
-
-All changes should be made through a separate branch and reviewed through a Pull Request.
-
-Recommended branch format:
-
-```text
-type/task-id-short-description
-```
-
-Example:
-
-```text
-doc/task-112-project-structure-and-folder-organization
-feature/task-034-incremental-load-logic
-fix/task-070-row-count-reconciliation
-```
+## Git and Pull Request Rules
 
 Before creating a Pull Request:
 
-- Confirm files are placed in the correct folder.
-- Confirm file names follow the agreed naming convention.
-- Confirm unrelated files are not included in the same PR.
-- Confirm generated or outdated files are not accidentally committed.
-- Confirm the PR description explains what was changed and why.
-- Confirm links to relevant documents, diagrams, or task IDs are included.
+1. Put files in the correct folder.
+2. Avoid creating duplicate folders with similar meanings.
+3. Do not commit generated cache files, temporary files, or local environment files.
+4. Do not commit credentials or secrets.
+5. Update `README.md` if the folder convention changes.
+6. Mention the changed folders or artifacts in the PR description.
 
----
+Recommended PR description format:
 
-## 7. Microsoft Fabric Alignment
+```md
+## Summary
 
-Microsoft Fabric is used for pipeline execution, Lakehouse processing, semantic modeling, and analytics delivery. GitHub is used to track related assets and supporting source files.
+Briefly describe what this PR adds or changes.
 
-The repository should support Fabric work in the following way:
+## Changes
 
-- Pipeline-related files should be stored under `fabric/pipelines/`.
-- Notebook files or notebook source exports should be stored under `fabric/notebooks/`.
-- Lakehouse table design and path conventions should be stored under `fabric/lakehouse/`.
-- Semantic model documentation should be stored under `fabric/semantic-model/`.
-- Deployment and environment notes should be stored under `fabric/deployment/`.
-- Reusable Python or SQL logic used by Fabric should be tracked under `src/` or `sql/`.
+- Added/updated files or folders.
+- Mentioned important documents, SQL scripts, Fabric assets, or code.
 
-This separation helps the team understand which files are documentation, which files are executable logic, and which files are Fabric-specific assets.
+## Review Notes
 
----
-
-## 8. Pull Request Review Checklist
-
-Reviewers should check the following items before approving a PR:
-
-- The file is stored in the correct folder.
-- The file name is clear and follows the naming convention.
-- The change is related to the task or user story.
-- The PR does not mix unrelated work.
-- The document or code can be understood by other team members.
-- Any related diagram, SQL file, source code, or deliverable is linked where needed.
-- Outdated files are moved to `archive/` if they are no longer current.
-- Fabric-related work is placed under the correct Fabric, SQL, or source code folder.
-
----
-
-## 9. Ownership Notes
-
-Each team member is responsible for keeping their task files organized according to this structure. If a new folder is needed, the team should discuss and agree before adding it.
-
-Do not create personal folders such as:
-
-```text
-phu/
-member-a/
-temp/
-new-folder/
+Mention what reviewers should focus on.
 ```
 
-Instead, place files based on their purpose and layer in the project.
+## Microsoft Fabric and GitHub Integration
 
----
+Fabric execution happens in Microsoft Fabric, while GitHub is used for source control and review.
 
-## 10. Source of Truth
+The `fabric/` folder is reserved for Fabric Git Integration output. The team should avoid manually creating custom internal folders under `fabric/`. Fabric-generated structure should be kept as the source of truth after Git Integration is configured.
 
-The current version in the `main` or agreed integration branch should be treated as the source of truth.
-
-For final review or submission, use files under:
-
-```text
-docs/final-deliverables/
-```
-
-For active working documents, use the relevant folder under:
-
-```text
-docs/
-fabric/
-sql/
-src/
-config/
-tests/
-```
-
-Archived files should not be used as the latest version unless explicitly restored by the team.
+This prevents conflicts between manually organized files and Fabric-generated files.

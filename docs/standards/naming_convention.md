@@ -1,4 +1,4 @@
-# CarPro Naming Convention Guide
+﻿# CarPro Naming Convention Guide
 
 **Project:** CarPro Insurance Analytics
 **Purpose:** Provide one shared naming standard for Python code and SQL objects so the team can develop consistently.
@@ -451,18 +451,18 @@ This project should use simple, readable, SQL-friendly names. The default SQL ob
 | SQL Object             | Pattern                            | Example                                             |
 | ---------------------- | ---------------------------------- | --------------------------------------------------- |
 | Schema                 | `lower_snake_case`                 | `gold`, `audit`, `cfg`, `etl`                       |
-| Table                  | `lower_snake_case`                 | `gold_fact_policy`                                  |
+| Table                  | `lower_snake_case`                 | `fact_policy`                                  |
 | View                   | `vw_<purpose>`                     | `vw_policy_performance`                             |
 | Stored procedure       | `usp_<verb>_<object>`              | `usp_load_silver_policy`                            |
 | Function               | `fn_<verb>_<object>`               | `fn_calculate_policy_age`                           |
 | Table-valued function  | `tvf_<verb>_<object>`              | `tvf_get_policy_payments`                           |
 | Trigger                | `trg_<table>_<event>`              | `trg_policy_after_update`                           |
-| Primary key constraint | `pk_<table>`                       | `pk_gold_dim_customer`                              |
-| Foreign key constraint | `fk_<child_table>__<parent_table>` | `fk_gold_fact_policy__gold_dim_customer`            |
-| Unique constraint      | `uq_<table>__<columns>`            | `uq_gold_dim_customer__customer_id`                 |
-| Check constraint       | `ck_<table>__<rule>`               | `ck_gold_fact_payment__payment_amount_non_negative` |
+| Primary key constraint | `pk_<table>`                       | `pk_dim_customer`                              |
+| Foreign key constraint | `fk_<child_table>__<parent_table>` | `fk_fact_policy_dim_customer`            |
+| Unique constraint      | `uq_<table>__<columns>`            | `uq_dim_customer__customer_id`                 |
+| Check constraint       | `ck_<table>__<rule>`               | `ck_fact_payment__payment_amount_non_negative` |
 | Default constraint     | `df_<table>__<column>`             | `df_audit_pipeline_execution__created_at`           |
-| Index                  | `ix_<table>__<columns>`            | `ix_gold_fact_policy__policy_date_key`              |
+| Index                  | `ix_<table>__<columns>`            | `ix_fact_policy__policy_date_key`              |
 | Unique index           | `ux_<table>__<columns>`            | `ux_silver_policy__policy_id`                       |
 | Temporary table        | `#tmp_<purpose>`                   | `#tmp_policy_dedup`                                 |
 | SQL variable           | `@snake_case`                      | `@batch_id`                                         |
@@ -487,7 +487,7 @@ Good:
 
 ```sql
 select policy_id, customer_id, policy_status
-from gold_fact_policy;
+from fact_policy;
 ```
 
 Bad:
@@ -520,7 +520,7 @@ The current Lakehouse design uses layer prefixes because all tables are listed t
 ```text
 bronze_policy
 silver_policy
-gold_fact_policy
+fact_policy
 ```
 
 If a future SQL Warehouse uses schemas, prefer schema separation and avoid repeating the layer in the table name:
@@ -538,7 +538,7 @@ Do not mix both styles in the same SQL database unless there is a clear reason.
 Bad future Warehouse example:
 
 ```sql
-gold.gold_fact_policy
+gold.dim_customer_table
 silver.silver_policy
 ```
 
@@ -573,14 +573,14 @@ silver_policies
 For Gold dimensional modeling, use fact/dimension prefixes:
 
 ```text
-gold_dim_customer
-gold_dim_vehicle
-gold_dim_provider
-gold_dim_date
-gold_fact_quotation
-gold_fact_policy
-gold_fact_payment
-gold_fact_cancellation
+dim_customer
+dim_vehicle
+dim_provider
+dim_date
+fact_quotation
+fact_policy
+fact_payment
+fact_cancellation
 ```
 
 ### 3.6 Column Names
@@ -646,7 +646,7 @@ Use these rules consistently:
 Example Gold dimension:
 
 ```sql
-create table gold_dim_customer (
+create table dim_customer (
     customer_key bigint,
     customer_id string,
     customer_name string,
@@ -661,7 +661,7 @@ create table gold_dim_customer (
 Example Gold fact:
 
 ```sql
-create table gold_fact_policy (
+create table fact_policy (
     policy_id string,
     customer_key bigint,
     vehicle_key bigint,
@@ -806,7 +806,7 @@ Recommended verbs:
 | ---------- | ------------------------------------- | ---------------------------- |
 | `load`     | Load from one layer/source to another | `usp_load_bronze_policy`     |
 | `merge`    | Merge/upsert data                     | `usp_merge_silver_policy`    |
-| `build`    | Build derived tables                  | `usp_build_gold_fact_policy` |
+| `build`    | Build derived tables                  | `usp_build_fact_policy` |
 | `refresh`  | Refresh report-facing object          | `usp_refresh_policy_summary` |
 | `validate` | Run validation rules                  | `usp_validate_payment`       |
 | `log`      | Write audit records                   | `usp_log_pipeline_execution` |
@@ -824,7 +824,7 @@ Good:
 ```sql
 etl.usp_load_bronze_policy
 etl.usp_merge_silver_payment
-etl.usp_build_gold_fact_policy
+etl.usp_build_fact_policy
 etl.usp_update_watermark
 ```
 
@@ -855,10 +855,10 @@ Always name important constraints explicitly. Do not rely on system-generated na
 
 | Constraint  | Pattern                            | Example                                             |
 | ----------- | ---------------------------------- | --------------------------------------------------- |
-| Primary key | `pk_<table>`                       | `pk_gold_dim_customer`                              |
-| Foreign key | `fk_<child_table>__<parent_table>` | `fk_gold_fact_policy__gold_dim_customer`            |
-| Unique      | `uq_<table>__<columns>`            | `uq_gold_dim_customer__customer_id`                 |
-| Check       | `ck_<table>__<rule>`               | `ck_gold_fact_payment__payment_amount_non_negative` |
+| Primary key | `pk_<table>`                       | `pk_dim_customer`                              |
+| Foreign key | `fk_<child_table>__<parent_table>` | `fk_fact_policy__dim_customer`            |
+| Unique      | `uq_<table>__<columns>`            | `uq_dim_customer__customer_id`                 |
+| Check       | `ck_<table>__<rule>`               | `ck_fact_payment__payment_amount_non_negative` |
 | Default     | `df_<table>__<column>`             | `df_audit_pipeline_execution__created_at`           |
 
 Use double underscore `__` to separate the table name from the target columns or related table.
@@ -869,7 +869,7 @@ Use index names that show table and column purpose.
 
 | Index Type     | Pattern                                         | Example                                                   |
 | -------------- | ----------------------------------------------- | --------------------------------------------------------- |
-| Normal index   | `ix_<table>__<column_list>`                     | `ix_gold_fact_policy__customer_key_policy_start_date_key` |
+| Normal index   | `ix_<table>__<column_list>`                     | `ix_fact_policy__customer_key_policy_start_date_key` |
 | Unique index   | `ux_<table>__<column_list>`                     | `ux_silver_policy__policy_id`                             |
 | Filtered index | `ix_<table>__<column_list>__filter_<condition>` | `ix_policy__policy_status__filter_active`                 |
 
@@ -901,8 +901,8 @@ Acceptable for very small queries:
 
 ```sql
 select p.policy_id, c.customer_name
-from gold_fact_policy p
-join gold_dim_customer c
+from fact_policy p
+join dim_customer c
     on p.customer_key = c.customer_key;
 ```
 
@@ -924,7 +924,7 @@ Use ordered and descriptive file names.
 | Reference data    | `020_seed_<subject>.sql`        | `020_seed_ref_status.sql`                  |
 | Stored procedure  | `030_create_usp_<name>.sql`     | `030_create_usp_load_silver_policy.sql`    |
 | Migration         | `YYYYMMDD_HHMM__<change>.sql`   | `20260529_1030__add_vehicle_dimension.sql` |
-| Test query        | `test_<subject>.sql`            | `test_gold_fact_policy_counts.sql`         |
+| Test query        | `test_<subject>.sql`            | `test_fact_policy_counts.sql`         |
 
 ### 3.18 SQL Naming Checklist
 
@@ -934,7 +934,7 @@ Before committing SQL code, check:
 - [ ] No spaces or special characters in object names.
 - [ ] No reserved words used as object or column names.
 - [ ] Table names are singular.
-- [ ] Fact and dimension tables use `gold_fact_` / `gold_dim_` in Lakehouse.
+- [ ] Fact and dimension tables use `fact_` / `dim_` in Lakehouse.
 - [ ] Primary keys use `<entity>_id` or `<entity>_key` consistently.
 - [ ] Foreign keys use the same name as the referenced key.
 - [ ] Date/time suffixes are consistent: `_date`, `_at`, `_date_key`.
@@ -972,4 +972,6 @@ This guide is synthesized from:
 - Clean code principles: meaningful names, consistency, small focused functions, avoiding unclear abbreviations, and avoiding unnecessary comments when names can explain intent.
 - SQL practice references covering meaningful aliases, SQL metadata/identifier behavior, database modeling, and stored SQL object usage.
 - Microsoft SQL Server / Fabric SQL identifier rules for valid database object names.
+
+
 

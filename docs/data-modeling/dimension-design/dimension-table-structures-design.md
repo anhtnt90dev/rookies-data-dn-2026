@@ -6,25 +6,25 @@ This document defines the proposed Gold Layer dimension table structures for the
 
 The design is based on the five agreed fact tables:
 
-- `Fact_Quotation`
-- `Fact_Quotation_Item`
-- `Fact_Policy`
-- `Fact_Payment`
-- `Fact_Cancellation`
+- `fact_quotation`
+- `fact_quotation_item`
+- `fact_policy`
+- `fact_payment`
+- `fact_cancellation`
 
 The goal is to define dimension structures that are reusable, consistent, and compatible with the Bus Matrix, surrogate key strategy, SCD approach, and Star Schema ERD.
 
 ## 2. General Dimension Design Standards
 
-| Rule                 | Standard                                                                                                              |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Naming convention    | Dimension tables use `Dim_<Entity>` format. Physical table names may use lowercase snake case such as `dim_customer`. |
-| Surrogate key        | Every dimension has a surrogate primary key ending with `_key`.                                                       |
-| Business key         | Every source-based dimension keeps the original source business key.                                                  |
-| Unknown member       | Every dimension except `Dim_Date` should have an unknown/default row with key `-1`.                                   |
-| Audit columns        | Dimensions should include source and load metadata where applicable.                                                  |
-| SCD columns          | Type 2 dimensions include effective dating and current flag columns.                                                  |
-| Soft delete tracking | Source-based Type 2 dimensions may include `is_deleted` if delete detection is supported.                             |
+| Rule                 | Standard                                                                                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Naming convention    | Dimension and fact table names use `lower_snake_case` consistently across documentation, ERD, and SQL objects, for example `dim_customer` and `fact_policy`. |
+| Surrogate key        | Every dimension has a surrogate primary key ending with `_key`.                                                                                              |
+| Business key         | Every source-based dimension keeps the original source business key.                                                                                         |
+| Unknown member       | Every dimension except `dim_date` should have an unknown/default row with key `-1`.                                                                          |
+| Audit columns        | Dimensions should include source and load metadata where applicable.                                                                                         |
+| SCD columns          | Type 2 dimensions include effective dating and current flag columns.                                                                                         |
+| Soft delete tracking | Source-based Type 2 dimensions may include `is_deleted` if delete detection is supported.                                                                    |
 
 ## 3. Common Technical Columns
 
@@ -56,7 +56,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 
 ## 4. Dimension Structures
 
-## 4.1 `Dim_Date`
+## 4.1 `dim_date`
 
 **Grain:** One row per calendar date  
 **SCD Type:** No SCD  
@@ -76,7 +76,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `year_month`     | STRING          | Year-month label.                   |
 | `is_weekend`     | BOOLEAN         | Weekend flag.                       |
 
-## 4.2 `Dim_Customer`
+## 4.2 `dim_customer`
 
 **Grain:** One row per customer version  
 **SCD Type:** Type 2  
@@ -102,7 +102,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`     | TIMESTAMP       | Gold row creation time.            |
 | `updated_at`     | TIMESTAMP       | Gold row update time.              |
 
-## 4.3 `Dim_Vehicle`
+## 4.3 `dim_vehicle`
 
 **Grain:** One row per vehicle version  
 **SCD Type:** Type 2  
@@ -127,7 +127,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`       | TIMESTAMP       | Gold row creation time.            |
 | `updated_at`       | TIMESTAMP       | Gold row update time.              |
 
-## 4.4 `Dim_Agent`
+## 4.4 `dim_agent`
 
 **Grain:** One row per agent version  
 **SCD Type:** Type 2  
@@ -150,7 +150,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`     | TIMESTAMP       | Gold row creation time.            |
 | `updated_at`     | TIMESTAMP       | Gold row update time.              |
 
-## 4.5 `Dim_Provider`
+## 4.5 `dim_provider`
 
 **Grain:** One row per provider version  
 **SCD Type:** Type 2  
@@ -171,7 +171,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`     | TIMESTAMP       | Gold row creation time.                                |
 | `updated_at`     | TIMESTAMP       | Gold row update time.                                  |
 
-## 4.6 `Dim_Region`
+## 4.6 `dim_region`
 
 **Grain:** One row per normalized reporting region  
 **SCD Type:** Type 1  
@@ -188,7 +188,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`   | TIMESTAMP       | Gold row creation time.                       |
 | `updated_at`   | TIMESTAMP       | Gold row update time.                         |
 
-## 4.7 `Dim_Package`
+## 4.7 `dim_package`
 
 **Grain:** One row per insurance package code  
 **SCD Type:** Type 1  
@@ -204,7 +204,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`    | TIMESTAMP       | Gold row creation time.                                                  |
 | `updated_at`    | TIMESTAMP       | Gold row update time.                                                    |
 
-## 4.8 `Dim_Coverage`
+## 4.8 `dim_coverage`
 
 **Grain:** One row per coverage type  
 **SCD Type:** Type 1  
@@ -219,7 +219,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`           | TIMESTAMP       | Gold row creation time.        |
 | `updated_at`           | TIMESTAMP       | Gold row update time.          |
 
-## 4.9 `Dim_Quotation`
+## 4.9 `dim_quotation`
 
 **Grain:** One row per quotation  
 **SCD Type:** Type 1  
@@ -235,7 +235,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`            | TIMESTAMP       | Gold row creation time.                                                             |
 | `updated_at`            | TIMESTAMP       | Gold row update time.                                                               |
 
-## 4.10 `Dim_Policy`
+## 4.10 `dim_policy`
 
 **Grain:** One row per policy  
 **SCD Type:** Type 1  
@@ -251,7 +251,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`    | TIMESTAMP       | Gold row creation time.     |
 | `updated_at`    | TIMESTAMP       | Gold row update time.       |
 
-## 4.11 `Dim_Quote_Status`
+## 4.11 `dim_quote_status`
 
 **Grain:** One row per quotation status  
 **SCD Type:** Type 1  
@@ -269,7 +269,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`        | TIMESTAMP       | Gold row creation time.                                                            |
 | `updated_at`        | TIMESTAMP       | Gold row update time.                                                              |
 
-## 4.12 `Dim_Policy_Status`
+## 4.12 `dim_policy_status`
 
 **Grain:** One row per policy status  
 **SCD Type:** Type 1  
@@ -286,7 +286,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`         | TIMESTAMP       | Gold row creation time.                                              |
 | `updated_at`         | TIMESTAMP       | Gold row update time.                                                |
 
-## 4.13 `Dim_Payment_Status`
+## 4.13 `dim_payment_status`
 
 **Grain:** One row per payment status  
 **SCD Type:** Type 1  
@@ -303,7 +303,7 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`            | TIMESTAMP       | Gold row creation time.                                           |
 | `updated_at`            | TIMESTAMP       | Gold row update time.                                             |
 
-## 4.14 `Dim_Payment_Method`
+## 4.14 `dim_payment_method`
 
 **Grain:** One row per payment method  
 **SCD Type:** Type 1  
@@ -342,20 +342,20 @@ Attributes such as `reason_group` and `is_customer_initiated` are not included i
 
 | Fact Table            | Expected Dimension Foreign Keys                                                                                                                                                                                                      |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `Fact_Quotation`      | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `quote_status_key`                                                      |
-| `Fact_Quotation_Item` | `quotation_key`, `quotation_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `coverage_key`, `quote_status_key`                                                                   |
-| `Fact_Policy`         | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `cancelled_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key` |
-| `Fact_Payment`        | `policy_key`, `payment_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key`, `payment_status_key`, `payment_method_key`                                           |
-| `Fact_Cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key`, `cancellation_reason_key`                                                       |
+| `fact_quotation`      | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `quote_status_key`                                                      |
+| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `coverage_key`, `quote_status_key`                                                                   |
+| `fact_policy`         | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `cancelled_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key` |
+| `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key`, `payment_status_key`, `payment_method_key`                                           |
+| `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `vehicle_key`, `agent_key`, `provider_key`, `region_key`, `package_key`, `policy_status_key`, `cancellation_reason_key`                                                       |
 
 ## 6. Review Points
 
 | Topic                            | Review Required                                                                                                                     |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `Dim_Region`                     | Confirm whether the official reporting region should follow agent region, customer city, or a standardized mapping table.           |
-| `Dim_Vehicle`                    | Confirm the project assumption that one customer has exactly one vehicle.                                                           |
-| `Dim_Package`                    | Confirm whether package code is enough for Sprint 1 or whether a richer product dimension is required.                              |
-| `Dim_Quotation` and `Dim_Policy` | Confirm that these identifier dimensions are acceptable for avoiding direct fact-to-fact relationships.                             |
+| `dim_region`                     | Confirm whether the official reporting region should follow agent region, customer city, or a standardized mapping table.           |
+| `dim_vehicle`                    | Confirm the project assumption that one customer has exactly one vehicle.                                                           |
+| `dim_package`                    | Confirm whether package code is enough for Sprint 1 or whether a richer product dimension is required.                              |
+| `dim_quotation` and `dim_policy` | Confirm that these identifier dimensions are acceptable for avoiding direct fact-to-fact relationships.                             |
 | Downstream inherited keys        | Confirm that policy/payment/cancellation facts may inherit agent, region, vehicle, and package context from quotation/policy joins. |
 
 ## 7. Output

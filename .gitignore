@@ -1,0 +1,102 @@
+# =========================================================
+# General
+# =========================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+
+# =========================================================
+# IDE / Editor
+# =========================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# =========================================================
+# Python
+# =========================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# =========================================================
+# Jupyter / Notebook Local Checkpoints
+# =========================================================
+.ipynb_checkpoints/
+
+# =========================================================
+# Secrets / Local Environment Files
+# =========================================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.crt
+*.cer
+*.token
+secrets/
+credentials/
+
+# =========================================================
+# Local Data / Generated Outputs
+# =========================================================
+data/
+output/
+outputs/
+exports/
+downloads/
+*.csv
+*.tsv
+*.parquet
+*.orc
+*.avro
+*.jsonl
+
+# Keep example data files when intentionally added
+!**/sample*.csv
+!**/sample*.json
+!**/*.example.json
+
+# =========================================================
+# Spark / Fabric / Local Runtime Artifacts
+# =========================================================
+metastore_db/
+derby.log
+spark-warehouse/
+checkpoints/
+_checkpoint/
+_delta_log_tmp/
+
+# =========================================================
+# Power BI / Office Temporary Files
+# =========================================================
+~$*.docx
+~$*.xlsx
+~$*.pptx
+*.pbix.tmp
+
+# =========================================================
+# Archive packages
+# =========================================================
+*.zip
+*.7z
+*.rar

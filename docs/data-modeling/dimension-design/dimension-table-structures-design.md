@@ -102,12 +102,20 @@ The goal is to define dimension structures that are reusable, consistent, and co
 | `created_at`     | TIMESTAMP       | Gold row creation time.            |
 | `updated_at`     | TIMESTAMP       | Gold row update time.              |
 
-## 4.3 `dim_vehicle`
+## 4.3 `dim_vehicle` Optional / Pending Confirmation
 
 **Grain:** One row per vehicle version  
 **SCD Type:** Type 2  
 **Source:** `vehicle`  
-**Assumption:** One customer has exactly one vehicle in project scope.
+**Implementation Status:** Optional / pending PO or client confirmation
+
+**Design Note:**
+
+The source contains vehicle data, but the current quotation and policy sources do not clearly provide a direct `vehicle_id` relationship.
+
+Because of this, `dim_vehicle` should not be treated as a mandatory conformed dimension in the current implementation. It can be included as an optional / nice-to-have dimension if the PO/client confirms that one customer has exactly one vehicle within the project scope, or if the source model is updated to clearly link quotation or policy records to a vehicle.
+
+For the current scope, fact tables should not depend on `vehicle_key` as a required foreign key. If vehicle analysis is needed later, `dim_vehicle` can be added to the semantic model after the relationship rule is confirmed.
 
 | Column             | Type Suggestion | Description                        |
 | ------------------ | --------------- | ---------------------------------- |

@@ -28,11 +28,15 @@ The strategy ensures that fact tables use stable dimension surrogate keys instea
 | `dim_package` | `package_key` | `package_code` |
 | `dim_coverage` | `coverage_key` | `coverage_type` |
 | `dim_quotation` | `quotation_key` | `quotation_id` |
+| `dim_policy` | `policy_key` | `policy_id` |
 | `dim_quotation_status` | `quotation_status_key` | `quotation_status_code` |
 | `dim_policy_status` | `policy_status_key` | `policy_status_code` |
 | `dim_payment_status` | `payment_status_key` | `payment_status_code` |
 | `dim_payment_method` | `payment_method_key` | `payment_method_code` |
 | `dim_cancellation_reason` | `cancellation_reason_key` | `cancellation_reason_code` |
+
+> [!NOTE]
+> `policy_id` is also retained as a degenerate identifier in the facts (`fact_policy`, `fact_payment`, `fact_cancellation`) for operational traceability, but the primary analytical relationship to policy context is through `policy_key` → `dim_policy`.
 
 ## 4. Recommended Key Data Types
 
@@ -116,18 +120,21 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
+| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `customer_key` | Lookup `dim_customer` by `customer_id` using `issued_date` or `policy_start_date`. |
 | `provider_key` | Lookup `dim_provider` by `provider_code` using `issued_date` or `policy_start_date`. |
-| `agent_key` | Inherit from related quotation if `policy_info.quotation_id` exists; otherwise use `-1`. |
-| `package_key` | Inherit from related quotation if `policy_info.quotation_id` exists; otherwise use `-1`. |
+| `agent_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_agent` by `agent_id` using `quotation_date`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
+| `package_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_package` by `package_code`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
 | `policy_status_key` | Lookup `dim_policy_status` by `policy_status`. |
 | Date keys | Lookup `dim_date` by issued, start, and end dates. |
+
 
 ## 7.4 `fact_payment`
 
 | Dimension Key | Resolution Rule |
 |---|---|
+| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `payment_status_key` | Lookup `dim_payment_status` by `payment_status`. |
 | `payment_method_key` | Lookup `dim_payment_method` by `payment_method`. |
 | `payment_date_key` | Lookup `dim_date` by `payment_date`. |
@@ -138,6 +145,7 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
+| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `cancellation_reason_key` | Lookup `dim_cancellation_reason` by `cancellation_reason`. |
 | `cancellation_date_key` | Lookup `dim_date` by `cancellation_date`. |
 | `customer_key` | Inherit from related policy using `cancellation.policy_id -> policy_info.policy_id`; resolve by `cancellation_date` where possible. |

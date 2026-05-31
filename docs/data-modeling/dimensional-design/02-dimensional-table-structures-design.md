@@ -33,7 +33,6 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `dim_vehicle` | Excluded from current Gold star schema. | The source has `vehicle.customer_id`, but `quotation` and `policy_info` do not contain `vehicle_id`. Vehicle analysis should wait for PO/client confirmation. |
 | `dim_region` | Excluded as a standalone dimension. | Region/geography is available as attributes in `customers` and `agents`; no confirmed reporting-region mapping table exists. |
-| `dim_policy` | Excluded. | Policy ID is stored directly in the facts (`fact_policy`, `fact_payment`, and `fact_cancellation`) to connect these processes without an independent dimension table. |
 | `dim_quotation_status` naming | Use `dim_quotation_status` instead of `dim_quote_status`. | This matches the source field name `quotation_status` and the Star Schema naming style. |
 
 
@@ -167,9 +166,12 @@ This version is aligned with the updated source data, the fact grain document ve
 | `package_code` | STRING | Package business key from `quotation.package_code`, for example `BASIC`, `STANDARD`, `PREMIUM`, `VIP`. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
+
+> [!NOTE]
+> `dim_package` is a small reference dimension derived directly from distinct `quotation.package_code` values (`VIP`, `PREMIUM`, `BASIC`, `STANDARD`). No extra attributes such as `package_name`, `package_tier`, or `package_group` are currently supported in the source data. Any such attributes are considered optional future enrichments and are excluded from the Sprint 1 scope.
 ## 5.6 `dim_coverage`
 
-**Grain:** One row per coverage type  
+**Grain:** One row per distinct coverage type (e.g., 'Physical Damage', 'Third Party'). This is a conformed reference lookup of distinct types, NOT one row per quotation item.  
 **SCD Type:** Type 1  
 **Source:** `quotation_item.coverage_type`
 
@@ -177,10 +179,12 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `coverage_key` | BIGINT | Surrogate key. |
 | `coverage_type` | STRING | Coverage type business value. |
-| `coverage_group` | STRING | Optional coverage grouping. |
-| `coverage_description` | STRING | Optional coverage description. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
+
+> [!NOTE]
+> `dim_coverage` is a conformed reference dimension representing unique, distinct `quotation_item.coverage_type` values (e.g., `'Physical Damage'`, `'Third Party'`), NOT a one-to-one mapping of quotation items. Attributes `coverage_group` and `coverage_description` are not supported in the source schema and have been removed to align strictly with the source database.
+
 
 ## 5.7 `dim_quotation`
 
@@ -198,7 +202,32 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.8 `dim_quotation_status`
+## 5.8 `dim_policy`
+
+**Grain:** One row per policy  
+**SCD Type:** Type 1  
+**Source:** `policy_info`
+
+| Column | Type Suggestion | Description |
+|---|---|---|
+| `policy_key` | BIGINT | Surrogate key. |
+| `policy_id` | STRING | Source policy business key. |
+| `policy_number` | STRING | Policy display number. |
+| `quotation_id` | STRING | Link to the originating quotation. |
+| `customer_id` | STRING | Inherited customer context from policy source. |
+| `provider_code` | STRING | Inherited provider context from policy source. |
+| `policy_start_date` | DATE | Policy coverage start date. |
+| `policy_end_date` | DATE | Policy coverage end date. |
+| `premium_amount` | DECIMAL(18,2) | Policy premium amount. |
+| `issued_date` | TIMESTAMP | Date when the policy was issued. |
+| `source_system` | STRING | Source system name. |
+| `created_at` | TIMESTAMP | Gold row creation time. |
+| `updated_at` | TIMESTAMP | Gold row update time. |
+
+> [!NOTE]
+> `dim_policy` is a transaction identifier dimension following the same pattern as `dim_quotation`. Policy status is handled separately by `dim_policy_status` and is not duplicated in this dimension. `policy_id` is also retained as a degenerate identifier in the facts for operational traceability.
+
+## 5.9 `dim_quotation_status`
 
 **Grain:** One row per quotation status  
 **SCD Type:** Type 1  
@@ -208,14 +237,26 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `quotation_status_key` | BIGINT | Surrogate key. |
 | `quotation_status_code` | STRING | Status code, for example `QUOTED`, `ACCEPTED`, `REJECTED`, `EXPIRED`, `CONVERTED`. |
-| `quotation_status_name` | STRING | Display name. |
-| `is_open` | BOOLEAN | Whether the quotation is still open. |
-| `is_accepted` | BOOLEAN | Whether the customer accepted the quotation. |
-| `is_converted` | BOOLEAN | Whether the quotation converted to policy. |
+| `quotation_status_name` | STRING | Display name. Derived by capitalising status code: `Quoted`, `Accepted`, `Rejected`, `Expired`, `Converted`. |
+| `is_open` | BOOLEAN | Derived flag: `true` if code is `QUOTED` or `ACCEPTED`. |
+| `is_accepted` | BOOLEAN | Derived flag: `true` if code is `ACCEPTED` or `CONVERTED`. |
+| `is_converted` | BOOLEAN | Derived flag: `true` if code is `CONVERTED`. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.9 `dim_policy_status`
+> [!NOTE]
+> **Derivation Mapping Rules:**
+> 
+> | `quotation_status_code` | `quotation_status_name` | `is_open` | `is_accepted` | `is_converted` |
+> |---|---|---|---|---|
+> | `QUOTED` | `Quoted` | `true` | `false` | `false` |
+> | `ACCEPTED` | `Accepted` | `true` | `true` | `false` |
+> | `REJECTED` | `Rejected` | `false` | `false` | `false` |
+> | `EXPIRED` | `Expired` | `false` | `false` | `false` |
+> | `CONVERTED` | `Converted` | `false` | `true` | `true` |
+
+
+## 5.10 `dim_policy_status`
 
 **Grain:** One row per policy status  
 **SCD Type:** Type 1  
@@ -225,14 +266,25 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `policy_status_key` | BIGINT | Surrogate key. |
 | `policy_status_code` | STRING | Status code, for example `ISSUED`, `ACTIVE`, `EXPIRED`, `CANCELLED`. |
-| `policy_status_name` | STRING | Display name. |
-| `status_group` | STRING | Optional group such as Active, Closed, Cancelled. |
-| `is_active_policy` | BOOLEAN | Whether status represents an active policy. |
-| `is_terminal_status` | BOOLEAN | Whether status represents final lifecycle state. |
+| `policy_status_name` | STRING | Display name. Derived by capitalising status code: `Issued`, `Active`, `Expired`, `Cancelled`. |
+| `status_group` | STRING | Group name. Derived as: `Active` for `ACTIVE`/`ISSUED`, `Closed` for `EXPIRED`, `Cancelled` for `CANCELLED`. |
+| `is_active_policy` | BOOLEAN | Derived flag: `true` if code is `ACTIVE`. |
+| `is_terminal_status` | BOOLEAN | Derived flag: `true` if code is `EXPIRED` or `CANCELLED`. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.10 `dim_payment_status`
+> [!NOTE]
+> **Derivation Mapping Rules:**
+> 
+> | `policy_status_code` | `policy_status_name` | `status_group` | `is_active_policy` | `is_terminal_status` |
+> |---|---|---|---|---|
+> | `ISSUED` | `Issued` | `Active` | `false` | `false` |
+> | `ACTIVE` | `Active` | `Active` | `true` | `false` |
+> | `EXPIRED` | `Expired` | `Closed` | `false` | `true` |
+> | `CANCELLED` | `Cancelled` | `Cancelled` | `false` | `true` |
+
+
+## 5.11 `dim_payment_status`
 
 **Grain:** One row per payment status  
 **SCD Type:** Type 1  
@@ -242,14 +294,25 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `payment_status_key` | BIGINT | Surrogate key. |
 | `payment_status_code` | STRING | Status code, for example `PENDING`, `PAID`, `FAILED`, `REFUNDED`. |
-| `payment_status_name` | STRING | Display name. |
-| `status_group` | STRING | Optional group such as Successful, Failed, Pending, Refunded. |
-| `is_successful_payment` | BOOLEAN | Whether payment is successful. |
-| `is_refund_status` | BOOLEAN | Whether payment is refunded. |
+| `payment_status_name` | STRING | Display name. Derived by capitalising status code: `Pending`, `Paid`, `Failed`, `Refunded`. |
+| `status_group` | STRING | Group name. Derived as: `Pending` for `PENDING`, `Successful` for `PAID`, `Failed` for `FAILED`, `Refunded` for `REFUNDED`. |
+| `is_successful_payment` | BOOLEAN | Derived flag: `true` if code is `PAID`. |
+| `is_refund_status` | BOOLEAN | Derived flag: `true` if code is `REFUNDED`. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.11 `dim_payment_method`
+> [!NOTE]
+> **Derivation Mapping Rules:**
+> 
+> | `payment_status_code` | `payment_status_name` | `status_group` | `is_successful_payment` | `is_refund_status` |
+> |---|---|---|---|---|
+> | `PENDING` | `Pending` | `Pending` | `false` | `false` |
+> | `PAID` | `Paid` | `Successful` | `true` | `false` |
+> | `FAILED` | `Failed` | `Failed` | `false` | `false` |
+> | `REFUNDED` | `Refunded` | `Refunded` | `false` | `true` |
+
+
+## 5.12 `dim_payment_method`
 
 **Grain:** One row per payment method  
 **SCD Type:** Type 1  
@@ -264,7 +327,17 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.12 `dim_cancellation_reason`
+> [!NOTE]
+> **Derivation Mapping Rules:**
+> 
+> | `payment_method_code` | `payment_method_name` | `payment_method_group` |
+> |---|---|---|
+> | `BANK_TRANSFER` | `Bank Transfer` | `Offline/Direct` |
+> | `CREDIT_CARD` | `Credit Card` | `Card` |
+> | `E_WALLET` | `E-wallet` | `Digital` |
+
+
+## 5.13 `dim_cancellation_reason`
 
 **Grain:** One row per distinct cancellation reason  
 **SCD Type:** Type 1  
@@ -278,15 +351,15 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 6. Fact Foreign Key Expectations
+## 6. Fact Foreign Key and Degenerate Identifier Expectations
 
-| Fact Table | Expected Dimension Foreign Keys |
-|---|---|
-| `fact_quotation` | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key` |
-| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key` |
-| `fact_policy` | `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key` |
-| `fact_payment` | `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key` |
-| `fact_cancellation` | `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key` |
+| Fact Table | Expected Dimension Foreign Keys | Degenerate Identifiers |
+|---|---|---|
+| `fact_quotation` | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key` | `quotation_id`, `customer_id`, `agent_id`, `provider_code` |
+| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key` | `quotation_item_id`, `quotation_id` |
+| `fact_policy` | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key` | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
+| `fact_payment` | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key` | `payment_id`, `policy_id`, `transaction_reference` |
+| `fact_cancellation` | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key` | `cancellation_id`, `policy_id` |
 
 ## 7. Review Points
 

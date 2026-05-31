@@ -33,7 +33,8 @@ The strategy ensures that fact tables use stable dimension surrogate keys instea
 | `dim_policy_status` | `policy_status_key` | `policy_status_code` |
 | `dim_payment_status` | `payment_status_key` | `payment_status_code` |
 | `dim_payment_method` | `payment_method_key` | `payment_method_code` |
-| `dim_cancellation_reason` | `cancellation_reason_key` | `cancellation_reason_code` |
+| `dim_cancellation_reason` | `cancellation_reason_key` | `cancellation_reason` |
+| `dim_vehicle` | `vehicle_key` | `vehicle_id` |
 
 > [!NOTE]
 > `policy_id` is also retained as a degenerate identifier in the facts (`fact_policy`, `fact_payment`, `fact_cancellation`) for operational traceability, but the primary analytical relationship to policy context is through `policy_key` → `dim_policy`.
@@ -106,6 +107,7 @@ Example unknown customer row:
 | `quotation_status_key` | Lookup `dim_quotation_status` by `quotation_status`. |
 | `quotation_date_key` | Lookup `dim_date` by `quotation_date`. |
 | `quotation_expiry_date_key` | Lookup `dim_date` by `quotation_expiry_date`. |
+| `vehicle_key` | Resolve by joining `customer_id` from quotation to `vehicle.customer_id` (under the 1-to-1 assumption), then lookup `dim_vehicle` by `vehicle_id` using `quotation_date`. |
 
 ## 7.2 `fact_quotation_item`
 
@@ -114,7 +116,7 @@ Example unknown customer row:
 | `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `coverage_key` | Lookup `dim_coverage` by `coverage_type`. |
 | `quotation_date_key` | Inherit from quotation header by joining `quotation_item.quotation_id` to `quotation.quotation_id`. |
-| Customer/agent/provider/package/status keys | Inherit from quotation header context. |
+| Customer/agent/provider/package/status/vehicle keys | Inherit from quotation header context. |
 
 ## 7.3 `fact_policy`
 
@@ -128,6 +130,7 @@ Example unknown customer row:
 | `package_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_package` by `package_code`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
 | `policy_status_key` | Lookup `dim_policy_status` by `policy_status`. |
 | Date keys | Lookup `dim_date` by issued, start, and end dates. |
+| `vehicle_key` | Resolve by joining `customer_id` from policy to `vehicle.customer_id` (under the 1-to-1 assumption), then lookup `dim_vehicle` by `vehicle_id` using `issued_date` or `policy_start_date`. |
 
 
 ## 7.4 `fact_payment`
@@ -140,6 +143,7 @@ Example unknown customer row:
 | `payment_date_key` | Lookup `dim_date` by `payment_date`. |
 | `customer_key` | Inherit from related policy using `payment.policy_id -> policy_info.policy_id`; resolve by `payment_date` where possible. |
 | `provider_key` | Inherit from related policy using `payment.policy_id -> policy_info.policy_id`; resolve by `payment_date` where possible. |
+| `vehicle_key` | Inherit from related policy using `payment.policy_id -> policy_info.policy_id`; resolve by `payment_date` where possible. |
 
 ## 7.5 `fact_cancellation`
 
@@ -150,6 +154,7 @@ Example unknown customer row:
 | `cancellation_date_key` | Lookup `dim_date` by `cancellation_date`. |
 | `customer_key` | Inherit from related policy using `cancellation.policy_id -> policy_info.policy_id`; resolve by `cancellation_date` where possible. |
 | `provider_key` | Inherit from related policy using `cancellation.policy_id -> policy_info.policy_id`; resolve by `cancellation_date` where possible. |
+| `vehicle_key` | Inherit from related policy using `cancellation.policy_id -> policy_info.policy_id`; resolve by `cancellation_date` where possible. |
 
 ## 8. SCD Type 2 Key Resolution
 
@@ -185,11 +190,8 @@ Facts may keep selected natural keys for audit and traceability, but these shoul
 | `fact_payment` | `payment_id`, `policy_id`, `transaction_reference` |
 | `fact_cancellation` | `cancellation_id`, `policy_id` |
 
-## 10. Out-of-Scope Key Handling
-
 | Item | Handling |
 |---|---|
-| `vehicle_key` | Not generated or stored in current facts because `quotation` and `policy_info` do not have `vehicle_id`. |
 | `region_key` | Not generated or stored in current facts because no confirmed `dim_region` mapping is in scope. Use `city`, `district`, or `agent.region` attributes for reporting until a mapping is confirmed. |
 
 ## 11. Key Quality Checks

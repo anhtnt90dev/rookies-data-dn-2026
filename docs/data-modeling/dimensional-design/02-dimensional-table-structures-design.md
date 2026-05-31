@@ -31,7 +31,7 @@ This version is aligned with the updated source data, the fact grain document ve
 
 | Item | Decision | Reason |
 |---|---|---|
-| `dim_vehicle` | Excluded from current Gold star schema. | The source has `vehicle.customer_id`, but `quotation` and `policy_info` do not contain `vehicle_id`. Vehicle analysis should wait for PO/client confirmation. |
+| `dim_vehicle` | Included in Gold star schema. | The source has `vehicle.customer_id`. Under the assumption that a customer owns exactly one vehicle, facts resolve `vehicle_key` from customer context (`customer_id` mapping). |
 | `dim_region` | Excluded as a standalone dimension. | Region/geography is available as attributes in `customers` and `agents`; no confirmed reporting-region mapping table exists. |
 | `dim_quotation_status` naming | Use `dim_quotation_status` instead of `dim_quote_status`. | This matches the source field name `quotation_status` and the Star Schema naming style. |
 
@@ -346,8 +346,31 @@ This version is aligned with the updated source data, the fact grain document ve
 | Column | Type Suggestion | Description |
 |---|---|---|
 | `cancellation_reason_key` | BIGINT | Surrogate key. |
-| `cancellation_reason_code` | STRING | Standardized cancellation reason code. |
 | `cancellation_reason` | STRING | Cancellation reason value from source. |
+| `created_at` | TIMESTAMP | Gold row creation time. |
+| `updated_at` | TIMESTAMP | Gold row update time. |
+
+## 5.14 `dim_vehicle`
+
+**Grain:** One row per vehicle version  
+**SCD Type:** Type 2  
+**Source:** `vehicle`
+
+| Column | Type Suggestion | Description |
+|---|---|---|
+| `vehicle_key` | BIGINT | Surrogate key. |
+| `vehicle_id` | STRING | Source vehicle business key. |
+| `customer_id` | STRING | Natural key of customer. |
+| `plate_number` | STRING | Vehicle plate number. |
+| `vehicle_brand` | STRING | Vehicle brand (e.g. Toyota, Mazda). |
+| `vehicle_model` | STRING | Vehicle model. |
+| `manufacture_year` | INT | Manufacture year. |
+| `vehicle_value` | DECIMAL(18,2) | Vehicle value. |
+| `effective_from` | TIMESTAMP | Start timestamp for the version. |
+| `effective_to` | TIMESTAMP | End timestamp for the version. Use `9999-12-31` for current. |
+| `is_current` | BOOLEAN | Indicates the current active version. |
+| `is_deleted` | BOOLEAN | Indicates whether the source record has been deleted. |
+| `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
@@ -355,17 +378,17 @@ This version is aligned with the updated source data, the fact grain document ve
 
 | Fact Table | Expected Dimension Foreign Keys | Degenerate Identifiers |
 |---|---|---|
-| `fact_quotation` | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key` | `quotation_id`, `customer_id`, `agent_id`, `provider_code` |
-| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key` | `quotation_item_id`, `quotation_id` |
-| `fact_policy` | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key` | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
-| `fact_payment` | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key` | `payment_id`, `policy_id`, `transaction_reference` |
-| `fact_cancellation` | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key` | `cancellation_id`, `policy_id` |
+| `fact_quotation` | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key` | `quotation_id`, `customer_id`, `agent_id`, `provider_code` |
+| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key` | `quotation_item_id`, `quotation_id` |
+| `fact_policy` | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key` | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
+| `fact_payment` | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key` | `payment_id`, `policy_id`, `transaction_reference` |
+| `fact_cancellation` | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key` | `cancellation_id`, `policy_id` |
 
 ## 7. Review Points
 
 | Topic | Review Required |
 |---|---|
-| `dim_vehicle` | Confirm whether future vehicle analysis is required and whether quotation/policy should include `vehicle_id`. |
+| `dim_vehicle` | Resolved. Modeled under the assumption that a customer owns exactly one vehicle, allowing `vehicle_key` to be resolved in fact tables using the customer context. |
 | Downstream inherited keys | Confirm whether payment and cancellation facts should physically store inherited `customer_key` and `provider_key`, or only rely on `policy_id`. |
 
 ## 8. Output

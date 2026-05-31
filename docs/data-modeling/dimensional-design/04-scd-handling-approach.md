@@ -16,6 +16,7 @@ This version is aligned with the current Gold star schema scope. `dim_vehicle` a
 | `dim_customer` | Type 2 | Customer profile and geography may change. Historical reporting should preserve customer attributes at the time of quotation, policy, payment, or cancellation. |
 | `dim_agent` | Type 2 | Agent region, branch, or manager may change. Historical agent performance should be reported using the assignment valid at the event time. |
 | `dim_provider` | Type 2 | Provider group or active flag may change. Historical provider reporting should preserve old provider attributes. |
+| `dim_vehicle` | Type 2 | Vehicle specification and value can change historically. Under the assumption that a customer owns exactly one vehicle, it is tracked as a Type 2 dimension. |
 | `Dim_Package` | Type 1 | Small reference dimension derived from distinct `quotation.package_code` values. Current source only supports package code; additional package attributes require confirmed mapping or derivation rules. |
 | `dim_coverage` | Type 1 | Coverage type is a reference value. Changes are expected to be corrections or enrichments. |
 | `dim_quotation` | Type 1 | Identifier dimension for grouping quotation header, quotation item, and related policy facts. Historical status is handled separately by facts/status dimension. |
@@ -74,6 +75,7 @@ Applicable dimensions:
 - `dim_customer`
 - `dim_agent`
 - `dim_provider`
+- `dim_vehicle`
 
 ### Type 2 Required Columns
 
@@ -134,6 +136,16 @@ Recommended Sprint 1 simplification: track all customer descriptive changes as T
 | `provider_name` | Type 1 | Usually correction or display change. |
 | `provider_group` | Type 2 | Provider grouping affects historical provider performance. |
 | `active_flag` | Type 2 | Active/inactive status should be preserved historically. |
+
+## 6.4 `dim_vehicle`
+
+| Attribute | Handling | Reason |
+|---|---|---|
+| `plate_number` | Type 1 | Usually correction or license plate transfer; can be Type 1 unless history is required. |
+| `vehicle_brand` | Type 1 | Core manufacturer, does not change. |
+| `vehicle_model` | Type 1 | Core model, does not change. |
+| `manufacture_year` | Type 1 | Core specifications, does not change. |
+| `vehicle_value` | Type 2 | Vehicle value changes and depreciates over time, affecting historical quotation or premium evaluation. |
 
 ## 7. Effective Date Rules
 
@@ -199,6 +211,7 @@ Example:
 customer_scd_hash = hash(customer_id, city, district)
 agent_scd_hash    = hash(agent_id, region, branch, manager_name)
 provider_scd_hash = hash(provider_code, provider_group, active_flag)
+vehicle_scd_hash  = hash(vehicle_id, vehicle_value)
 ```
 
 Usage:
@@ -215,7 +228,6 @@ Each dimension should define its own tracked attribute list instead of using eve
 
 | Item | Handling |
 |---|---|
-| `dim_vehicle` | Excluded from current scope because the current fact sources do not clearly provide `vehicle_id`. If later confirmed, it should likely be Type 2 because `vehicle_value` can change and affect historical analysis. |
 | `dim_region` | Excluded from current scope as standalone dimension. Region/geography attributes are handled inside `dim_customer` and `dim_agent`. |
 
 ## 13. SCD Testing Checklist
@@ -226,6 +238,7 @@ Each dimension should define its own tracked attribute list instead of using eve
 | Existing customer city changed | Old customer row expired; new `customer_key` inserted. |
 | Existing agent branch changed | Old agent row expired; new `agent_key` inserted. |
 | Provider active flag changed | Old provider row expired; new `provider_key` inserted. |
+| Existing vehicle value changed | Old vehicle row expired; new `vehicle_key` inserted with updated value. |
 | Type 1 payment method display name changed | Existing `payment_method_key` remains the same and attributes are overwritten. |
 | Type 1 quotation status display name changed | Existing `quotation_status_key` remains the same and attributes are overwritten. |
 | Fact lookup for old event date | Fact resolves to the historical dimension version valid on that event date. |

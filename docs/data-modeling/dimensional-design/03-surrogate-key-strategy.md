@@ -28,7 +28,6 @@ The strategy ensures that fact tables use stable dimension surrogate keys instea
 | `dim_package` | `package_key` | `package_code` |
 | `dim_coverage` | `coverage_key` | `coverage_type` |
 | `dim_quotation` | `quotation_key` | `quotation_id` |
-| `dim_policy` | `policy_key` | `policy_id` |
 | `dim_quotation_status` | `quotation_status_key` | `quotation_status_code` |
 | `dim_policy_status` | `policy_status_key` | `policy_status_code` |
 | `dim_payment_status` | `payment_status_key` | `payment_status_code` |
@@ -117,7 +116,6 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `customer_key` | Lookup `dim_customer` by `customer_id` using `issued_date` or `policy_start_date`. |
 | `provider_key` | Lookup `dim_provider` by `provider_code` using `issued_date` or `policy_start_date`. |
@@ -130,7 +128,6 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `payment_status_key` | Lookup `dim_payment_status` by `payment_status`. |
 | `payment_method_key` | Lookup `dim_payment_method` by `payment_method`. |
 | `payment_date_key` | Lookup `dim_date` by `payment_date`. |
@@ -141,7 +138,6 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `policy_key` | Lookup `dim_policy` by `policy_id`. |
 | `cancellation_reason_key` | Lookup `dim_cancellation_reason` by `cancellation_reason`. |
 | `cancellation_date_key` | Lookup `dim_date` by `cancellation_date`. |
 | `customer_key` | Inherit from related policy using `cancellation.policy_id -> policy_info.policy_id`; resolve by `cancellation_date` where possible. |

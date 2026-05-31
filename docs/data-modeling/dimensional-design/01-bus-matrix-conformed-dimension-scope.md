@@ -16,7 +16,7 @@ This version is aligned with:
 |---|---|
 | The Gold model keeps five fact tables. | The model supports `fact_quotation`, `fact_quotation_item`, `fact_policy`, `fact_payment`, and `fact_cancellation`. |
 | All five fact tables are transaction facts in the current scope. | No periodic snapshot or accumulating snapshot fact is selected for Sprint 1 because the source and dashboard scope do not require stored periodic balances or milestone snapshots. |
-| Fact tables should not be directly connected to each other in the semantic model. | Shared identifier dimensions such as `dim_quotation` and `dim_policy` are used to analyze related processes without direct fact-to-fact joins. |
+| Fact tables should not be directly connected to each other in the semantic model. | Shared identifier dimensions such as `dim_quotation` are used to analyze related processes without direct fact-to-fact joins. In this scope, `policy_id` is included directly in the facts to support downstream process analysis. |
 | `dim_vehicle` is excluded from the current Gold star schema. | The source has a `vehicle` table, but `quotation` and `policy_info` do not contain `vehicle_id`. Vehicle can be reconsidered only if the PO/client confirms the relationship rule. |
 | `dim_region` is excluded as a standalone conformed dimension for the current ERD. | Customer geography and agent region remain attributes inside `dim_customer` and `dim_agent`. A separate region dimension can be added later if a confirmed reporting-region mapping is provided. |
 | One logical `dim_date` is used as a role-playing date dimension. | Facts may contain several date keys, such as `quotation_date_key`, `policy_start_date_key`, `payment_date_key`, and `cancellation_date_key`. |
@@ -33,7 +33,7 @@ This version is aligned with:
 | CRM SQL | `quotation.package_code` | `Dim_Package` |
 | CRM SQL | `quotation` | `Dim_Quotation`, `Dim_Quotation_Status`, `Dim_Date` |
 | CRM SQL | `quotation_item` | `dim_coverage` | Coverage belongs to quotation item grain. |
-| Policy DB / JSON | `policy_info` | `dim_policy`, `dim_policy_status`, `dim_date` | Policy keeps `quotation_id`, `customer_id`, `provider_code`, policy dates, status, and premium amount. |
+| Policy DB / JSON | `policy_info` | `dim_policy_status`, `dim_date` | Policy keeps `policy_id`, `quotation_id`, `customer_id`, `provider_code`, policy dates, status, and premium amount. |
 | Payment DB / JSON | `payment` | `dim_payment_status`, `dim_payment_method`, `dim_date` | Payment is linked to policy by `policy_id`. |
 | Cancellation DB / JSON | `cancellation` | `dim_cancellation_reason`, `dim_date` | Cancellation is linked to policy by `policy_id`. |
 
@@ -58,7 +58,6 @@ This version is aligned with:
 | `dim_package` | Conformed reference | Type 1 | One row per distinct package code | `package_code` | `package_key` |
 | `dim_coverage` | Conformed reference | Type 1 | One row per distinct coverage type | `coverage_type` | `coverage_key` |
 | `dim_quotation` | Transaction identifier dimension | Type 1 | One row per quotation | `quotation_id` | `quotation_key` |
-| `dim_policy` | Transaction identifier dimension | Type 1 | One row per policy | `policy_id` | `policy_key` |
 | `dim_quotation_status` | Status mini-dimension | Type 1 | One row per quotation status | `quotation_status_code` | `quotation_status_key` |
 | `dim_policy_status` | Status mini-dimension | Type 1 | One row per policy status | `policy_status_code` | `policy_status_key` |
 | `dim_payment_status` | Status mini-dimension | Type 1 | One row per payment status | `payment_status_code` | `payment_status_key` |
@@ -73,13 +72,13 @@ Legend:
 - `X*` = inherited context through `quotation_id` or `policy_id`; may be materialized in the fact for reporting convenience only if the team agrees.
 - `Date role` = one or more role-playing date keys to `dim_date`.
 
-| Business Process | Fact Table | Fact Grain | Date | Customer | Agent | Provider | Package | Coverage | Quotation | Policy | Quotation Status | Policy Status | Payment Status | Payment Method | Cancellation Reason |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Quotation | `fact_quotation` | One row per quotation | X | X | X | X | X |  | X |  | X |  |  |  |  |
-| Quotation Coverage | `fact_quotation_item` | One row per quotation coverage item | X* | X* | X* | X* | X* | X | X |  | X* |  |  |  |  |
-| Policy Lifecycle | `fact_policy` | One row per policy | Date role | X | X* | X | X* |  | X | X |  | X |  |  |  |
-| Payment | `fact_payment` | One row per payment transaction | X | X* |  | X* |  |  |  | X |  |  | X | X |  |
-| Cancellation | `fact_cancellation` | One row per cancellation event | X | X* |  | X* |  |  |  | X |  |  |  |  | X |
+| Business Process | Fact Table | Fact Grain | Date | Customer | Agent | Provider | Package | Coverage | Quotation | Quotation Status | Policy Status | Payment Status | Payment Method | Cancellation Reason |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Quotation | `fact_quotation` | One row per quotation | X | X | X | X | X |  | X | X |  |  |  |  |
+| Quotation Coverage | `fact_quotation_item` | One row per quotation coverage item | X* | X* | X* | X* | X* | X | X | X* |  |  |  |  |
+| Policy Lifecycle | `fact_policy` | One row per policy | Date role | X | X* | X | X* |  | X |  | X |  |  |  |
+| Payment | `fact_payment` | One row per payment transaction | X | X* |  | X* |  |  |  |  |  | X | X |  |
+| Cancellation | `fact_cancellation` | One row per cancellation event | X | X* |  | X* |  |  |  |  |  |  |  | X |
 
 ## 7. Role-Playing Date Usage
 
@@ -104,7 +103,6 @@ Legend:
 | `dim_provider` | `fact_quotation`, `fact_quotation_item`, `fact_policy`, optionally downstream payment/cancellation through policy context | Provider performance across quotation, policy, payment, and cancellation. |
 | `dim_package` | `fact_quotation`, `fact_quotation_item`, `fact_policy`, `fact_payment`, `fact_cancellation` | Package-code-level analysis across quotation and downstream lifecycle processes. In the current source, this dimension is derived from distinct `quotation.package_code` values only. |
 | `dim_quotation` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Allows quotation header, quotation item, and converted-policy analysis without direct fact-to-fact joins. |
-| `dim_policy` | `fact_policy`, `fact_payment`, `fact_cancellation` | Allows policy, payment, and cancellation analysis without direct fact-to-fact joins. |
 
 
 
@@ -125,7 +123,6 @@ Legend:
 |---|---|
 | `dim_vehicle` | Do not include in current star schema until the vehicle-to-quotation or vehicle-to-policy relationship is confirmed. |
 | `dim_region` | Do not include as standalone dimension in current star schema. Keep geography/region attributes in agent dimensions. |
-| `dim_policy` | Should be present in the logical model because `fact_policy`, `fact_payment`, and `fact_cancellation` need a shared policy identifier dimension. If the ERD image does not show it, the ERD should be updated. |
 | `dim_cancellation_reason` | Keep connected only to `fact_cancellation`. |
 | Fact-to-fact relationships | Avoid as main semantic model relationships. Use shared dimensions instead. |
 

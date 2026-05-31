@@ -19,7 +19,6 @@ This version is aligned with the current Gold star schema scope. `dim_vehicle` a
 | `Dim_Package` | Type 1 | Small reference dimension derived from distinct `quotation.package_code` values. Current source only supports package code; additional package attributes require confirmed mapping or derivation rules. |
 | `dim_coverage` | Type 1 | Coverage type is a reference value. Changes are expected to be corrections or enrichments. |
 | `dim_quotation` | Type 1 | Identifier dimension for grouping quotation header, quotation item, and related policy facts. Historical status is handled separately by facts/status dimension. |
-| `dim_policy` | Type 1 | Identifier dimension for grouping policy, payment, and cancellation facts. Policy lifecycle is handled by `fact_policy` and `dim_policy_status`. |
 | `dim_quotation_status` | Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata. |
 | `dim_policy_status` | Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata. |
 | `dim_payment_status` | Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata. |
@@ -44,7 +43,6 @@ Applicable dimensions:
 - `dim_package`
 - `dim_coverage`
 - `dim_quotation`
-- `dim_policy`
 - `dim_quotation_status`
 - `dim_policy_status`
 - `dim_payment_status`

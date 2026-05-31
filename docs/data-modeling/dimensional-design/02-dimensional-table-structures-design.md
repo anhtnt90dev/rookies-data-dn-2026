@@ -25,6 +25,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | Audit columns | Dimensions should include source and load metadata where applicable. |
 | SCD columns | Type 2 dimensions include effective dating and current flag columns. |
 | Soft delete tracking | Source-based Type 2 dimensions may include `is_deleted` if delete detection is supported. |
+| `source_system` usage | Include `source_system` for dimensions loaded from a clear external/source object. Omit it for generated dimensions and small reference dimensions unless source-level audit is required. |
 
 ## 3. Current Scope Decisions
 
@@ -32,8 +33,9 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|---|
 | `dim_vehicle` | Excluded from current Gold star schema. | The source has `vehicle.customer_id`, but `quotation` and `policy_info` do not contain `vehicle_id`. Vehicle analysis should wait for PO/client confirmation. |
 | `dim_region` | Excluded as a standalone dimension. | Region/geography is available as attributes in `customers` and `agents`; no confirmed reporting-region mapping table exists. |
-| `dim_policy` | Included. | Needed to connect `fact_policy`, `fact_payment`, and `fact_cancellation` without direct fact-to-fact relationships. |
+| `dim_policy` | Excluded. | Policy ID is stored directly in the facts (`fact_policy`, `fact_payment`, and `fact_cancellation`) to connect these processes without an independent dimension table. |
 | `dim_quotation_status` naming | Use `dim_quotation_status` instead of `dim_quote_status`. | This matches the source field name `quotation_status` and the Star Schema naming style. |
+
 
 ## 4. Common Technical Columns
 
@@ -44,7 +46,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `<dimension>_key` | Surrogate primary key. |
 | `<business_key>` | Natural/business key from source or generated reference code. |
 | Descriptive attributes | Business attributes used in filtering, grouping, and reporting. |
-| `source_system` | Source system name, where applicable. |
+| `source_system` | Source system name. Required for source-based entity or identifier dimensions. Optional for small reference dimensions derived from distinct source values. Not required for generated dimensions such as `dim_date`. |
 | `created_at` | Date/time when the dimension row was created in Gold. |
 | `updated_at` | Date/time when the dimension row was last updated in Gold. |
 
@@ -196,23 +198,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.8 `dim_policy`
-
-**Grain:** One row per policy  
-**SCD Type:** Type 1  
-**Source:** `policy_info`
-
-| Column | Type Suggestion | Description |
-|---|---|---|
-| `policy_key` | BIGINT | Surrogate key. |
-| `policy_id` | STRING | Source policy business key. |
-| `policy_number` | STRING | Policy display number. |
-| `quotation_id` | STRING | Related quotation ID for traceability. |
-| `source_system` | STRING | Source system name. |
-| `created_at` | TIMESTAMP | Gold row creation time. |
-| `updated_at` | TIMESTAMP | Gold row update time. |
-
-## 5.9 `dim_quotation_status`
+## 5.8 `dim_quotation_status`
 
 **Grain:** One row per quotation status  
 **SCD Type:** Type 1  
@@ -229,7 +215,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.10 `dim_policy_status`
+## 5.9 `dim_policy_status`
 
 **Grain:** One row per policy status  
 **SCD Type:** Type 1  
@@ -246,7 +232,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.11 `dim_payment_status`
+## 5.10 `dim_payment_status`
 
 **Grain:** One row per payment status  
 **SCD Type:** Type 1  
@@ -263,7 +249,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.12 `dim_payment_method`
+## 5.11 `dim_payment_method`
 
 **Grain:** One row per payment method  
 **SCD Type:** Type 1  
@@ -278,7 +264,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
 
-## 5.13 `dim_cancellation_reason`
+## 5.12 `dim_cancellation_reason`
 
 **Grain:** One row per distinct cancellation reason  
 **SCD Type:** Type 1  
@@ -298,17 +284,16 @@ This version is aligned with the updated source data, the fact grain document ve
 |---|---|
 | `fact_quotation` | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key` |
 | `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key` |
-| `fact_policy` | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key` |
-| `fact_payment` | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key` |
-| `fact_cancellation` | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key` |
+| `fact_policy` | `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key` |
+| `fact_payment` | `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key` |
+| `fact_cancellation` | `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key` |
 
 ## 7. Review Points
 
 | Topic | Review Required |
 |---|---|
-| `dim_policy` in ERD | Confirm that the ERD includes `dim_policy`, because it is needed to connect policy, payment, and cancellation facts without direct fact-to-fact relationships. |
 | `dim_vehicle` | Confirm whether future vehicle analysis is required and whether quotation/policy should include `vehicle_id`. |
-| Downstream inherited keys | Confirm whether payment and cancellation facts should physically store inherited `customer_key` and `provider_key`, or only rely on `policy_key`. |
+| Downstream inherited keys | Confirm whether payment and cancellation facts should physically store inherited `customer_key` and `provider_key`, or only rely on `policy_id`. |
 
 ## 8. Output
 

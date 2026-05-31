@@ -1,0 +1,95 @@
+graph LR
+    %% ── STYLES ───────────────────────────────────────────
+    classDef srcStyle    fill:#dce8f5,stroke:#7aabda,color:#1a3a5c
+    classDef bronzeStyle fill:#fdf3dc,stroke:#e8c96a,color:#5c3d0a
+    classDef silverStyle fill:#dff2ea,stroke:#6dc49a,color:#0a3d22
+    classDef goldStyle   fill:#fde8e8,stroke:#e89090,color:#5c0a0a
+    classDef conStyle    fill:#dce8f5,stroke:#7aabda,color:#1a3a5c
+    classDef logStyle    fill:#fdf3dc,stroke:#e8c96a,color:#5c3d0a
+    classDef orcStyle    fill:#ecdff5,stroke:#b07ad4,color:#3a0a5c
+    classDef monStyle    fill:#fde8d0,stroke:#e8a870,color:#5c2a0a
+    classDef wrapperStyle fill:none,stroke:#999,stroke-dasharray: 5 5,color:#555
+
+    %% ── ORCHESTRATION (Top-level Control Plane) ──────────
+    subgraph ORC[" Orchestration"]
+        direction TB
+        O1[Fabric Pipeline]
+        O2[Job Config]
+        O3[Watermark Table]
+    end
+
+    %% ── MAIN PIPELINE ────────────────────────────────────
+    subgraph SRC["Source Systems"]
+        direction TB
+        S1[Relational DB]
+        S2[JSON]
+    end
+
+    %% WRAPPER: Keeps Medallion layers linear and neat
+    subgraph LKH["Medallion Data Lakehouse"]
+        direction LR
+
+        subgraph BRZ["Bronze Layer · Raw"]
+            direction TB
+            B1[Raw Delta / Parquet]
+            B2[Append Only]
+            B3[Metadata Columns]
+        end
+
+        subgraph SLV["Silver Layer · Cleansed"]
+            direction TB
+            SL1[Deduplication]
+            SL2[Data Quality Checks]
+            SL3[Transformations]
+        end
+
+        subgraph GLD["Gold Layer · Business"]
+            direction TB
+            G1[Star Schema]
+            G2[Aggregations]
+            G3[Business Measures]
+        end
+
+        BRZ -->|cleanse| SLV
+        SLV -->|aggregate| GLD
+    end
+
+    subgraph CON["Consumers"]
+        direction TB
+        C1[Power BI]
+    end
+
+    %% ── OBSERVABILITY (Bottom-level Management) ──────────
+    subgraph LOG["Logging & Audit"]
+        direction TB
+        L1[Pipeline Log]
+        L2[Error Log]
+        L3[Batch Log]
+    end
+
+    subgraph MON["Monitoring"]
+        direction TB
+        M1[Azure Monitor]
+        M2[Alerts]
+    end
+
+    %% ── MAIN DATA FLOW ───────────────────────────────────
+    SRC -->|ingest| BRZ
+    GLD -->|serve| CON
+
+    %% ── CROSS-CUTTING CONNECTIONS ────────────────────────
+    %% Connecting to the wrapper instead of layers cleans up layout
+    ORC -->|triggers & schedules| LKH
+    LKH -.->|audit trail| LOG
+    MON -.->|observes| LKH
+
+    %% ── APPLY STYLES ─────────────────────────────────────
+    class S1,S2 srcStyle
+    class B1,B2,B3 bronzeStyle
+    class SL1,SL2,SL3 silverStyle
+    class G1,G2,G3 goldStyle
+    class C1 conStyle
+    class L1,L2,L3 logStyle
+    class O1,O2,O3 orcStyle
+    class M1,M2 monStyle
+    class LKH wrapperStyle

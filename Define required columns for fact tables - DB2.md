@@ -23,37 +23,16 @@ All three fact tables share the following audit and metadata columns:
 
 Grain: One row per issued insurance policy
 Source: policy_info (Silver Layer)
-Fact Type: Accumulating snapshot
-
-
-Design Notes:
-policy_status_key appears once in the physical table — the duplicate entries visible in the ERD were modelling artefacts.
-Three separate date keys (start, end, issued) allow independent slicing across all three date dimensions using the shared Dim_Date table.
-premium_amount is the only measure; all other numeric context should be derived from dimension attributes or calculated metrics.
 
 ## 4.2 Fact_Payment
 
 Grain: One row per payment transaction against a policy
 Source: payment (Silver Layer)
-Fact Type: Transaction fact
-
-
-Design Notes:
-transaction_reference is treated as a degenerate dimension — it is a unique identifier that carries no descriptive attributes and does not justify its own dimension table.
-There is no direct policy_key on this fact table as designed. A policy link can be derived via customer_key + date range if cross-fact analysis is required, or policy_key can be added as an optional FK in a future iteration.
-payment_amount is fully additive and can be summed across all dimensions.
 
 ## 4.3 Fact_Cancellation
 
 Grain: One row per policy cancellation event
 Source: cancellation (Silver Layer)
-Fact Type: Transaction fact
-
-
-Design Notes:
-refund_amount is additive and should default to 0 rather than NULL, as defined by the Silver Layer cleansing rules.
-A policy_key FK is not present in the current design. It is recommended to add policy_key as a conformed FK in a future revision to enable direct policy-to-cancellation joins without traversing customer or provider dimensions.
-cancellation_reason_key references Dim_Cancellation_Reason, a reference dimension containing standardised reason codes and descriptions.
 
 # 5. Dimension Reference Summary
 The table below lists all dimension tables referenced across the three fact tables, showing which facts consume each dimension.
@@ -85,7 +64,7 @@ The following measures are defined across the three fact tables. All measures ar
 | quotation_key | BIGINT | FK → Dim_Quotation | Reference to the originating quotation. |
 | agent_key | BIGINT | FK → Dim_Agent | Reference to the agent who issued the policy. |
 | package_key | BIGINT | FK → Dim_Package | Reference to the insurance package selected. |
-| premium_amount | DECIMAL(18,2) | Measure (Additive) | Gross premium amount charged for the policy. |
+| issued_premium_amount | DECIMAL(18,2) | Measure (Additive) | Gross premium amount charged for the policy. |
 | source_system | STRING | Audit | Source system identifier. |
 | created_at | TIMESTAMP | Audit | Gold load timestamp. |
 | updated_at | TIMESTAMP | Audit | Gold last update timestamp. |

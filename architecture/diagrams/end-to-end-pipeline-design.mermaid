@@ -20,7 +20,7 @@ flowchart TD
     subgraph BRONZE[" Bronze Layer"]
         direction TB
         E[Extract from Source System<br/> FULL -> SELECT *; INCREMENTAL -> WHERE updated_at > watermark]
-        F[Schema Validation<br/> validate column types; check NOT NULL fields; reject invalids -> Pipeline_Error_Record]
+        F[Schema Validation<br/> validate column types;  reject invalids -> Pipeline_Error_Record]
         H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
         I{Bronze Load<br/>Success?}
         RB{Retry Bronze?<br/>Condition: retry_count < max_retry}
@@ -37,7 +37,8 @@ flowchart TD
     subgraph SILVER["Silver Layer"]
         direction TB
         M[Insert audit_detail<br/> status = Running]
-        G[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
+        G1[Cleansing<br/> mandatory cleaning null]
+        G2[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
         N[Load Silver<br/> initial -> truncate table; read bronze via audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
         O{Silver Load<br/>Success?}
         RS{Retry Silver?<br/>Condition: retry_count < max_retry}
@@ -78,7 +79,7 @@ flowchart TD
     RB -- No  --> END_B
     I -- Yes --> J --> K --> L
     L --> SILVER
-    M --> G --> N --> O
+    M --> G1 --> G2 --> N --> O
     O -- No  --> ERR_S1 --> ERR_S2 --> RS
     RS -- Yes --> RS_WAIT --> M
     RS -- No  --> END_S
@@ -103,7 +104,7 @@ flowchart TD
     class Start,End startEnd
     class A,B,C,D,AS config
     class E,F,H,J,K,L bronze
-    class M,G,N,P,Q silver
+    class M,G1,G2,N,P,Q silver
     class R,S,U,V gold
     class I,O,T,RB,RS,RG decision
     class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2 error

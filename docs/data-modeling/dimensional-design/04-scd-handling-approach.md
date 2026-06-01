@@ -87,7 +87,6 @@ Applicable dimensions:
 | `effective_from` | Timestamp when the version becomes valid. |
 | `effective_to` | Timestamp when the version stops being valid. |
 | `is_current` | Current active version flag. |
-| `is_deleted` | Indicates deleted/inactive source records if supported. |
 | `source_system` | Origin system. |
 | `created_at` | Gold insert timestamp. |
 | `updated_at` | Gold update timestamp. |
@@ -175,11 +174,12 @@ old.is_current   = false
 
 | Source Delete Pattern | Handling |
 |---|---|
-| Explicit delete event with `operation_type = 'D'` | Expire current Type 2 dimension row and set `is_deleted = true`. |
-| No delete event available | Keep the current dimension row. Do not infer delete from absence in incremental load. |
+| CRM SQL sources (Type 2 dimensions) | CRM SQL sources do not support delete detection. No `is_deleted` column is created, and deletions are not tracked. |
+| JSON sources (e.g. `policy_info`, `payment`, `cancellation`) with `operation_type = 'D'` | Set `is_deleted = true` in the target Gold tables (e.g., `dim_policy`, `fact_policy`, `fact_payment`, `fact_cancellation`). |
+| No delete event available | Keep the current row. Do not infer delete from absence in incremental load. |
 | Reference dimension delete | Usually do not physically delete. Mark inactive or keep unchanged unless PO confirms. |
 
-For source systems with delete events, deletion should be treated as a historical state rather than physical deletion from dimensions.
+For JSON source systems with delete events, deletion should be treated as a soft delete (`is_deleted = true`) rather than physical deletion from DWH tables.
 
 ## 9. Late-Arriving Dimension Handling
 

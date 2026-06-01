@@ -24,7 +24,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | Unknown member | Every dimension except `dim_date` should have an unknown/default row with key `-1`. |
 | Audit columns | Dimensions should include source and load metadata where applicable. |
 | SCD columns | Type 2 dimensions include effective dating and current flag columns. |
-| Soft delete tracking | Source-based Type 2 dimensions may include `is_deleted` if delete detection is supported. |
+| Soft delete tracking | CRM SQL sources do not require soft delete tracking (`is_deleted` is excluded). JSON sources (e.g. `policy_info` JSON) track deletion using `is_deleted` based on `operation_type = 'D'`. |
 | `source_system` usage | Include `source_system` for dimensions loaded from a clear external/source object. Omit it for generated dimensions and small reference dimensions unless source-level audit is required. |
 
 ## 3. Current Scope Decisions
@@ -59,7 +59,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | Start timestamp for the dimension version. |
 | `effective_to` | End timestamp for the dimension version. Use `9999-12-31` for current row. |
 | `is_current` | Indicates the current active version for a business key. |
-| `is_deleted` | Indicates whether the source record has been deleted or no longer active, if supported. |
 | `source_system` | Source system name. |
 | `created_at` | Date/time when the dimension row was created in Gold. |
 | `updated_at` | Date/time when the dimension row was last updated in Gold. |
@@ -106,7 +105,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP | Version start timestamp. |
 | `effective_to` | TIMESTAMP | Version end timestamp. |
 | `is_current` | BOOLEAN | Current version flag. |
-| `is_deleted` | BOOLEAN | Source deletion flag if available. |
 | `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
@@ -128,7 +126,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP | Version start timestamp. |
 | `effective_to` | TIMESTAMP | Version end timestamp. |
 | `is_current` | BOOLEAN | Current version flag. |
-| `is_deleted` | BOOLEAN | Source deletion flag if available. |
 | `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
@@ -149,7 +146,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP | Version start timestamp. |
 | `effective_to` | TIMESTAMP | Version end timestamp. |
 | `is_current` | BOOLEAN | Current version flag. |
-| `is_deleted` | BOOLEAN | Source deletion flag if available. |
 | `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
@@ -220,6 +216,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `policy_end_date` | DATE | Policy coverage end date. |
 | `premium_amount` | DECIMAL(18,2) | Policy premium amount. |
 | `issued_date` | TIMESTAMP | Date when the policy was issued. |
+| `is_deleted` | BOOLEAN | Indicates whether the policy has been deleted at the source (based on JSON operation_type = 'D'). |
 | `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |
@@ -369,7 +366,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP | Start timestamp for the version. |
 | `effective_to` | TIMESTAMP | End timestamp for the version. Use `9999-12-31` for current. |
 | `is_current` | BOOLEAN | Indicates the current active version. |
-| `is_deleted` | BOOLEAN | Indicates whether the source record has been deleted. |
 | `source_system` | STRING | Source system name. |
 | `created_at` | TIMESTAMP | Gold row creation time. |
 | `updated_at` | TIMESTAMP | Gold row update time. |

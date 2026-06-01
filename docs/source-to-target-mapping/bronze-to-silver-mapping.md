@@ -10,12 +10,12 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 
 
 
-## 3. Common Audit and Metadata Columns (Pass-Through)
+## 3. Common Audit and Metadata Columns 
 
 | Bronze Column | Silver Column | Silver Type | Rule |
 | --- | --- | --- | --- |
 | _batch_id | _batch_id | STRING | Pass-through |
-| _loaded_at | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | _loaded_at | TIMESTAMP | Generate |
 | _source_system | _source_system | STRING | Pass-through |
 | _source_name | _source_name | STRING | Pass-through |
 
@@ -35,10 +35,9 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | cancellation_date | STRING | cancellation_date | DATE | Cast to `DATE` |
 | cancellation_reason | STRING | cancellation_reason | STRING | Direct mapping |
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
-| last_updated | STRING | last_updated_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
+| last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| batch_date | STRING | batch_date | DATE | Cast to `DATE` |
-| source_system | STRING | source_system | STRING | Direct mapping |
+| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
 | _source_system | STRING | _source_system | STRING | Pass-through |
@@ -58,12 +57,11 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | payment_status | STRING | payment_status | STRING | Direct mapping |
 | payment_amount | STRING | payment_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | transaction_reference | STRING | transaction_reference | STRING | Direct mapping |
-| last_updated | STRING | last_updated_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
+| last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| batch_date | STRING | batch_date | DATE | Cast to `DATE` |
-| source_system | STRING | source_system | STRING | Direct mapping |
+| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -83,13 +81,12 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | policy_end_date | STRING | policy_end_date | DATE | Cast to `DATE` |
 | policy_status | STRING | policy_status | STRING | Direct mapping |
 | premium_amount | STRING | premium_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
+| operation_type | STRING | operation_type | STRING | Direct mapping |
+| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
 | issued_date | STRING | issued_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
 | last_updated | STRING | last_updated_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
-| operation_type | STRING | operation_type | STRING | Direct mapping |
-| batch_date | STRING | batch_date | DATE | Cast to `DATE` |
-| source_system | STRING | source_system | STRING | Direct mapping |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -115,7 +112,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -134,7 +131,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -152,7 +149,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -173,7 +170,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -196,7 +193,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
@@ -215,12 +212,8 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | created_date | TIMESTAMP | created_at | TIMESTAMP | Rename to `_at` |
 | updated_date | TIMESTAMP | updated_at | TIMESTAMP | Rename to `_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-## 6. Open Questions
 
-- Confirm whether Silver should retain `operation_type`, `batch_date`, and `source_system` from JSON sources, or move them to an audit table.
-- Confirm numeric precision requirements for amounts (defaulted to `DECIMAL(18,2)`).
-- Confirm whether `last_updated_at` should be normalized to `updated_at` for consistency across entities.

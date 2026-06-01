@@ -1,0 +1,97 @@
+flowchart TD
+    Start([Start Pipeline])
+
+    %% ── INITIAL ──────────────────────────────────────────
+    subgraph INIT["Initial"]
+        direction TB
+        A[Read Job_Config Table\nJob_ID · Source_System\nLoad_Type · Schedule · Max_Retry]
+        B[Read Watermark Table\nLast_Run_Timestamp per source\nNULL → Full Load triggered]
+    end
+
+    %% ── STATUS SETUP ──────────────────────────────────────
+    subgraph STATUS["Status Stage"]
+        direction TB
+        C[Insert audit_detail\nstatus = Running\nsource · batch_id · load_type]
+        D[Insert audit_table_session\nOne record per active table\nbronze/silver/gold = Pending]
+    end
+
+    %% ── BRONZE LAYER ──────────────────────────────────────
+    subgraph BRONZE[" Bronze Layer"]
+        direction TB
+        E[Extract from Source System\nFULL → SELECT *\nINCREMENTAL → WHERE updated_at > watermark]
+        F[Schema Validation\nValidate column types\nCheck NOT NULL fields\nReject invalids → Pipeline_Error_Record]
+        G[Deduplication Engine\nHash on business key\nRemove exact duplicates\nKeep latest by updated_at]
+        H[Load Bronze\nFULL → Truncate + INSERT\nINCREMENTAL → APPEND new\nHash all fields for change detection]
+        I{Bronze Load\nSuccess?}
+        J[Update audit_table_session\nbronze_status = Success\nbronze_end_at = NOW\nrows_extracted · rows_loaded]
+        K[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
+        L[Update Watermark Table\nLast_Run_Timestamp = MAX updated_at\nLast_Batch_ID = current Batch_ID]
+        ERR_B1[Update audit_table_session\n— Failed]
+        ERR_B2[Update audit_detail\n= Failed + Error message]
+        END_B([End this Bronze table])
+    end
+
+    %% ── SILVER LAYER ──────────────────────────────────────
+    subgraph SILVER["Silver Layer"]
+        direction TB
+        M[Insert audit_detail\nstatus = Running]
+        N[Load Silver\nInitial → Truncate table\nRead Bronze via audit_table_session_id\nCleansing · Business rules · SCD logic\nPartition by ingestion_date + source]
+        O{Silver Load\nSuccess?}
+        P[Update audit_table_session\nsilver_status = Success\nsilver_end_at = NOW]
+        Q[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
+        ERR_S1[Update audit_table_session\n— Failed]
+        ERR_S2[Update audit_detail\n= Failed + Error message]
+        END_S([End this Silver table])
+    end
+
+    %% ── GOLD LAYER ────────────────────────────────────────
+    subgraph GOLD["Gold Layer"]
+        direction TB
+        R[Insert audit_detail\nstatus = Running]
+        S[Load Gold\nRead Silver conformed tables\nAggregation + KPI logic\nMERGE into Fact / Dimension\nPartition by report_date + region]
+        T{Gold Load\nSuccess?}
+        U[Update audit_table_session\ngold_status = Success\ngold_end_at = NOW]
+        V[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
+        ERR_G1[Update audit_table_session\n— Failed]
+        ERR_G2[Update audit_detail\n= Failed + Error message]
+        END_G([End this Gold table])
+    end
+
+    End([Pipeline Complete])
+
+    %% ── CONNECTIONS ───────────────────────────────────────
+    Start --> INIT
+    A --> B
+    B --> STATUS
+    C --> D
+    D --> BRONZE
+    E --> F --> G --> H --> I
+    I -- No  --> ERR_B1 --> ERR_B2 --> END_B
+    I -- Yes --> J --> K --> L
+    L --> SILVER
+    M --> N --> O
+    O -- No  --> ERR_S1 --> ERR_S2 --> END_S
+    O -- Yes --> P --> Q
+    Q --> GOLD
+    R --> S --> T
+    T -- No  --> ERR_G1 --> ERR_G2 --> END_G
+    T -- Yes --> U --> V --> End
+
+    %% ── STYLES ────────────────────────────────────────────
+    classDef startEnd fill:#1B6B3A,stroke:#0d4a28,color:#fff,rx:20
+    classDef config    fill:#2C3E6B,stroke:#1a2a50,color:#d0d8ff
+    classDef bronze    fill:#7B4A1E,stroke:#5a3210,color:#ffe8c8
+    classDef silver    fill:#3A5A7B,stroke:#24405c,color:#d0eaff
+    classDef gold      fill:#7B6B1E,stroke:#5a4e10,color:#fff8c8
+    classDef decision  fill:#4A3060,stroke:#2e1e47,color:#e8d8ff
+    classDef error     fill:#7B1E1E,stroke:#5a0e0e,color:#ffd0d0
+    classDef stopNode  fill:#9B2020,stroke:#7a0e0e,color:#fff,rx:20
+
+    class Start,End startEnd
+    class A,B,C,D config
+    class E,F,G,H,J,K,L bronze
+    class M,N,P,Q silver
+    class R,S,U,V gold
+    class I,O,T decision
+    class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2 error
+    class END_B,END_S,END_G stopNode

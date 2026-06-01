@@ -1,66 +1,66 @@
 flowchart TD
     Start([Start Pipeline])
-    AS[Insert audit_session\n status = Running; pipeline_id; batch_id]
+    AS[Insert audit_session<br/> status = Running; pipeline_id; batch_id]
 
     %% ── INITIAL ──────────────────────────────────────────
     subgraph INIT["Initial"]
         direction TB
-        A[Read Job_Config Table\n Job_ID; Source_System; Load_Type; Schedule; Max_Retry]
-        B[Read Watermark Table\n last_run_timestamp per source; NULL -> Full load triggered]
+        A[Read Job_Config Table<br/> Job_ID; Source_System; Load_Type; Schedule; Max_Retry]
+        B[Read Watermark Table<br/> last_run_timestamp per source; NULL -> Full load triggered]
     end
 
     %% ── STATUS SETUP ──────────────────────────────────────
     subgraph STATUS["Status Stage"]
         direction TB
-        C[Insert audit_detail\n status = Running; source; batch_id; load_type]
-        D[Insert audit_table_session\n one record per active table; bronze/silver/gold = Pending]
+        C[Insert audit_detail<br/> status = Running; source; batch_id; load_type]
+        D[Insert audit_table_session<br/> one record per active table; bronze/silver/gold = Pending]
     end
 
     %% ── BRONZE LAYER ──────────────────────────────────────
     subgraph BRONZE[" Bronze Layer"]
         direction TB
-        E[Extract from Source System\n FULL -> SELECT *; INCREMENTAL -> WHERE updated_at > watermark]
-        F[Schema Validation\n validate column types; check NOT NULL fields; reject invalids -> Pipeline_Error_Record]
-        H[Load Bronze\n FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
-        I{Bronze Load\nSuccess?}
-        RB{Retry Bronze?\nCondition: retry_count < max_retry}
-        RB_WAIT[Schedule Bronze Retry\n increment retry_count; backoff delay]
-        J[Update audit_table_session\n bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
-        K[Update audit_detail\n status = Success; inserted/updated/deleted rows]
-        L[Update Watermark Table\n last_run_timestamp = MAX updated_at; last_batch_id = current batch_id]
-        ERR_B1[Update audit_table_session\n— Failed]
-        ERR_B2[Update audit_detail\n status = Failed; error message]
+        E[Extract from Source System<br/> FULL -> SELECT *; INCREMENTAL -> WHERE updated_at > watermark]
+        F[Schema Validation<br/> validate column types; check NOT NULL fields; reject invalids -> Pipeline_Error_Record]
+        H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
+        I{Bronze Load<br/>Success?}
+        RB{Retry Bronze?<br/>Condition: retry_count < max_retry}
+        RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
+        J[Update audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
+        K[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        L[Update Watermark Table<br/> last_run_timestamp = MAX updated_at; last_batch_id = current batch_id]
+        ERR_B1[Update audit_table_session<br/>— Failed]
+        ERR_B2[Update audit_detail<br/> status = Failed; error message]
         END_B([End this Bronze table])
     end
 
     %% ── SILVER LAYER ──────────────────────────────────────
     subgraph SILVER["Silver Layer"]
         direction TB
-        M[Insert audit_detail\n status = Running]
-        G[Deduplication Engine\n hash on business key; remove exact duplicates; keep latest by updated_at]
-        N[Load Silver\n initial -> truncate table; read bronze via audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
-        O{Silver Load\nSuccess?}
-        RS{Retry Silver?\nCondition: retry_count < max_retry}
-        RS_WAIT[Schedule Silver Retry\n increment retry_count; backoff delay]
-        P[Update audit_table_session\n silver_status = Success; silver_end_at = NOW]
-        Q[Update audit_detail\n status = Success; inserted/updated/deleted rows]
-        ERR_S1[Update audit_table_session\n— Failed]
-        ERR_S2[Update audit_detail\n status = Failed; error message]
+        M[Insert audit_detail<br/> status = Running]
+        G[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
+        N[Load Silver<br/> initial -> truncate table; read bronze via audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
+        O{Silver Load<br/>Success?}
+        RS{Retry Silver?<br/>Condition: retry_count < max_retry}
+        RS_WAIT[Schedule Silver Retry<br/> increment retry_count; backoff delay]
+        P[Update audit_table_session<br/> silver_status = Success; silver_end_at = NOW]
+        Q[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_S1[Update audit_table_session<br/>— Failed]
+        ERR_S2[Update audit_detail<br/> status = Failed; error message]
         END_S([End this Silver table])
     end
 
     %% ── GOLD LAYER ────────────────────────────────────────
     subgraph GOLD["Gold Layer"]
         direction TB
-        R[Insert audit_detail\n status = Running]
-        S[Load Gold\n read silver conformed tables; aggregation and KPI logic; merge into fact/dimension; partition by report_date + region]
-        T{Gold Load\nSuccess?}
-        RG{Retry Gold?\nCondition: retry_count < max_retry}
-        RG_WAIT[Schedule Gold Retry\n increment retry_count; backoff delay]
-        U[Update audit_table_session\n gold_status = Success; gold_end_at = NOW]
-        V[Update audit_detail\n status = Success; inserted/updated/deleted rows]
-        ERR_G1[Update audit_table_session\n— Failed]
-        ERR_G2[Update audit_detail\n status = Failed; error message]
+        R[Insert audit_detail<br/> status = Running]
+        S[Load Gold<br/> read silver conformed tables; aggregation and KPI logic; merge into fact/dimension; partition by report_date + region]
+        T{Gold Load<br/>Success?}
+        RG{Retry Gold?<br/>Condition: retry_count < max_retry}
+        RG_WAIT[Schedule Gold Retry<br/> increment retry_count; backoff delay]
+        U[Update audit_table_session<br/> gold_status = Success; gold_end_at = NOW]
+        V[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_G1[Update audit_table_session<br/>— Failed]
+        ERR_G2[Update audit_detail<br/> status = Failed; error message]
         END_G([End this Gold table])
     end
 

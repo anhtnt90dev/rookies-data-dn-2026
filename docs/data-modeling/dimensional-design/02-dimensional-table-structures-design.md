@@ -24,8 +24,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | Unknown member        | Every dimension except `dim_date` should have an unknown/default row with key `-1`.                                                                                                       |
 | Audit columns         | Dimensions should include source and load metadata where applicable.                                                                                                                      |
 | SCD columns           | Type 2 dimensions include effective dating and current flag columns.                                                                                                                      |
-| Soft delete tracking  | CRM SQL sources do not require soft delete tracking (`is_deleted` is excluded). JSON sources (e.g. `policy_info` JSON) track deletion using `is_deleted` based on `operation_type = 'D'`. |
-| `source_system` usage | Include `source_system` for dimensions loaded from a clear external/source object. Omit it for generated dimensions and small reference dimensions unless source-level audit is required. |
+| Soft delete tracking  | CRM SQL sources do not require soft delete tracking (`is_deleted` is excluded). JSON sources (e.g. `policy_info` JSON) track deletion using `is_deleted` in the fact tables based on `operation_type = 'D'`. |
 
 ## 3. Current Scope Decisions
 
@@ -44,7 +43,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `<dimension>_key`      | Surrogate primary key.                                                                                                                                                                                                |
 | `<business_key>`       | Natural/business key from source or generated reference code.                                                                                                                                                         |
 | Descriptive attributes | Business attributes used in filtering, grouping, and reporting.                                                                                                                                                       |
-| `source_system`        | Source system name. Required for source-based entity or identifier dimensions. Optional for small reference dimensions derived from distinct source values. Not required for generated dimensions such as `dim_date`. |
 | `created_at`           | Date/time when the dimension row was created in Gold.                                                                                                                                                                 |
 | `updated_at`           | Date/time when the dimension row was last updated in Gold.                                                                                                                                                            |
 
@@ -58,7 +56,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from`       | Start timestamp for the dimension version.                                   |
 | `effective_to`         | End timestamp for the dimension version. Use `9999-12-31` for current row.   |
 | `is_current`           | Indicates the current active version for a business key.                     |
-| `source_system`        | Source system name.                                                          |
 | `created_at`           | Date/time when the dimension row was created in Gold.                        |
 | `updated_at`           | Date/time when the dimension row was last updated in Gold.                   |
 
@@ -104,7 +101,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP       | Version start timestamp.      |
 | `effective_to`   | TIMESTAMP       | Version end timestamp.        |
 | `is_current`     | BOOLEAN         | Current version flag.         |
-| `source_system`  | STRING          | Source system name.           |
 | `created_at`     | TIMESTAMP       | Gold row creation time.       |
 | `updated_at`     | TIMESTAMP       | Gold row update time.         |
 
@@ -125,7 +121,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP       | Version start timestamp.           |
 | `effective_to`   | TIMESTAMP       | Version end timestamp.             |
 | `is_current`     | BOOLEAN         | Current version flag.              |
-| `source_system`  | STRING          | Source system name.                |
 | `created_at`     | TIMESTAMP       | Gold row creation time.            |
 | `updated_at`     | TIMESTAMP       | Gold row update time.              |
 
@@ -145,7 +140,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from` | TIMESTAMP       | Version start timestamp.                               |
 | `effective_to`   | TIMESTAMP       | Version end timestamp.                                 |
 | `is_current`     | BOOLEAN         | Current version flag.                                  |
-| `source_system`  | STRING          | Source system name.                                    |
 | `created_at`     | TIMESTAMP       | Gold row creation time.                                |
 | `updated_at`     | TIMESTAMP       | Gold row update time.                                  |
 
@@ -187,15 +181,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `quotation`
 
-| Column                  | Type Suggestion | Description                                                                         |
-| ----------------------- | --------------- | ----------------------------------------------------------------------------------- |
-| `quotation_key`         | BIGINT          | Surrogate key.                                                                      |
-| `quotation_id`          | STRING          | Source quotation business key.                                                      |
-| `quotation_number`      | STRING          | Optional display identifier; can equal `quotation_id` if no separate number exists. |
-| `quotation_expiry_date` | DATE/TIMESTAMP  | Quotation expiry date.                                                              |
-| `source_system`         | STRING          | Source system name.                                                                 |
-| `created_at`            | TIMESTAMP       | Gold row creation time.                                                             |
-| `updated_at`            | TIMESTAMP       | Gold row update time.                                                               |
+| Column          | Type Suggestion | Description                     |
+| --------------- | --------------- | ------------------------------- |
+| `quotation_key` | BIGINT          | Surrogate key.                  |
+| `quotation_id`  | STRING          | Source quotation business key.  |
+| `created_at`    | TIMESTAMP       | Gold row creation time.         |
+| `updated_at`    | TIMESTAMP       | Gold row update time.           |
 
 ## 5.8 `dim_policy`
 
@@ -203,25 +194,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `policy_info`
 
-| Column              | Type Suggestion | Description                                                                                       |
-| ------------------- | --------------- | ------------------------------------------------------------------------------------------------- |
-| `policy_key`        | BIGINT          | Surrogate key.                                                                                    |
-| `policy_id`         | STRING          | Source policy business key.                                                                       |
-| `policy_number`     | STRING          | Policy display number.                                                                            |
-| `quotation_id`      | STRING          | Link to the originating quotation.                                                                |
-| `customer_id`       | STRING          | Inherited customer context from policy source.                                                    |
-| `provider_code`     | STRING          | Inherited provider context from policy source.                                                    |
-| `policy_start_date` | DATE            | Policy coverage start date.                                                                       |
-| `policy_end_date`   | DATE            | Policy coverage end date.                                                                         |
-| `premium_amount`    | DECIMAL(18,2)   | Policy premium amount.                                                                            |
-| `issued_date`       | TIMESTAMP       | Date when the policy was issued.                                                                  |
-| `is_deleted`        | BOOLEAN         | Indicates whether the policy has been deleted at the source (based on JSON operation_type = 'D'). |
-| `source_system`     | STRING          | Source system name.                                                                               |
-| `created_at`        | TIMESTAMP       | Gold row creation time.                                                                           |
-| `updated_at`        | TIMESTAMP       | Gold row update time.                                                                             |
-
-> [!NOTE]
-> `dim_policy` is a transaction identifier dimension following the same pattern as `dim_quotation`. Policy status is handled separately by `dim_policy_status` and is not duplicated in this dimension. `policy_id` is also retained as a degenerate identifier in the facts for operational traceability.
+| Column          | Type Suggestion | Description                                            |
+| --------------- | --------------- | ------------------------------------------------------ |
+| `policy_key`    | BIGINT          | Surrogate key.                                         |
+| `policy_id`     | STRING          | Source policy business key (`policy_info.policy_id`).  |
+| `created_at`    | TIMESTAMP       | Gold row creation time.                                |
+| `updated_at`    | TIMESTAMP       | Gold row update time.                                  |
 
 ## 5.9 `dim_quotation_status`
 
@@ -229,27 +207,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `quotation.quotation_status`
 
-| Column                  | Type Suggestion | Description                                                                                                  |
-| ----------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `quotation_status_key`  | BIGINT          | Surrogate key.                                                                                               |
-| `quotation_status_code` | STRING          | Status code, for example `QUOTED`, `ACCEPTED`, `REJECTED`, `EXPIRED`, `CONVERTED`.                           |
-| `quotation_status_name` | STRING          | Display name. Derived by capitalising status code: `Quoted`, `Accepted`, `Rejected`, `Expired`, `Converted`. |
-| `is_open`               | BOOLEAN         | Derived flag: `true` if code is `QUOTED` or `ACCEPTED`.                                                      |
-| `is_accepted`           | BOOLEAN         | Derived flag: `true` if code is `ACCEPTED` or `CONVERTED`.                                                   |
-| `is_converted`          | BOOLEAN         | Derived flag: `true` if code is `CONVERTED`.                                                                 |
-| `created_at`            | TIMESTAMP       | Gold row creation time.                                                                                      |
-| `updated_at`            | TIMESTAMP       | Gold row update time.                                                                                        |
-
-> [!NOTE]
-> **Derivation Mapping Rules:**
->
-> | `quotation_status_code` | `quotation_status_name` | `is_open` | `is_accepted` | `is_converted` |
-> | ----------------------- | ----------------------- | --------- | ------------- | -------------- |
-> | `QUOTED`                | `Quoted`                | `true`    | `false`       | `false`        |
-> | `ACCEPTED`              | `Accepted`              | `true`    | `true`        | `false`        |
-> | `REJECTED`              | `Rejected`              | `false`   | `false`       | `false`        |
-> | `EXPIRED`               | `Expired`               | `false`   | `false`       | `false`        |
-> | `CONVERTED`             | `Converted`             | `false`   | `true`        | `true`         |
+| Column                  | Type Suggestion | Description                                                                        |
+| ----------------------- | --------------- | ---------------------------------------------------------------------------------- |
+| `quotation_status_key`  | BIGINT          | Surrogate key.                                                                     |
+| `quotation_status_code` | STRING          | Status code, for example `QUOTED`, `ACCEPTED`, `REJECTED`, `EXPIRED`, `CONVERTED`. |
+| `created_at`            | TIMESTAMP       | Gold row creation time.                                                            |
+| `updated_at`            | TIMESTAMP       | Gold row update time.                                                              |
 
 ## 5.10 `dim_policy_status`
 
@@ -257,26 +220,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `policy_info.policy_status`
 
-| Column               | Type Suggestion | Description                                                                                                  |
-| -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `policy_status_key`  | BIGINT          | Surrogate key.                                                                                               |
-| `policy_status_code` | STRING          | Status code, for example `ISSUED`, `ACTIVE`, `EXPIRED`, `CANCELLED`.                                         |
-| `policy_status_name` | STRING          | Display name. Derived by capitalising status code: `Issued`, `Active`, `Expired`, `Cancelled`.               |
-| `status_group`       | STRING          | Group name. Derived as: `Active` for `ACTIVE`/`ISSUED`, `Closed` for `EXPIRED`, `Cancelled` for `CANCELLED`. |
-| `is_active_policy`   | BOOLEAN         | Derived flag: `true` if code is `ACTIVE`.                                                                    |
-| `is_terminal_status` | BOOLEAN         | Derived flag: `true` if code is `EXPIRED` or `CANCELLED`.                                                    |
-| `created_at`         | TIMESTAMP       | Gold row creation time.                                                                                      |
-| `updated_at`         | TIMESTAMP       | Gold row update time.                                                                                        |
-
-> [!NOTE]
-> **Derivation Mapping Rules:**
->
-> | `policy_status_code` | `policy_status_name` | `status_group` | `is_active_policy` | `is_terminal_status` |
-> | -------------------- | -------------------- | -------------- | ------------------ | -------------------- |
-> | `ISSUED`             | `Issued`             | `Active`       | `false`            | `false`              |
-> | `ACTIVE`             | `Active`             | `Active`       | `true`             | `false`              |
-> | `EXPIRED`            | `Expired`            | `Closed`       | `false`            | `true`               |
-> | `CANCELLED`          | `Cancelled`          | `Cancelled`    | `false`            | `true`               |
+| Column               | Type Suggestion | Description                                                         |
+| -------------------- | --------------- | ------------------------------------------------------------------- |
+| `policy_status_key`  | BIGINT          | Surrogate key.                                                      |
+| `policy_status_code` | STRING          | Status code, for example `ISSUED`, `ACTIVE`, `EXPIRED`, `CANCELLED`. |
+| `created_at`         | TIMESTAMP       | Gold row creation time.                                             |
+| `updated_at`         | TIMESTAMP       | Gold row update time.                                               |
 
 ## 5.11 `dim_payment_status`
 
@@ -284,26 +233,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `payment.payment_status`
 
-| Column                  | Type Suggestion | Description                                                                                                                 |
-| ----------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `payment_status_key`    | BIGINT          | Surrogate key.                                                                                                              |
-| `payment_status_code`   | STRING          | Status code, for example `PENDING`, `PAID`, `FAILED`, `REFUNDED`.                                                           |
-| `payment_status_name`   | STRING          | Display name. Derived by capitalising status code: `Pending`, `Paid`, `Failed`, `Refunded`.                                 |
-| `status_group`          | STRING          | Group name. Derived as: `Pending` for `PENDING`, `Successful` for `PAID`, `Failed` for `FAILED`, `Refunded` for `REFUNDED`. |
-| `is_successful_payment` | BOOLEAN         | Derived flag: `true` if code is `PAID`.                                                                                     |
-| `is_refund_status`      | BOOLEAN         | Derived flag: `true` if code is `REFUNDED`.                                                                                 |
-| `created_at`            | TIMESTAMP       | Gold row creation time.                                                                                                     |
-| `updated_at`            | TIMESTAMP       | Gold row update time.                                                                                                       |
-
-> [!NOTE]
-> **Derivation Mapping Rules:**
->
-> | `payment_status_code` | `payment_status_name` | `status_group` | `is_successful_payment` | `is_refund_status` |
-> | --------------------- | --------------------- | -------------- | ----------------------- | ------------------ |
-> | `PENDING`             | `Pending`             | `Pending`      | `false`                 | `false`            |
-> | `PAID`                | `Paid`                | `Successful`   | `true`                  | `false`            |
-> | `FAILED`              | `Failed`              | `Failed`       | `false`                 | `false`            |
-> | `REFUNDED`            | `Refunded`            | `Refunded`     | `false`                 | `true`             |
+| Column                | Type Suggestion | Description                                                       |
+| --------------------- | --------------- | ----------------------------------------------------------------- |
+| `payment_status_key`  | BIGINT          | Surrogate key.                                                    |
+| `payment_status_code` | STRING          | Status code, for example `PENDING`, `PAID`, `FAILED`, `REFUNDED`. |
+| `created_at`          | TIMESTAMP       | Gold row creation time.                                           |
+| `updated_at`          | TIMESTAMP       | Gold row update time.                                             |
 
 ## 5.12 `dim_payment_method`
 
@@ -311,23 +246,12 @@ This version is aligned with the updated source data, the fact grain document ve
 **SCD Type:** Type 1  
 **Source:** `payment.payment_method`
 
-| Column                 | Type Suggestion | Description                                                                    |
-| ---------------------- | --------------- | ------------------------------------------------------------------------------ |
-| `payment_method_key`   | BIGINT          | Surrogate key.                                                                 |
-| `payment_method_code`  | STRING          | Standardized method code.                                                      |
-| `payment_method_name`  | STRING          | Payment method display name, for example Bank Transfer, Credit Card, E-wallet. |
-| `payment_method_group` | STRING          | Optional grouping.                                                             |
-| `created_at`           | TIMESTAMP       | Gold row creation time.                                                        |
-| `updated_at`           | TIMESTAMP       | Gold row update time.                                                          |
-
-> [!NOTE]
-> **Derivation Mapping Rules:**
->
-> | `payment_method_code` | `payment_method_name` | `payment_method_group` |
-> | --------------------- | --------------------- | ---------------------- |
-> | `BANK_TRANSFER`       | `Bank Transfer`       | `Offline/Direct`       |
-> | `CREDIT_CARD`         | `Credit Card`         | `Card`                 |
-> | `E_WALLET`            | `E-wallet`            | `Digital`              |
+| Column                | Type Suggestion | Description               |
+| --------------------- | --------------- | ------------------------- |
+| `payment_method_key`  | BIGINT          | Surrogate key.            |
+| `payment_method_code` | STRING          | Standardized method code. |
+| `created_at`          | TIMESTAMP       | Gold row creation time.   |
+| `updated_at`          | TIMESTAMP       | Gold row update time.     |
 
 ## 5.13 `dim_cancellation_reason`
 
@@ -361,7 +285,6 @@ This version is aligned with the updated source data, the fact grain document ve
 | `effective_from`   | TIMESTAMP       | Start timestamp for the version.                             |
 | `effective_to`     | TIMESTAMP       | End timestamp for the version. Use `9999-12-31` for current. |
 | `is_current`       | BOOLEAN         | Indicates the current active version.                        |
-| `source_system`    | STRING          | Source system name.                                          |
 | `created_at`       | TIMESTAMP       | Gold row creation time.                                      |
 | `updated_at`       | TIMESTAMP       | Gold row update time.                                        |
 

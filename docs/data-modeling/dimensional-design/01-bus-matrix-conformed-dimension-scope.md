@@ -33,7 +33,7 @@ This version is aligned with:
 | CRM SQL | `quotation.package_code` | `Dim_Package` |
 | CRM SQL | `quotation` | `Dim_Quotation`, `Dim_Quotation_Status`, `Dim_Date` |
 | CRM SQL | `quotation_item` | `dim_coverage` | Coverage belongs to quotation item grain. |
-| Policy DB / JSON | `policy_info` | `dim_policy`, `dim_policy_status`, `dim_date` | Policy keeps `policy_id`, `quotation_id`, `customer_id`, `provider_code`, policy dates, status, and premium amount. `dim_policy` serves as the transaction identifier dimension for the policy lifecycle. |
+| Policy DB / JSON | `policy_info` | `dim_policy`, `dim_policy_status`, `dim_date` | Policy keeps `policy_id` and `policy_number`. Policy transaction dates, status, premium, and context keys are resolved into `fact_policy`. `dim_policy` serves as the transaction identifier dimension. |
 | Payment DB / JSON | `payment` | `dim_payment_status`, `dim_payment_method`, `dim_date` | Payment is linked to policy by `policy_id`. |
 | Cancellation DB / JSON | `cancellation` | `dim_cancellation_reason`, `dim_date` | Cancellation is linked to policy by `policy_id`. |
 

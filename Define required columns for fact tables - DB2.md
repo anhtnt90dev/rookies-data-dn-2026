@@ -55,15 +55,15 @@ The following measures are defined across the three fact tables. All measures ar
 **fact_policy**
 | Column | Type | FK / Measure | Description |
 |---|---|---|---|
-| customer_key | BIGINT | FK → Dim_Customer | Reference to the customer who holds the policy. |
-| provider_key | BIGINT | FK → Dim_Provider | Reference to the insurance provider. |
-| policy_status_key | BIGINT | FK → Dim_Policy_Status | Reference to the current policy status. |
-| policy_start_date_key | INT | FK → Dim_Date | Date key for the policy start date (YYYYMMDD). |
-| policy_end_date_key | INT | FK → Dim_Date | Date key for the policy end date (YYYYMMDD). |
-| issued_date_key | INT | FK → Dim_Date | Date key for the policy issue date (YYYYMMDD). |
-| quotation_key | BIGINT | FK → Dim_Quotation | Reference to the originating quotation. |
-| agent_key | BIGINT | FK → Dim_Agent | Reference to the agent who issued the policy. |
-| package_key | BIGINT | FK → Dim_Package | Reference to the insurance package selected. |
+| customer_key | BIGINT | FK → dim_customer | Reference to the customer who holds the policy. |
+| provider_key | BIGINT | FK → dim_provider | Reference to the insurance provider. |
+| policy_status_key | BIGINT | FK → dim_policy_status | Reference to the current policy status. |
+| policy_start_date_key | INT | FK → dim_date | Date key for the policy start date (YYYYMMDD). |
+| policy_end_date_key | INT | FK → dim_date | Date key for the policy end date (YYYYMMDD). |
+| issued_date_key | INT | FK → dim_date | Date key for the policy issue date (YYYYMMDD). |
+| quotation_key | BIGINT | FK → dim_quotation | Reference to the originating quotation. |
+| agent_key | BIGINT | FK → aim_agent | Reference to the agent who issued the policy. |
+| package_key | BIGINT | FK → dim_package | Reference to the insurance package selected. |
 | issued_premium_amount | DECIMAL(18,2) | Measure (Additive) | Gross premium amount charged for the policy. |
 | source_system | STRING | Audit | Source system identifier. |
 | created_at | TIMESTAMP | Audit | Gold load timestamp. |
@@ -72,11 +72,11 @@ The following measures are defined across the three fact tables. All measures ar
 **fact_payment**
 | Column | Type | FK / Measure | Description |
 |---|---|---|---|
-| payment_date_key | INT | FK → Dim_Date | Date key for the payment date (YYYYMMDD). |
-| payment_status_key | BIGINT | FK → Dim_Payment_Status | Reference to the payment status (e.g., Successful, Failed, Pending). |
-| payment_method_key | BIGINT | FK → Dim_Payment_Method | Reference to the payment method used. |
-| customer_key | BIGINT | FK → Dim_Customer | Reference to the customer making the payment. |
-| provider_key | BIGINT | FK → Dim_Provider | Reference to the insurance provider receiving payment. |
+| payment_date_key | INT | FK → dim_date | Date key for the payment date (YYYYMMDD). |
+| payment_status_key | BIGINT | FK → dim_payment_status | Reference to the payment status (e.g., Successful, Failed, Pending). |
+| payment_method_key | BIGINT | FK → dim_payment_method | Reference to the payment method used. |
+| customer_key | BIGINT | FK → dim_customer | Reference to the customer making the payment. |
+| provider_key | BIGINT | FK → dim_provider | Reference to the insurance provider receiving payment. |
 | payment_amount | DECIMAL(18,2) | Measure (Additive) | Total amount paid in the transaction. |
 | transaction_reference | STRING | Degenerate Dimension | Unique transaction reference from source system. Stored directly (no associated dimension). |
 | source_system | STRING | Audit | Source system identifier. |
@@ -86,10 +86,10 @@ The following measures are defined across the three fact tables. All measures ar
 **fact_cancellation**
 | Column | Type | FK / Measure | Description |
 |---|---|---|---|
-| cancellation_reason_key | BIGINT | FK → Dim_Cancellation_Reason | Reference to the reason for cancellation. |
-| cancellation_date_key | INT | FK → Dim_Date | Date key for the cancellation date (YYYYMMDD). |
-| provider_key | BIGINT | FK → Dim_Provider | Reference to the insurance provider involved. |
-| customer_key | BIGINT | FK → Dim_Customer | Reference to the customer whose policy was cancelled. |
+| cancellation_reason_key | BIGINT | FK → dim_cancellation_reason | Reference to the reason for cancellation. |
+| cancellation_date_key | INT | FK → dim_date | Date key for the cancellation date (YYYYMMDD). |
+| provider_key | BIGINT | FK → dim_provider | Reference to the insurance provider involved. |
+| customer_key | BIGINT | FK → dim_customer | Reference to the customer whose policy was cancelled. |
 | refund_amount | DECIMAL(18,2) | Measure (Additive) | Refund amount issued upon cancellation. May be 0 if no refund applies. |
 | source_system | STRING | Audit | Source system identifier. |
 | created_at | TIMESTAMP | Audit | Gold load timestamp. |

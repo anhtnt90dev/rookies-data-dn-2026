@@ -19,8 +19,7 @@ This version is aligned with the current Gold star schema scope. `dim_vehicle` a
 | `dim_vehicle`             |   Type 2 | Vehicle specification and value can change historically. Under the assumption that a customer owns exactly one vehicle, it is tracked as a Type 2 dimension.                                             |
 | `Dim_Package`             |   Type 1 | Small reference dimension derived from distinct `quotation.package_code` values. Current source only supports package code; additional package attributes require confirmed mapping or derivation rules. |
 | `dim_coverage`            |   Type 1 | Coverage type is a reference value. Changes are expected to be corrections or enrichments.                                                                                                               |
-| `dim_quotation`           |   Type 1 | Identifier dimension for grouping quotation header, quotation item, and related policy facts. Historical status is handled separately by facts/status dimension.                                         |
-| `dim_policy`              |   Type 1 | Transaction identifier dimension for grouping policy, payment, and cancellation facts. Policy status is handled separately by `dim_policy_status`.                                                       |
+| `dim_policy`              |   No SCD | Transaction identifier dimension containing only `policy_id` and surrogate key. No historical change tracking applies.                                                                                   |
 | `dim_quotation_status`    |   Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata.                                                                                                          |
 | `dim_policy_status`       |   Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata.                                                                                                          |
 | `dim_payment_status`      |   Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata.                                                                                                          |
@@ -44,13 +43,14 @@ Applicable dimensions:
 
 - `dim_package`
 - `dim_coverage`
-- `dim_quotation`
-- `dim_policy`
 - `dim_quotation_status`
 - `dim_policy_status`
 - `dim_payment_status`
 - `dim_payment_method`
 - `dim_cancellation_reason`
+
+> [!NOTE]
+> Reference dimensions for status and method (`dim_quotation_status`, `dim_policy_status`, `dim_payment_status`, `dim_payment_method`) have been simplified to contain **only the raw code fields** (no names, groups, or boolean flags). This design completely eliminates Type 1 attribute tracking or translation mapping logic for these tables. Their ETL is simplified to basic deduplicated code insertions.
 
 ### Type 1 Processing Logic
 

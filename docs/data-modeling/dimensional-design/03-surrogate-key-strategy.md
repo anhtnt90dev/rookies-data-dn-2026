@@ -27,7 +27,6 @@ The strategy ensures that fact tables use stable dimension surrogate keys instea
 | `dim_provider` | `provider_key` | `provider_code` |
 | `dim_package` | `package_key` | `package_code` |
 | `dim_coverage` | `coverage_key` | `coverage_type` |
-| `dim_quotation` | `quotation_key` | `quotation_id` |
 | `dim_policy` | `policy_key` | `policy_id` |
 | `dim_quotation_status` | `quotation_status_key` | `quotation_status_code` |
 | `dim_policy_status` | `policy_status_key` | `policy_status_code` |
@@ -99,7 +98,6 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `customer_key` | Lookup `dim_customer` by `customer_id` using `quotation_date`. |
 | `agent_key` | Lookup `dim_agent` by `agent_id` using `quotation_date`. |
 | `provider_key` | Lookup `dim_provider` by `provider_code` using `quotation_date`. |
@@ -113,17 +111,15 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `coverage_key` | Lookup `dim_coverage` by `coverage_type`. |
 | `quotation_date_key` | Inherit from quotation header by joining `quotation_item.quotation_id` to `quotation.quotation_id`. |
-| Customer/agent/provider/package/status/vehicle keys | Inherit from quotation header context. |
+| Customer/agent/provider/package/status/vehicle keys | Inherit from `fact_quotation` context by joining on `quotation_id`. |
 
 ## 7.3 `fact_policy`
 
 | Dimension Key | Resolution Rule |
 |---|---|
 | `policy_key` | Lookup `dim_policy` by `policy_id`. |
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
 | `customer_key` | Lookup `dim_customer` by `customer_id` using `issued_date` or `policy_start_date`. |
 | `provider_key` | Lookup `dim_provider` by `provider_code` using `issued_date` or `policy_start_date`. |
 | `agent_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_agent` by `agent_id` using `quotation_date`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
@@ -193,6 +189,15 @@ Facts may keep selected natural keys for audit and traceability, but these shoul
 | Item | Handling |
 |---|---|
 | `region_key` | Not generated or stored in current facts because no confirmed `dim_region` mapping is in scope. Use `city`, `district`, or `agent.region` attributes for reporting until a mapping is confirmed. |
+
+## 10. Degenerate Dimension Strategy for Quotation ID
+
+Following the architectural simplification to eliminate the physical `dim_quotation` table, `quotation_id` is modeled strictly as a **Degenerate Dimension** directly stored in `fact_quotation`, `fact_quotation_item`, and `fact_policy`.
+
+### Key Benefits:
+- **Simplified ETL:** Eliminates the need to load, check, and maintain surrogate keys for the `dim_quotation` table in the Gold Layer.
+- **Traceability:** Keeps direct traceability from fact records back to the source CRM quotation header using the natural `quotation_id`.
+- **BI Drill-Across:** Semantic models can group and drill across multiple fact tables on `quotation_id` without any join overhead to a surrogate bridge dimension.
 
 ## 11. Key Quality Checks
 

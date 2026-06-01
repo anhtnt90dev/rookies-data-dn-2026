@@ -22,7 +22,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | Surrogate key         | Every dimension has a surrogate primary key ending with `_key`.                                                                                                                           |
 | Business key          | Every source-based dimension keeps the original source business key.                                                                                                                      |
 | Unknown member        | Every dimension except `dim_date` should have an unknown/default row with key `-1`.                                                                                                       |
-| Audit columns         | Dimensions should include source and load metadata where applicable.                                                                                                                      |
+| Audit columns         | Dimensions include load metadata (`created_at` and `updated_at`) to track DWH load times. Source-level metadata is excluded.                                                                |
 | SCD columns           | Type 2 dimensions include effective dating and current flag columns.                                                                                                                      |
 | Soft delete tracking  | CRM SQL sources do not require soft delete tracking (`is_deleted` is excluded). JSON sources (e.g. `policy_info` JSON) track deletion using `is_deleted` in the fact tables based on `operation_type = 'D'`. |
 
@@ -175,18 +175,6 @@ This version is aligned with the updated source data, the fact grain document ve
 > [!NOTE]
 > `dim_coverage` is a conformed reference dimension representing unique, distinct `quotation_item.coverage_type` values (e.g., `'Physical Damage'`, `'Third Party'`), NOT a one-to-one mapping of quotation items. Attributes `coverage_group` and `coverage_description` are not supported in the source schema and have been removed to align strictly with the source database.
 
-## 5.7 `dim_quotation`
-
-**Grain:** One row per quotation  
-**SCD Type:** Type 1  
-**Source:** `quotation`
-
-| Column          | Type Suggestion | Description                     |
-| --------------- | --------------- | ------------------------------- |
-| `quotation_key` | BIGINT          | Surrogate key.                  |
-| `quotation_id`  | STRING          | Source quotation business key.  |
-| `created_at`    | TIMESTAMP       | Gold row creation time.         |
-| `updated_at`    | TIMESTAMP       | Gold row update time.           |
 
 ## 5.8 `dim_policy`
 
@@ -200,6 +188,9 @@ This version is aligned with the updated source data, the fact grain document ve
 | `policy_id`     | STRING          | Source policy business key (`policy_info.policy_id`).  |
 | `created_at`    | TIMESTAMP       | Gold row creation time.                                |
 | `updated_at`    | TIMESTAMP       | Gold row update time.                                  |
+
+> [!NOTE]
+> `dim_policy` is highly simplified to contain only the surrogate `policy_key` and business `policy_id`. It acts as a lightweight conformed dimension to link `fact_policy`, `fact_payment`, and `fact_cancellation` together in the BI semantic model, avoiding direct fact-to-fact joins. All policy dates, status keys, premium amounts, and context keys (customer, provider, vehicle) are resolved directly at the fact table level (`fact_policy`).
 
 ## 5.9 `dim_quotation_status`
 
@@ -292,9 +283,9 @@ This version is aligned with the updated source data, the fact grain document ve
 
 | Fact Table            | Expected Dimension Foreign Keys                                                                                                                                                                  | Degenerate Identifiers                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `fact_quotation`      | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key`                            | `quotation_id`, `customer_id`, `agent_id`, `provider_code`                   |
-| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key`                                         | `quotation_item_id`, `quotation_id`                                          |
-| `fact_policy`         | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key` | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
+| `fact_quotation`      | `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key`                                             | `quotation_id`, `customer_id`, `agent_id`, `provider_code`                   |
+| `fact_quotation_item` | `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key`                                                           | `quotation_item_id`, `quotation_id`                                          |
+| `fact_policy`         | `policy_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key`                   | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
 | `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key`                                                                      | `payment_id`, `policy_id`, `transaction_reference`                           |
 | `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key`                                                                                  | `cancellation_id`, `policy_id`                                               |
 

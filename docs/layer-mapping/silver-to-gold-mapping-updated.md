@@ -1,4 +1,4 @@
-# Silver to Gold Layer Column Mapping (Updated)
+# Silver to Gold Layer Column Mapping
 **Insurance Analytics - Dimensional Model (Star Schema)**
 
 ---

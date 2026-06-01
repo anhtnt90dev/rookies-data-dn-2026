@@ -10,7 +10,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 
 
 
-## 3. Common Audit and Metadata Columns (Pass-Through)
+## 3. Common Audit and Metadata Columns 
 
 | Bronze Column | Silver Column | Silver Type | Rule |
 | --- | --- | --- | --- |

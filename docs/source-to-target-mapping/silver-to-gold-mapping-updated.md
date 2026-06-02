@@ -12,7 +12,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ## 2. Naming Alignment and Assumptions
 
-- Silver tables use Lakehouse prefix naming: `silver_<entity>` (if using schemas, replace with `silver.<entity>`).
+- Silver tables use Lakehouse prefix naming: `silver.<entity>` (if using schemas, replace with `silver.<entity>`).
 - Timestamp columns end with `_at`; date-only columns end with `_date`.
 - JSON-derived dates are already cast to `DATE` in Silver (e.g., `payment_date`, `cancellation_date`).
 - Provider active flag is standardized as `is_active` (BOOLEAN) in Silver.
@@ -58,7 +58,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.2 `dim_customer`
 
-> **Silver Source Table:** `silver_customer`
+> **Silver Source Table:** `silver.customer`
 > **SCD Type:** Type 2
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                 |
@@ -87,7 +87,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.3 `dim_agent`
 
-> **Silver Source Table:** `silver_agent`
+> **Silver Source Table:** `silver.agent`
 > **SCD Type:** Type 2
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                 |
@@ -113,7 +113,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.4 `dim_provider`
 
-> **Silver Source Table:** `silver_provider`
+> **Silver Source Table:** `silver.provider`
 > **SCD Type:** Type 2
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                 |
@@ -138,13 +138,13 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.5 `dim_package`
 
-> **Silver Source Table:** `silver_quotation` (distinct `package_code`)
+> **Silver Source Table:** `silver.quotation` (distinct `package_code`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                   |
 | ---------------------- | ----------- | ------------------------ | --------- | ------------------------------------------------ |
 | _(pipeline generated)_ | -           | `package_key`            | BIGINT    | System-generated surrogate key.                  |
-| `package_code`         | STRING      | `package_code`           | STRING    | `DISTINCT package_code` from `silver_quotation`. |
+| `package_code`         | STRING      | `package_code`           | STRING    | `DISTINCT package_code` from `silver.quotation`. |
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                |
@@ -156,13 +156,13 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.6 `dim_coverage`
 
-> **Silver Source Table:** `silver_quotation_item` (distinct `coverage_type`)
+> **Silver Source Table:** `silver.quotation_item` (distinct `coverage_type`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                         |
 | ---------------------- | ----------- | ------------------------ | --------- | ------------------------------------------------------ |
 | _(pipeline generated)_ | -           | `coverage_key`           | BIGINT    | System-generated surrogate key.                        |
-| `coverage_type`        | STRING      | `coverage_type`          | STRING    | `DISTINCT coverage_type` from `silver_quotation_item`. |
+| `coverage_type`        | STRING      | `coverage_type`          | STRING    | `DISTINCT coverage_type` from `silver.quotation_item`. |
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                      |
@@ -174,7 +174,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.7 `dim_quotation`
 
-> **Silver Source Table:** `silver_quotation`
+> **Silver Source Table:** `silver.quotation`
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                     |
@@ -194,7 +194,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.8 `dim_policy`
 
-> **Silver Source Table:** `silver_policy`
+> **Silver Source Table:** `silver.policy`
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type   | Gold Column              | Gold Type     | Transform Rule                    |
@@ -220,7 +220,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.9 `dim_quotation_status`
 
-> **Silver Source Table:** `silver_quotation` (distinct `quotation_status`)
+> **Silver Source Table:** `silver.quotation` (distinct `quotation_status`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                      |
@@ -242,7 +242,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.10 `dim_policy_status`
 
-> **Silver Source Table:** `silver_policy` (distinct `policy_status`)
+> **Silver Source Table:** `silver.policy` (distinct `policy_status`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                                                                                         |
@@ -264,7 +264,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.11 `dim_payment_status`
 
-> **Silver Source Table:** `silver_payment` (distinct `payment_status`)
+> **Silver Source Table:** `silver.payment` (distinct `payment_status`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                                                                                                                 |
@@ -286,7 +286,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.12 `dim_payment_method`
 
-> **Silver Source Table:** `silver_payment` (distinct `payment_method`)
+> **Silver Source Table:** `silver.payment` (distinct `payment_method`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                                                                                                                                                 |
@@ -306,7 +306,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.13 `dim_cancellation_reason`
 
-> **Silver Source Table:** `silver_cancellation` (distinct `cancellation_reason`)
+> **Silver Source Table:** `silver.cancellation` (distinct `cancellation_reason`)
 > **SCD Type:** Type 1
 
 | Silver Column          | Silver Type | Gold Column              | Gold Type | Transform Rule                    |
@@ -324,7 +324,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 4.14 `dim_vehicle`
 
-> **Silver Source Table:** `silver_vehicle`
+> **Silver Source Table:** `silver.vehicle`
 > **SCD Type:** Type 2
 
 | Silver Column          | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                 |
@@ -354,7 +354,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 5.1 `fact_quotation`
 
-> **Silver Source Table:** `silver_quotation`
+> **Silver Source Table:** `silver.quotation`
 > **Grain:** One row per quotation
 
 | Silver Column          | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                                                             |
@@ -379,13 +379,13 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `_source_name`         | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                          |
 
 > **Vehicle key resolution:**
-> Join `silver_quotation.customer_id -> silver_vehicle.customer_id` (1-to-1 assumption), then lookup `dim_vehicle` by `vehicle_id` WHERE `quotation_at` BETWEEN `effective_from` AND `effective_to`. Default `-1` if not found.
+> Join `silver.quotation.customer_id -> silver.vehicle.customer_id` (1-to-1 assumption), then lookup `dim_vehicle` by `vehicle_id` WHERE `quotation_at` BETWEEN `effective_from` AND `effective_to`. Default `-1` if not found.
 
 ---
 
 ### 5.2 `fact_quotation_item`
 
-> **Silver Source Tables:** `silver_quotation_item` (primary), `silver_quotation` (header context)
+> **Silver Source Tables:** `silver.quotation_item` (primary), `silver.quotation` (header context)
 > **Grain:** One row per coverage line item within a quotation
 
 | Silver Column             | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                                                             |
@@ -413,7 +413,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 5.3 `fact_policy`
 
-> **Silver Source Tables:** `silver_policy` (primary), `silver_quotation` (agent and package context)
+> **Silver Source Tables:** `silver.policy` (primary), `silver.quotation` (agent and package context)
 > **Grain:** One row per issued policy
 
 | Silver Column             | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                                                                                                                |
@@ -445,7 +445,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 5.4 `fact_payment`
 
-> **Silver Source Tables:** `silver_payment` (primary), `silver_policy` (context)
+> **Silver Source Tables:** `silver.payment` (primary), `silver.policy` (context)
 > **Grain:** One row per payment transaction
 
 | Silver Column           | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                                                                                        |
@@ -471,7 +471,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 ### 5.5 `fact_cancellation`
 
-> **Silver Source Tables:** `silver_cancellation` (primary), `silver_policy` (context)
+> **Silver Source Tables:** `silver.cancellation` (primary), `silver.policy` (context)
 > **Grain:** One row per policy cancellation event
 
 | Silver Column          | Silver Type   | Gold Column              | Gold Type     | Transform Rule                                                                                                                                  |
@@ -498,24 +498,24 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | Gold Table                | Primary Silver Source   | Secondary Silver Sources             |
 | ------------------------- | ----------------------- | ------------------------------------ |
 | `dim_date`                | _(generated)_           | -                                    |
-| `dim_customer`            | `silver_customer`       | -                                    |
-| `dim_agent`               | `silver_agent`          | -                                    |
-| `dim_provider`            | `silver_provider`       | -                                    |
-| `dim_package`             | `silver_quotation`      | -                                    |
-| `dim_coverage`            | `silver_quotation_item` | -                                    |
-| `dim_quotation`           | `silver_quotation`      | -                                    |
-| `dim_policy`              | `silver_policy`         | -                                    |
-| `dim_quotation_status`    | `silver_quotation`      | -                                    |
-| `dim_policy_status`       | `silver_policy`         | -                                    |
-| `dim_payment_status`      | `silver_payment`        | -                                    |
-| `dim_payment_method`      | `silver_payment`        | -                                    |
-| `dim_cancellation_reason` | `silver_cancellation`   | -                                    |
-| `dim_vehicle`             | `silver_vehicle`        | -                                    |
-| `fact_quotation`          | `silver_quotation`      | `silver_vehicle`                     |
-| `fact_quotation_item`     | `silver_quotation_item` | `silver_quotation`, `silver_vehicle` |
-| `fact_policy`             | `silver_policy`         | `silver_quotation`, `silver_vehicle` |
-| `fact_payment`            | `silver_payment`        | `silver_policy`, `silver_vehicle`    |
-| `fact_cancellation`       | `silver_cancellation`   | `silver_policy`, `silver_vehicle`    |
+| `dim_customer`            | `silver.customer`       | -                                    |
+| `dim_agent`               | `silver.agent`          | -                                    |
+| `dim_provider`            | `silver.provider`       | -                                    |
+| `dim_package`             | `silver.quotation`      | -                                    |
+| `dim_coverage`            | `silver.quotation_item` | -                                    |
+| `dim_quotation`           | `silver.quotation`      | -                                    |
+| `dim_policy`              | `silver.policy`         | -                                    |
+| `dim_quotation_status`    | `silver.quotation`      | -                                    |
+| `dim_policy_status`       | `silver.policy`         | -                                    |
+| `dim_payment_status`      | `silver.payment`        | -                                    |
+| `dim_payment_method`      | `silver.payment`        | -                                    |
+| `dim_cancellation_reason` | `silver.cancellation`   | -                                    |
+| `dim_vehicle`             | `silver.vehicle`        | -                                    |
+| `fact_quotation`          | `silver.quotation`      | `silver.vehicle`                     |
+| `fact_quotation_item`     | `silver.quotation_item` | `silver.quotation`, `silver.vehicle` |
+| `fact_policy`             | `silver.policy`         | `silver.quotation`, `silver.vehicle` |
+| `fact_payment`            | `silver.payment`        | `silver.policy`, `silver.vehicle`    |
+| `fact_cancellation`       | `silver.cancellation`   | `silver.policy`, `silver.vehicle`    |
 
 ---
 

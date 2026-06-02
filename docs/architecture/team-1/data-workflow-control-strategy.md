@@ -6,11 +6,11 @@ Configuration tables store metadata and configuration used to drive pipeline pro
 
 ```mermaid
 erDiagram
-    cfg_source_table ||--|| cfg_watermark : has
-    cfg_source_table ||--o{ cfg_source_dim_fact : maps
-    cfg_dim_fact_table ||--o{ cfg_source_dim_fact : maps
+    cfg.source_table ||--|| cfg.watermark : has
+    cfg.source_table ||--o{ cfg.source_dim_fact : maps
+    cfg.dim_fact_table ||--o{ cfg.source_dim_fact : maps
 
-    cfg_source_table {
+    cfg.source_table {
         bigint id PK
         varchar source_system
         varchar source_type
@@ -30,7 +30,7 @@ erDiagram
         timestamp updated_at
     }
 
-    cfg_dim_fact_table {
+    cfg.dim_fact_table {
         bigint id PK
         varchar table_name
         varchar table_type
@@ -42,14 +42,14 @@ erDiagram
         timestamp updated_at
     }
 
-    cfg_watermark {
+    cfg.watermark {
         bigint source_table_id PK
         timestamp watermark_value
         timestamp created_at
         timestamp updated_at
     }
 
-    cfg_source_dim_fact {
+    cfg.source_dim_fact {
         bigint dim_fact_table_id FK
         bigint source_table_id FK
         timestamp created_at
@@ -127,12 +127,12 @@ Audit and logging tables store pipeline execution status, processing metrics, re
 
 ```mermaid
 erDiagram
-    log_audit_session ||--o{ log_audit_table_session : contains
-    log_audit_table_session ||--o{ log_audit_detail : has
-    log_audit_table_session ||--o{ log_retry_log : has
-    log_audit_table_session ||--o{ log_invalid_record : has
+    log.audit_session ||--o{ log.audit_table_session : contains
+    log.audit_table_session ||--o{ log.audit_detail : has
+    log.audit_table_session ||--o{ log.retry_log : has
+    log.audit_table_session ||--o{ log.invalid_record : has
 
-    log_audit_session {
+    log.audit_session {
         bigint id PK
         varchar session_status
         varchar run_mode
@@ -145,7 +145,7 @@ erDiagram
         timestamp updated_at
     }
 
-    log_audit_table_session {
+    log.audit_table_session {
         bigint id PK
         bigint session_id FK
         bigint source_table_id FK
@@ -166,7 +166,7 @@ erDiagram
         timestamp updated_at
     }
 
-    log_audit_detail {
+    log.audit_detail {
         bigint id PK
         bigint table_session_id FK
         varchar detail_status
@@ -181,7 +181,7 @@ erDiagram
         timestamp updated_at
     }
 
-    log_retry_log {
+    log.retry_log {
         bigint id PK
         bigint table_session_id FK
         varchar layer
@@ -193,7 +193,7 @@ erDiagram
         timestamp created_at
     }
 
-    log_invalid_record {
+    log.invalid_record {
         bigint id PK
         bigint table_session_id FK
         varchar layer

@@ -1,0 +1,184 @@
+sequenceDiagram
+    title Insurance Business Process Sequence Diagram<br/>Quotation → Policy Issuance → Payment → Cancellation
+
+    autonumber
+
+    actor Customer
+    participant Agent
+    participant Provider as Insurance Provider
+    participant Underwriting as Underwriting Team
+    participant PaymentProcessor as Payment Processor
+    participant Operations as Operations Team
+    participant System as Insurance Core System
+
+    %% 1. Quotation Creation
+    rect rgb(245, 245, 245)
+    Note over Customer,System: 1. Quotation Creation
+
+    Customer->>Agent: Request vehicle insurance quotation
+    Agent->>Customer: Collect customer and vehicle information
+
+    Agent->>System: Create Customer / Vehicle records if not existing
+    System-->>Agent: Customer and Vehicle records available
+
+    Agent->>System: Create Quotation<br/>Status = QUOTED
+    System-->>Agent: Quotation created
+
+    Agent->>System: Add Quotation Item(s)<br/>Coverage, sum insured, deductible
+    System-->>Agent: Quotation Item(s) saved
+
+    System->>Provider: Submit quotation information
+    Provider->>Underwriting: Request underwriting review if required
+
+    alt Underwriting approval required
+        Underwriting->>Underwriting: Review customer, vehicle, coverage, premium
+        Underwriting-->>Provider: Approve / reject quotation
+    else No underwriting approval required
+        Provider->>Provider: Apply standard pricing and eligibility rules
+    end
+
+    Provider-->>System: Return quotation decision and premium
+    System-->>Agent: Quotation ready for customer review
+    Agent->>Customer: Present quotation details<br/>Premium, coverage, expiry date
+    end
+
+    %% 2. Quotation Decision
+    rect rgb(245, 245, 245)
+    Note over Customer,System: 2. Quotation Decision
+
+    alt Customer accepts quotation before expiry
+        Customer->>Agent: Accept quotation
+        Agent->>System: Update Quotation<br/>Status = ACCEPTED
+        System-->>Agent: Quotation accepted
+
+        System->>System: Convert accepted quotation to policy
+        System->>System: Update Quotation<br/>Status = CONVERTED
+
+        %% 3. Policy Issuance
+        Note over System,Provider: 3. Policy Issuance
+
+        System->>Provider: Request policy issuance
+        Provider->>System: Issue policy<br/>Policy Status = ISSUED
+        System-->>Agent: Policy issued
+
+        Note right of System: Business meaning:<br/>- QUOTED = quotation has been generated and is ready for customer review<br/>- ACCEPTED = customer agrees with quotation<br/>- CONVERTED = quotation has been used to create policy<br/>- ISSUED = policy has been generated<br/>- ACTIVE may depend on start date and/or successful payment
+
+        %% 4. Payment Creation and Processing
+        Note over Customer,System: 4. Payment Creation and Processing
+
+        System->>PaymentProcessor: Create payment request<br/>Payment Status = PENDING
+        PaymentProcessor-->>Agent: Send payment instruction / payment link
+        Agent-->>Customer: Forward payment instruction / payment link
+
+        Customer->>PaymentProcessor: Make premium payment
+
+        alt Payment successful
+            PaymentProcessor->>System: Confirm payment<br/>Payment Status = PAID
+            System->>System: Check policy start date and activation rules
+
+            alt Policy start date reached and activation conditions met
+                System->>System: Update Policy<br/>Status = ACTIVE
+                System-->>Agent: Policy activated
+                Agent-->>Customer: Confirm active policy
+            else Policy start date is in the future
+                System->>System: Keep Policy Status = ISSUED<br/>Activate on start date
+                System-->>Agent: Policy issued, pending activation date
+                Agent-->>Customer: Confirm policy issued
+            end
+
+        else Payment failed
+            PaymentProcessor->>System: Payment failed<br/>Payment Status = FAILED
+            System-->>Operations: Notify failed payment case
+            Operations->>Agent: Request payment follow-up with customer
+            Agent->>Customer: Follow up for retry payment
+
+            alt Customer retries payment successfully
+                Customer->>PaymentProcessor: Retry payment
+                PaymentProcessor->>System: Confirm payment<br/>Payment Status = PAID
+                System->>System: Check policy start date and activation rules
+
+                alt Policy start date reached and activation conditions met
+                    System->>System: Update Policy<br/>Status = ACTIVE
+                    System-->>Agent: Policy activated after retry
+                    Agent-->>Customer: Confirm active policy
+                else Policy start date is in the future
+                    System->>System: Keep Policy Status = ISSUED<br/>Activate on start date
+                    System-->>Agent: Policy issued, pending activation date
+                    Agent-->>Customer: Confirm policy issued
+                end
+
+            else Payment remains unpaid after grace period
+                Operations->>System: Mark overdue / unpaid case
+                System->>System: Apply business rule<br/>Policy may remain ISSUED, become CANCELLED, or EXPIRED
+                System-->>Agent: Notify unpaid policy outcome
+                Agent-->>Customer: Inform unpaid policy outcome
+            end
+        end
+
+    else Customer rejects quotation
+        Customer->>Agent: Reject quotation
+        Agent->>System: Update Quotation<br/>Status = REJECTED
+        System-->>Agent: Quotation rejected
+
+        Note right of System: No policy should be created<br/>No payment should be required
+
+    else Quotation expires before customer decision
+        System->>System: Check quotation expiry date
+        System->>System: Update Quotation<br/>Status = EXPIRED
+        System-->>Agent: Quotation expired
+        Agent-->>Customer: Inform quotation expired
+
+        Note right of System: Expired quotations are not converted to policy.<br/>A new quotation or re-quotation may be required based on business rules.
+    end
+    end
+
+    %% 5. Cancellation Lifecycle
+    rect rgb(245, 245, 245)
+    Note over Customer,System: 5. Cancellation Lifecycle
+
+    opt Customer requests policy cancellation
+        Customer->>Agent: Request policy cancellation
+        Agent->>System: Submit cancellation request
+
+        System->>Operations: Validate cancellation eligibility
+        Operations->>System: Review policy status, effective date, payment, refund rule
+
+        alt Cancellation approved
+            Operations->>System: Create Cancellation record<br/>Cancellation date, reason, refund amount
+            System->>System: Update Policy<br/>Status = CANCELLED
+
+            alt Refund applicable
+                System->>PaymentProcessor: Create refund request
+                PaymentProcessor->>System: Confirm refund processed
+                System->>System: Update Payment<br/>Status = REFUNDED
+                System-->>Agent: Policy cancelled and refund completed
+                Agent-->>Customer: Confirm cancellation and refund
+            else No refund applicable
+                System-->>Agent: Policy cancelled without refund
+                Agent-->>Customer: Confirm cancellation
+            end
+
+        else Cancellation rejected
+            Operations->>System: Reject cancellation request
+            System-->>Agent: Cancellation rejected
+            Agent-->>Customer: Inform cancellation rejection reason
+        end
+    end
+    end
+
+    %% 6. Natural Policy Expiry
+    rect rgb(245, 245, 245)
+    Note over Customer,System: 6. Natural Policy Expiry
+
+    opt Policy reaches end date without renewal
+        System->>System: Check policy_end_date
+        System->>System: Update Policy<br/>Status = EXPIRED
+        System-->>Operations: Policy expired
+
+        Operations->>System: Confirm expiry handling completed
+        System-->>Agent: Notify policy expired
+        Agent-->>Customer: Inform policy expired
+
+        Note right of System: Natural expiry is system-driven when policy_end_date is reached.<br/>Operations may monitor expiry cases for reporting, renewal follow-up,<br/>or customer service handling.
+    end
+    end

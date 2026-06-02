@@ -95,28 +95,6 @@ Files:
 
 /Files/landing/policy_system/cancellation/file_format=json/load_type=incremental/ingestion_date=2026-05-26/
 
-Tables:
-
-/Tables/bronze_customer
-
-/Tables/bronze_quotation
-
-/Tables/bronze_policy
-
-/Tables/bronze_payment
-
-/Tables/bronze_cancellation
-
-/Tables/silver_customer
-
-/Tables/silver_quotation
-
-/Tables/silver_policy
-
-/Tables/silver_payment
-
-/Tables/silver_cancellation
-
 ## 5. Data Storage Responsibility by Layer
 
 | Layer          | Owns                                                                                                                                          | Does Not Own                                                                                                                               | Example Outputs                                                                                                   |

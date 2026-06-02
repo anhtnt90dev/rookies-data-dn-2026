@@ -1,0 +1,50 @@
+{
+  "source_table": "dbo.agents",
+  "target_table": "bronze.agent",
+  "columns": [
+    {
+      "target": "agent_id",
+      "expression": "agent_id"
+    },
+    {
+      "target": "agent_name",
+      "expression": "agent_name"
+    },
+    {
+      "target": "region",
+      "expression": "region"
+    },
+    {
+      "target": "branch",
+      "expression": "branch"
+    },
+    {
+      "target": "manager_name",
+      "expression": "manager_name"
+    },
+    {
+      "target": "created_date",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_date",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

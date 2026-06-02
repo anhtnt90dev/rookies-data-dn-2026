@@ -1,0 +1,58 @@
+{
+  "source_table": "cancellation_full_<yyyy-MM-dd>.json",
+  "target_table": "bronze.cancellation",
+  "columns": [
+    {
+      "target": "cancellation_id",
+      "expression": "cancellation_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "cancellation_date",
+      "expression": "cancellation_date"
+    },
+    {
+      "target": "cancellation_reason",
+      "expression": "cancellation_reason"
+    },
+    {
+      "target": "refund_amount",
+      "expression": "refund_amount"
+    },
+    {
+      "target": "last_updated",
+      "expression": "last_updated"
+    },
+    {
+      "target": "operation_type",
+      "expression": "operation_type"
+    },
+    {
+      "target": "batch_date",
+      "expression": "batch_date"
+    },
+    {
+      "target": "source_system",
+      "expression": "source_system"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

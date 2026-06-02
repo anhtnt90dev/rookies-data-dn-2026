@@ -1,0 +1,50 @@
+{
+  "source_table": null,
+  "target_table": "gold.dim_date",
+  "columns": [
+    {
+      "target": "date_key",
+      "expression": null
+    },
+    {
+      "target": "full_date",
+      "expression": null
+    },
+    {
+      "target": "day_number",
+      "expression": null
+    },
+    {
+      "target": "day_name",
+      "expression": null
+    },
+    {
+      "target": "week_number",
+      "expression": null
+    },
+    {
+      "target": "month_number",
+      "expression": null
+    },
+    {
+      "target": "month_name",
+      "expression": null
+    },
+    {
+      "target": "quarter_number",
+      "expression": null
+    },
+    {
+      "target": "year_number",
+      "expression": null
+    },
+    {
+      "target": "year_month",
+      "expression": null
+    },
+    {
+      "target": "is_weekend",
+      "expression": null
+    }
+  ]
+}

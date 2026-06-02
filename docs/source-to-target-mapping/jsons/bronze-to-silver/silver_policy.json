@@ -1,0 +1,74 @@
+{
+  "source_table": "bronze.policy",
+  "target_table": "silver.policy",
+  "columns": [
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "quotation_id",
+      "expression": "quotation_id"
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "provider_code",
+      "expression": "provider_code"
+    },
+    {
+      "target": "policy_number",
+      "expression": "policy_number"
+    },
+    {
+      "target": "policy_start_date",
+      "expression": "policy_start_date"
+    },
+    {
+      "target": "policy_end_date",
+      "expression": "policy_end_date"
+    },
+    {
+      "target": "policy_status",
+      "expression": "policy_status"
+    },
+    {
+      "target": "premium_amount",
+      "expression": "premium_amount"
+    },
+    {
+      "target": "operation_type",
+      "expression": "operation_type"
+    },
+    {
+      "target": "is_delete",
+      "expression": "operation_type"
+    },
+    {
+      "target": "issued_at",
+      "expression": "issued_date"
+    },
+    {
+      "target": "last_updated_at",
+      "expression": "last_updated"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "_loaded_at"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

@@ -27,35 +27,35 @@ Figure 1. DEV working environment in Fabric: one trial capacity, team workspaces
 | --------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | Workspace topology    | One DEV workspace only: INS-DEV or the current team DEV workspace        | Confirmed that UAT/PROD are not implemented in this sprint.                         |
 | Capacity              | Fabric trial capacity                                                    | Sufficient for mock project and sprint delivery, but not production-grade.          |
-| Environment isolation | Logical isolation inside DEV using naming conventions and folders/tables | Physical DEV/UAT/PROD separation is deferred.                                       |
-| Data platform item    | Fabric Lakehouse on OneLake                                              | Main storage and compute surface for raw, cleaned, and curated Delta data.          |
+| Environment isolation | Logical isolation inside DEV using custom schemas (`bronze`, `silver`, `gold`, `audit`, `cfg`) | Physical DEV/UAT/PROD separation is deferred.                                       |
+| Data platform item    | Fabric Lakehouse on OneLake (with schemas enabled)                       | Main storage and compute surface for raw, cleaned, and curated Delta data.          |
 | Serving item          | Power BI Semantic Model over Gold tables                                 | Business users and dashboards consume curated Gold data through the semantic model. |
 
 Recommended Fabric item naming in DEV:
 
-| Item Type      | Recommended Name                     | Purpose                                                            |
-| -------------- | ------------------------------------ | ------------------------------------------------------------------ |
-| Workspace      | INS-DEV                              | Team DEV environment for the Insurance Analytics solution          |
-| Lakehouse      | lh_insurance_dev                     | Stores Landing, Bronze, Silver, Gold, Audit, and Config data       |
-| Data pipelines | pl*insurance*<source>\_ingestion_dev | Ingest source data into Landing/Bronze and call transformations    |
-| Notebooks      | nb*<layer>*<entity>\_<purpose>\_dev  | Perform ingestion, transformation, quality checks, and maintenance |
-| Semantic model | sm_insurance_gold_dev                | Business-facing serving layer built from Gold tables               |
-| Report         | rpt_insurance_operations_dev         | Optional Power BI report connected to the semantic model           |
+| Item Type      | Recommended Name                       | Purpose                                                            |
+| -------------- | -------------------------------------- | ------------------------------------------------------------------ |
+| Workspace      | `INS-DEV`                              | Team DEV environment for the Insurance Analytics solution          |
+| Lakehouse      | `lh_insurance_dev`                     | Stores Landing, Bronze, Silver, Gold, Audit, and Config data       |
+| Data pipelines | `pl_insurance_<source>_ingestion_dev`  | Ingest source data into Landing/Bronze and call transformations    |
+| Notebooks      | `nb_<layer>_<entity>_<purpose>_dev`     | Perform ingestion, transformation, quality checks, and maintenance |
+| Semantic model | `sm_insurance_gold_dev`                 | Business-facing serving layer built from Gold tables               |
+| Report         | `rpt_insurance_operations_dev`          | Optional Power BI report connected to the semantic model           |
 
 ## 4. OneLake and Lakehouse Storage Convention
 
-**Design principle.** Use one Lakehouse in the DEV workspace. Separate layers by folder/table naming convention. Files are used for raw file landing and archival. Delta tables are used for queryable Bronze, Silver, Gold, Audit, and Config data.
+**Design principle.** Use one Lakehouse in the DEV workspace (with schemas enabled). Separate layers by custom schemas. Files are used for raw file landing and archival. Delta tables are used for queryable Bronze, Silver, Gold, Audit, and Config data.
 
-| Zone / Layer          | Recommended Path or Table Convention                                                                                     | Owner / Responsibility                                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Landing files         | /Files/landing/{source_system}/{entity}/file_format={sql\|json}/load_type={full\|incremental}/ingestion_date=YYYY-MM-DD/ | Source-preserved file arrival zone. Stores original SQL or JSON files for ingestion, replay, and troubleshooting.                  |
-| Bronze Delta tables   | /Tables/bronze\_{entity}                                                                                                 | Raw-to-Delta ingestion result. Minimal transformation only: metadata columns, schema capture, batch ID.                            |
-| Silver Delta tables   | /Tables/silver\_{entity}                                                                                                 | Cleaned and standardized entity-level data. Applies type casting, deduplication, standard status mapping, and basic quality rules. |
-| Gold Dimension tables | /Tables/gold*dim*{business_entity}                                                                                       | Conformed dimensions for analytics, e.g., customer, provider, product/package, date.                                               |
-| Gold Fact tables      | /Tables/gold*fact*{business_process}                                                                                     | Fact tables at defined grain, e.g., quotation, policy, payment, cancellation.                                                      |
-| Audit tables          | /Tables/audit\_{subject}                                                                                                 | Pipeline execution, row counts, quality results, and error records.                                                                |
-| Config/control tables | /Tables/cfg\_{subject}                                                                                                   | Pipeline configuration, watermark state, source metadata, and load control.                                                        |
-| Serving layer         | Semantic model: sm_insurance_gold_dev                                                                                    | Business-facing model created on Gold tables. Contains relationships, measures, and RLS roles when needed.                         |
+| Zone / Layer          | Recommended Table Convention (and OneLake Path)                                                                                     | Owner / Responsibility                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Landing files         | `/Files/landing/{source_system}/{entity}/file_format={sql\|json}/load_type={full\|incremental}/ingestion_date=YYYY-MM-DD/`          | Source-preserved file arrival zone. Stores original SQL or JSON files for ingestion, replay, and troubleshooting.                  |
+| Bronze Delta tables   | `bronze.{entity}` (Path: `/Tables/bronze/{entity}`)                                                                                 | Raw-to-Delta ingestion result. Minimal transformation only: metadata columns, schema capture, batch ID.                            |
+| Silver Delta tables   | `silver.{entity}` (Path: `/Tables/silver/{entity}`)                                                                                 | Cleaned and standardized entity-level data. Applies type casting, deduplication, standard status mapping, and basic quality rules. |
+| Gold Dimension tables | `gold.dim_{business_entity}` (Path: `/Tables/gold/dim_{business_entity}`)                                                           | Conformed dimensions for analytics, e.g., customer, provider, product/package, date.                                               |
+| Gold Fact tables      | `gold.fact_{business_process}` (Path: `/Tables/gold/fact_{business_process}`)                                                       | Fact tables at defined grain, e.g., quotation, policy, payment, cancellation.                                                      |
+| Audit tables          | `audit.{subject}` (Path: `/Tables/audit/{subject}`)                                                                                 | Pipeline execution, row counts, quality results, and error records.                                                                |
+| Config/control tables | `cfg.{subject}` (Path: `/Tables/cfg/{subject}`)                                                                                     | Pipeline configuration, watermark state, source metadata, and load control.                                                        |
+| Serving layer         | Semantic model: `sm_insurance_gold_dev` (built from `gold` schema tables)                                                           | Business-facing model created on Gold tables. Contains relationships, measures, and RLS roles when needed.                         |
 
 Recommended common technical columns for Delta tables:
 
@@ -100,11 +100,11 @@ Files:
 | Layer          | Owns                                                                                                                                          | Does Not Own                                                                                                                               | Example Outputs                                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | Landing        | Incoming source files stored in original format before ingestion into Delta tables.                                                           | Preserve raw source files for ingestion, replay, troubleshooting, and audit tracking. No business transformation is applied in this layer. | SQL extracts and JSON files partitioned by source system, entity, load type, and ingestion date.                  |
-| Bronze         | Raw Delta representation of source data with technical metadata. Keeps data traceability and supports replay.                                 | Heavy cleansing, deduplication as business truth, KPI calculation.                                                                         | bronze_customer, bronze_quotation, bronze_policy, bronze_payment, bronze_cancellation.                            |
-| Silver         | Cleaned, standardized, and validated entity-level data. Applies type conversion, status normalization, deduplication, and data quality flags. | Aggregated KPI outputs and report-specific measures.                                                                                       | silver_customer, silver_quotation, silver_policy, silver_payment, silver_cancellation.                            |
-| Gold           | Business-ready dimensional model and facts at agreed grain. Used by semantic model and reports.                                               | Raw source fields that are not useful for analytics, unresolved invalid records.                                                           | gold_dim_customer, gold_dim_provider, gold_dim_package, gold_fact_quotation, gold_fact_policy, gold_fact_payment. |
-| Audit / Config | Execution logs, row counts, error records, quality results, and watermark/control metadata.                                                   | Business report facts unless explicitly designed as monitoring outputs.                                                                    | audit_pipeline_execution, audit_data_quality_result, audit_error_record, cfg_watermark.                           |
-| Serving        | Semantic model relationships, business measures, display names, role-based security rules, and report consumption model.                      | Raw ingestion, operational transformation, or data repair logic.                                                                           | sm_insurance_gold_dev, Power BI report.                                                                           |
+| Bronze         | Raw Delta representation of source data with technical metadata. Keeps data traceability and supports replay.                                 | Heavy cleansing, deduplication as business truth, KPI calculation.                                                                         | `bronze.customer`, `bronze.quotation`, `bronze.policy`, `bronze.payment`, `bronze.cancellation`.                  |
+| Silver         | Cleaned, standardized, and validated entity-level data. Applies type conversion, status normalization, deduplication, and data quality flags. | Aggregated KPI outputs and report-specific measures.                                                                                       | `silver.customer`, `silver.quotation`, `silver.policy`, `silver.payment`, `silver.cancellation`.                  |
+| Gold           | Business-ready dimensional model and facts at agreed grain. Used by semantic model and reports.                                               | Raw source fields that are not useful for analytics, unresolved invalid records.                                                           | `gold.dim_customer`, `gold.dim_provider`, `gold.dim_package`, `gold.fact_quotation`, `gold.fact_policy`, `gold.fact_payment`. |
+| Audit / Config | Execution logs, row counts, error records, quality results, and watermark/control metadata.                                                   | Business report facts unless explicitly designed as monitoring outputs.                                                                    | `audit.pipeline_execution`, `audit.data_quality_result`, `audit.error_record`, `cfg.watermark`.                   |
+| Serving        | Semantic model relationships, business measures, display names, role-based security rules, and report consumption model.                      | Raw ingestion, operational transformation, or data repair logic.                                                                           | `sm_insurance_gold_dev`, Power BI report.                                                                         |
 
 ## 6. Lakehouse vs Warehouse Decision
 
@@ -133,14 +133,14 @@ Files:
 Example maintenance commands to be executed from Fabric notebook/Spark context
 
 ```sql
-OPTIMIZE bronze_policy;
-VACUUM bronze_policy RETAIN 720 HOURS;  -- 30 days
+OPTIMIZE bronze.policy;
+VACUUM bronze.policy RETAIN 720 HOURS;  -- 30 days
 
-OPTIMIZE silver_policy;
-VACUUM silver_policy RETAIN 336 HOURS;  -- 14 days
+OPTIMIZE silver.policy;
+VACUUM silver.policy RETAIN 336 HOURS;  -- 14 days
 
-OPTIMIZE gold_fact_policy;
-VACUUM gold_fact_policy RETAIN 168 HOURS;  -- 7 days
+OPTIMIZE gold.fact_policy;
+VACUUM gold.fact_policy RETAIN 168 HOURS;  -- 7 days
 ```
 
 ## 8. Data Accessibility Model
@@ -162,7 +162,7 @@ VACUUM gold_fact_policy RETAIN 168 HOURS;  -- 7 days
 | ---------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | Workspace-level access | Primary control in current DEV setup                                               | Use for team collaboration in the single DEV workspace.                                               | Team members can access INS-DEV.                                                                  |
 | Item-level access      | Recommended when reviewers need access to report/model but not engineering objects | Use for PO/PM/report reviewers.                                                                       | Share semantic model/report without giving edit access to Lakehouse.                              |
-| Table-level access     | Documented as target control, but may not be strictly enforced in DEV trial        | Use to prevent raw or sensitive tables from being queried by consumers.                               | Business users should query Gold only, not bronze_payment.                                        |
+| Table-level access     | Documented as target control, but may not be strictly enforced in DEV trial        | Use to prevent raw or sensitive tables from being queried by consumers.                               | Business users should query Gold only, not `bronze.payment`.                                      |
 | Row-Level Security     | Not mandatory for current DEV team if everyone has equal access                    | Use later for business/embedded users when data must be filtered by provider, region, agent, or role. | Provider user sees only policies from their provider; regional manager sees only assigned region. |
 
 Recommended RLS candidates for future production/embedded analytics:
@@ -179,13 +179,13 @@ Recommended RLS candidates for future production/embedded analytics:
 
 | Failure Scenario                        | Design Response                                                                                               | Expected Recovery Action                                                              |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Bad source file or malformed records    | Keep raw file in Landing/Bronze archive and write invalid records to audit_error_record or quarantine output. | Fix source issue or parsing rule, then reprocess the same batch/file.                 |
-| Partial pipeline failure                | Use batch ID, audit_pipeline_execution status, and row counts to detect incomplete loads.                     | Rerun failed step for the same batch after cleanup or idempotent MERGE logic.         |
+| Bad source file or malformed records    | Keep raw file in Landing/Bronze archive and write invalid records to `audit.error_record` or quarantine output. | Fix source issue or parsing rule, then reprocess the same batch/file.                 |
+| Partial pipeline failure                | Use batch ID, `audit.pipeline_execution` status, and row counts to detect incomplete loads.                     | Rerun failed step for the same batch after cleanup or idempotent MERGE logic.         |
 | Duplicate incremental records           | Use business key + record hash + batch ID to deduplicate in Silver or during MERGE.                           | Reprocess affected entity and verify row counts.                                      |
 | Wrong transformation logic              | Bronze remains unchanged; Silver/Gold can be rebuilt from Bronze.                                             | Fix notebook/transformation rule and rebuild Silver/Gold for impacted dates/entities. |
 | Wrong Gold KPI or dimensional mapping   | Gold is derived from Silver; semantic model consumes Gold only.                                               | Fix Gold logic, refresh semantic model, and validate KPI numbers.                     |
 | Accidental table overwrite              | Use Delta history/time travel where available and avoid aggressive VACUUM.                                    | Restore/rebuild table from previous Delta version or rebuild from upstream layer.     |
-| Watermark error                         | Store watermark in cfg_watermark and update it only after successful load.                                    | Reset watermark to the last successful point and rerun incremental load.              |
+| Watermark error                         | Store watermark in `cfg.watermark` and update it only after successful load.                                  | Reset watermark to the last successful point and rerun incremental load.              |
 | Trial capacity limitation or throttling | Keep maintenance lightweight and avoid unnecessary large refreshes.                                           | Run heavy jobs outside peak team usage or split workloads by entity.                  |
 
 **Recovery design principle.** Bronze should be replayable, Silver should be rebuildable from Bronze, Gold should be rebuildable from Silver, and Serving should be refreshable from Gold. This keeps failures contained and makes data repair traceable.
@@ -208,8 +208,8 @@ Recommended RLS candidates for future production/embedded analytics:
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | Status     | Accepted                                                                                                                                    |
 | Context    | The team needs a simple Medallion design that supports raw, cleaned, and curated data in Fabric.                                            |
-| Decision   | Use one Fabric Lakehouse on OneLake for Landing, Bronze, Silver, Gold, Audit, and Config data.                                              |
-| Rationale  | Lakehouse fits Spark-based ingestion/transformation and keeps all data layers in one consistent storage pattern.                            |
+| Decision   | Use one Fabric Lakehouse on OneLake with custom schemas enabled (`bronze`, `silver`, `gold`, `audit`, `cfg`).                               |
+| Rationale  | Lakehouse fits Spark-based ingestion/transformation, keeps all data layers in one storage pattern, and schemas organize tables cleanly without prefix redundancy. |
 | Trade-offs | A separate Warehouse may provide a more SQL-centric serving layer later, but it adds complexity and is not required for the current sprint. |
 
 ### ADR-003: Use Semantic Model as the serving layer
@@ -244,12 +244,8 @@ Recommended RLS candidates for future production/embedded analytics:
 
 ## 15. References
 
-- - [Microsoft Fabric - Medallion Lakehouse Architecture](https://learn.microsoft.com/en-us/fabric/onelake/onelake-medallion-lakehouse-architecture)
-
-- - [Microsoft Fabric - Permission Model](https://learn.microsoft.com/en-us/fabric/security/permission-model)
-
-- - [Microsoft Fabric - OneLake Security Access Control Model](https://learn.microsoft.com/en-us/fabric/onelake/security/data-access-control-model)
-
-- - [Microsoft Fabric - Run Delta Table Maintenance in Lakehouse](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-table-maintenance)
-
-- - [Microsoft Fabric - Cross-Workload Table Maintenance and Optimization](https://learn.microsoft.com/en-us/fabric/fundamentals/table-maintenance-optimization)
+- [Microsoft Fabric - Medallion Lakehouse Architecture](https://learn.microsoft.com/en-us/fabric/onelake/onelake-medallion-lakehouse-architecture)
+- [Microsoft Fabric - Permission Model](https://learn.microsoft.com/en-us/fabric/security/permission-model)
+- [Microsoft Fabric - OneLake Security Access Control Model](https://learn.microsoft.com/en-us/fabric/onelake/security/data-access-control-model)
+- [Microsoft Fabric - Run Delta Table Maintenance in Lakehouse](https://learn.microsoft.com/en-us/fabric/data-engineering/lakehouse-table-maintenance)
+- [Microsoft Fabric - Cross-Workload Table Maintenance and Optimization](https://learn.microsoft.com/en-us/fabric/fundamentals/table-maintenance-optimization)

@@ -1,5 +1,6 @@
 flowchart TD
     Start([Start Pipeline])
+    AS[Insert audit_session<br/> status = Running; pipeline_id; batch_id]
 
     %% ── CONTROL CHECK ──────────────────────────────────────
     NMR_READ[Read next_mode_run Table<br/>Get mode, failed batch_id & session_id]

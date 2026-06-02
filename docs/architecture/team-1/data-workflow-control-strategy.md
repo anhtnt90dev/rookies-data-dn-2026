@@ -390,3 +390,4 @@ A new batch must not be started until the failed batch has been successfully rec
 ## Note
 
 > - This document presents the proposed design and processing strategy based on the current understanding of requirements and assumptions. The design has not yet been implemented and may be refined during the implementation phase.
+> - ID columns are defined as bigint for logical design purposes. The actual ID generation strategy may be finalized during implementation based on Fabric Lakehouse capabilities.

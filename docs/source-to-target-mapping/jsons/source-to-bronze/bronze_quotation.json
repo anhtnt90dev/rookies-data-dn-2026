@@ -1,0 +1,66 @@
+{
+  "source_table": "dbo.quotation",
+  "target_table": "bronze.quotation",
+  "columns": [
+    {
+      "target": "quotation_id",
+      "expression": "quotation_id"
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "agent_id",
+      "expression": "agent_id"
+    },
+    {
+      "target": "provider_code",
+      "expression": "provider_code"
+    },
+    {
+      "target": "quotation_date",
+      "expression": "quotation_date"
+    },
+    {
+      "target": "quotation_status",
+      "expression": "quotation_status"
+    },
+    {
+      "target": "package_code",
+      "expression": "package_code"
+    },
+    {
+      "target": "premium_amount",
+      "expression": "premium_amount"
+    },
+    {
+      "target": "quotation_expiry_date",
+      "expression": "quotation_expiry_date"
+    },
+    {
+      "target": "created_date",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_date",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

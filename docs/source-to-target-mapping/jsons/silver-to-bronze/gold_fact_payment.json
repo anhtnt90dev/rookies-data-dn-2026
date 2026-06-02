@@ -1,0 +1,70 @@
+{
+  "source_table": "silver.payment",
+  "target_table": "gold.fact_payment",
+  "columns": [
+    {
+      "target": "payment_id",
+      "expression": "payment_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "transaction_reference",
+      "expression": "transaction_reference"
+    },
+    {
+      "target": "policy_key",
+      "expression": "policy_id"
+    },
+    {
+      "target": "payment_status_key",
+      "expression": "payment_status"
+    },
+    {
+      "target": "payment_method_key",
+      "expression": "payment_method"
+    },
+    {
+      "target": "payment_date_key",
+      "expression": "payment_date"
+    },
+    {
+      "target": "customer_key",
+      "expression": null
+    },
+    {
+      "target": "provider_key",
+      "expression": null
+    },
+    {
+      "target": "payment_amount",
+      "expression": "payment_amount"
+    },
+    {
+      "target": "created_at",
+      "expression": "created_at"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_at"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "_loaded_at"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

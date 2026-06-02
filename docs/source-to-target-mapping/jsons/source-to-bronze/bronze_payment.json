@@ -1,0 +1,66 @@
+{
+  "source_table": "payment_full_<yyyy-MM-dd>.json",
+  "target_table": "bronze.payment",
+  "columns": [
+    {
+      "target": "payment_id",
+      "expression": "payment_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "payment_date",
+      "expression": "payment_date"
+    },
+    {
+      "target": "payment_method",
+      "expression": "payment_method"
+    },
+    {
+      "target": "payment_status",
+      "expression": "payment_status"
+    },
+    {
+      "target": "payment_amount",
+      "expression": "payment_amount"
+    },
+    {
+      "target": "transaction_reference",
+      "expression": "transaction_reference"
+    },
+    {
+      "target": "last_updated",
+      "expression": "last_updated"
+    },
+    {
+      "target": "operation_type",
+      "expression": "operation_type"
+    },
+    {
+      "target": "batch_date",
+      "expression": "batch_date"
+    },
+    {
+      "target": "source_system",
+      "expression": "source_system"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

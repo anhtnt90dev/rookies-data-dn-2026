@@ -1,0 +1,62 @@
+{
+  "source_table": "bronze.payment",
+  "target_table": "silver.payment",
+  "columns": [
+    {
+      "target": "payment_id",
+      "expression": "payment_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "payment_date",
+      "expression": "payment_date"
+    },
+    {
+      "target": "payment_method",
+      "expression": "payment_method"
+    },
+    {
+      "target": "payment_status",
+      "expression": "payment_status"
+    },
+    {
+      "target": "payment_amount",
+      "expression": "payment_amount"
+    },
+    {
+      "target": "transaction_reference",
+      "expression": "transaction_reference"
+    },
+    {
+      "target": "last_updated",
+      "expression": "last_updated"
+    },
+    {
+      "target": "operation_type",
+      "expression": "operation_type"
+    },
+    {
+      "target": "is_delete",
+      "expression": "operation_type"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "_loaded_at"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

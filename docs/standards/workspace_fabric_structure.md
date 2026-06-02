@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document defines a recommended folder structure and naming convention for Microsoft Fabric projects. The goal is to:
+This document defines a recommended folder structure 
 
 - **Improve Collaboration:** Standardize where items are placed so team members can easily locate resources.
 - **Standardize Development:** Ensure consistency across different environments and workspaces.

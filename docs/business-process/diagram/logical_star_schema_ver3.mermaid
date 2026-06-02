@@ -31,7 +31,7 @@ erDiagram
         timestamp effective_to
         boolean is_current
         boolean is_deleted
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -47,7 +47,7 @@ erDiagram
         timestamp effective_to
         boolean is_current
         boolean is_deleted
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -62,7 +62,7 @@ erDiagram
         timestamp effective_to
         boolean is_current
         boolean is_deleted
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -70,7 +70,7 @@ erDiagram
     dim_package {
         bigint package_key PK
         string package_code
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -78,7 +78,7 @@ erDiagram
     dim_coverage {
         bigint coverage_key PK
         string coverage_type
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -86,9 +86,8 @@ erDiagram
     dim_quotation {
         bigint quotation_key PK
         string quotation_id
-        string quotation_number
         date quotation_expiry_date
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -96,7 +95,7 @@ erDiagram
     dim_policy {
         bigint policy_key PK
         string policy_id
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -107,7 +106,7 @@ erDiagram
         boolean is_open
         boolean is_accepted
         boolean is_converted
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -117,7 +116,8 @@ erDiagram
         string policy_status_code
         boolean is_active_policy
         boolean is_terminal_status
-        string source_system
+        string is_accepted
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -127,7 +127,7 @@ erDiagram
         string payment_status_code
         boolean is_successful_payment
         boolean is_refund_status
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -135,9 +135,7 @@ erDiagram
     dim_payment_method {
         bigint payment_method_key PK
         string payment_method_code
-        string payment_method_name
-        string payment_method_group
-        string source_system
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -145,7 +143,8 @@ erDiagram
     dim_cancellation_reason {
         bigint cancellation_reason_key PK
         string cancellation_reason
-        string source_system
+        string is_accepted
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -163,7 +162,8 @@ erDiagram
         timestamp effective_to
         boolean is_current
         boolean is_deleted
-        string source_system
+        string is_accepted
+        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -183,10 +183,20 @@ erDiagram
         bigint quotation_status_key FK
         bigint vehicle_key FK
         decimal premium_amount
-        string source_system
+
+        string quotation_id
+
+        string _source_system
         timestamp created_at
         timestamp updated_at
-        string quotation_id
+
+        string _batch_id
+        string pipeline_run_id
+
+        boolean is_deleted
+        timestamp deleted_at
+        string delete_batch_id
+        boolean converted_flag
     }
 
     fact_quotation_item {
@@ -201,10 +211,19 @@ erDiagram
         bigint vehicle_key FK
         decimal coverage_amount
         decimal deductible_amount
-        string source_system
+
+        string quotation_item_id
+
+        string _source_system
         timestamp created_at
         timestamp updated_at
-        string quotation_item_id
+
+        string _batch_id
+        string pipeline_run_id
+
+        boolean is_deleted
+        timestamp deleted_at
+        string delete_batch_id
     }
 
     fact_policy {
@@ -220,10 +239,19 @@ erDiagram
         bigint policy_status_key FK
         bigint vehicle_key FK
         decimal premium_amount
-        string source_system
+
+        string policy_id
+
+        string _source_system
         timestamp created_at
         timestamp updated_at
-        string policy_id
+
+        string _batch_id
+        string pipeline_run_id
+
+        boolean is_deleted
+        timestamp deleted_at
+        string delete_batch_id
     }
 
     fact_payment {
@@ -235,11 +263,21 @@ erDiagram
         bigint payment_method_key FK
         bigint vehicle_key FK
         decimal payment_amount
+
+        string payment_id
+        string policy_id
         string transaction_reference
-        string source_system
+
+        string _source_system
         timestamp created_at
         timestamp updated_at
-        string payment_id
+
+        string _batch_id
+        string pipeline_run_id
+
+        boolean is_deleted
+        timestamp deleted_at
+        string delete_batch_id
     }
 
     fact_cancellation {
@@ -250,10 +288,20 @@ erDiagram
         bigint cancellation_reason_key FK
         bigint vehicle_key FK
         decimal refund_amount
-        string source_system
+
+        string cancellation_id
+        string policy_id
+
+        string _source_system
         timestamp created_at
         timestamp updated_at
-        string cancellation_id
+
+        string _batch_id
+        string pipeline_run_id
+
+        boolean is_deleted
+        timestamp deleted_at
+        string delete_batch_id
     }
 
     %% ========================================
@@ -270,26 +318,26 @@ erDiagram
     dim_date ||--o{ fact_cancellation : "cancellation_date"
 
     dim_customer ||--o{ fact_quotation : "1:N"
-    dim_customer ||--o{ fact_quotation_item : "1:N"
+    dim_customer ||--o{ fact_quotation_item : "resolved via quotation"
     dim_customer ||--o{ fact_policy : "1:N"
-    dim_customer ||--o{ fact_payment : "1:N"
-    dim_customer ||--o{ fact_cancellation : "1:N"
+    dim_customer ||--o{ fact_payment : "resolved via policy"
+    dim_customer ||--o{ fact_cancellation : "resolved via policy"
 
     dim_agent ||--o{ fact_quotation : "1:N"
-    dim_agent ||--o{ fact_quotation_item : "1:N"
-    dim_agent ||--o{ fact_policy : "1:N"
+    dim_agent ||--o{ fact_quotation_item : "resolved via quotation"
+    dim_agent ||--o{ fact_policy : "resolved via quotation"
 
     dim_provider ||--o{ fact_quotation : "1:N"
-    dim_provider ||--o{ fact_quotation_item : "1:N"
-    dim_provider ||--o{ fact_policy : "1:N"
-    dim_provider ||--o{ fact_payment : "1:N"
-    dim_provider ||--o{ fact_cancellation : "1:N"
+    dim_provider ||--o{ fact_quotation_item : "resolved via quotation"
+    dim_provider ||--o{ fact_policy : "resolved via quotation"
+    dim_provider ||--o{ fact_payment : "resolved via quotation and policy"
+    dim_provider ||--o{ fact_cancellation : "resolved via quotation and policy"
 
     dim_package ||--o{ fact_quotation : "1:N"
-    dim_package ||--o{ fact_quotation_item : "1:N"
-    dim_package ||--o{ fact_policy : "1:N"
+    dim_package ||--o{ fact_quotation_item : "resolved via quotation"
+    dim_package ||--o{ fact_policy : "resolved via quotation"
 
-    dim_coverage ||--o{ fact_quotation_item : "1:N"
+    dim_coverage ||--o{ fact_quotation_item : "resolved via quotation"
 
     dim_quotation ||--o{ fact_quotation : "1:N"
     dim_quotation ||--o{ fact_quotation_item : "1:N"
@@ -311,7 +359,7 @@ erDiagram
     dim_cancellation_reason ||--o{ fact_cancellation : "1:N"
 
     dim_vehicle ||--o{ fact_quotation : "1:N"
-    dim_vehicle ||--o{ fact_quotation_item : "1:N"
-    dim_vehicle ||--o{ fact_policy : "1:N"
-    dim_vehicle ||--o{ fact_payment : "1:N"
-    dim_vehicle ||--o{ fact_cancellation : "1:N"
+    dim_vehicle ||--o{ fact_quotation_item : "resolved via quotation"
+    dim_vehicle ||--o{ fact_policy : "resolved via quotation"
+    dim_vehicle ||--o{ fact_payment : "resolved via quotation and policy"
+    dim_vehicle ||--o{ fact_cancellation : "resolved via quotation and policy"

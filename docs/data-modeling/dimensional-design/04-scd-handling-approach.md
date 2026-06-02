@@ -6,7 +6,7 @@ This document defines the Slowly Changing Dimension handling approach for the In
 
 The objective is to define which dimensions require historical tracking, which dimensions can be overwritten, and how dimension changes should be processed during incremental loads.
 
-This version is aligned with the current Gold star schema scope. `dim_vehicle` and `dim_region` are excluded from the current implementation scope.
+This version is aligned with the current Gold star schema scope. `dim_vehicle` is included as a Type 2 dimension. `dim_region` is excluded from the current implementation scope.
 
 ## 2. SCD Type Summary
 
@@ -17,8 +17,9 @@ This version is aligned with the current Gold star schema scope. `dim_vehicle` a
 | `dim_agent`               |   Type 2 | Agent region, branch, or manager may change. Historical agent performance should be reported using the assignment valid at the event time.                                                               |
 | `dim_provider`            |   Type 2 | Provider group or active flag may change. Historical provider reporting should preserve old provider attributes.                                                                                         |
 | `dim_vehicle`             |   Type 2 | Vehicle specification and value can change historically. Under the assumption that a customer owns exactly one vehicle, it is tracked as a Type 2 dimension.                                             |
-| `Dim_Package`             |   Type 1 | Small reference dimension derived from distinct `quotation.package_code` values. Current source only supports package code; additional package attributes require confirmed mapping or derivation rules. |
+| `dim_package`             |   Type 1 | Small reference dimension derived from distinct `quotation.package_code` values. Current source only supports package code; additional package attributes require confirmed mapping or derivation rules. |
 | `dim_coverage`            |   Type 1 | Coverage type is a reference value. Changes are expected to be corrections or enrichments.                                                                                                               |
+| `dim_quotation`           |   Type 1 | Small reference dimension representing unique quotation identifiers. Natural key changes (expiry dates) overwrite. |
 | `dim_policy`              |   No SCD | Transaction identifier dimension containing only `policy_id` and surrogate key. No historical change tracking applies.                                                                                   |
 | `dim_quotation_status`    |   Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata.                                                                                                          |
 | `dim_policy_status`       |   Type 1 | Status reference table. Business definition changes should overwrite or be managed as metadata.                                                                                                          |
@@ -43,6 +44,7 @@ Applicable dimensions:
 
 - `dim_package`
 - `dim_coverage`
+- `dim_quotation`
 - `dim_quotation_status`
 - `dim_policy_status`
 - `dim_payment_status`
@@ -76,6 +78,10 @@ Applicable dimensions:
 - `dim_agent`
 - `dim_provider`
 - `dim_vehicle`
+
+> [!NOTE]
+> As confirmed by the team, both `customers` and `agents` CRM source tables actually contain `updated_date` along with `created_date`. This enables efficient, standard SCD Type 2 incremental loads and change detection using these date fields, fully aligned with the handling for `dim_provider` and `dim_vehicle`.
+
 
 ### Type 2 Required Columns
 

@@ -175,6 +175,20 @@ This version is aligned with the updated source data, the fact grain document ve
 > [!NOTE]
 > `dim_coverage` is a conformed reference dimension representing unique, distinct `quotation_item.coverage_type` values (e.g., `'Physical Damage'`, `'Third Party'`), NOT a one-to-one mapping of quotation items. Attributes `coverage_group` and `coverage_description` are not supported in the source schema and have been removed to align strictly with the source database.
 
+## 5.7 `dim_quotation`
+
+**Grain:** One row per quotation  
+**SCD Type:** Type 1  
+**Source:** `quotation`
+
+| Column | Type Suggestion | Description |
+|---|---|---|
+| `quotation_key` | BIGINT | Surrogate primary key. |
+| `quotation_id` | STRING | Natural/business key from source (`quotation.quotation_id`). |
+| `quotation_expiry_date` | DATE | Optional quotation attribute (`quotation.quotation_expiry_date`). |
+| `created_at` | TIMESTAMP | Gold row creation time. |
+| `updated_at` | TIMESTAMP | Gold row update time. |
+
 
 ## 5.8 `dim_policy`
 
@@ -283,18 +297,19 @@ This version is aligned with the updated source data, the fact grain document ve
 
 | Fact Table            | Expected Dimension Foreign Keys                                                                                                                                                                  | Degenerate Identifiers                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `fact_quotation`      | `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key`                                             | `quotation_id`, `customer_id`, `agent_id`, `provider_code`                   |
-| `fact_quotation_item` | `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key`                                                           | `quotation_item_id`, `quotation_id`                                          |
-| `fact_policy`         | `policy_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key`                   | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
-| `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key`                                                                      | `payment_id`, `policy_id`, `transaction_reference`                           |
-| `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key`                                                                                  | `cancellation_id`, `policy_id`                                               |
+| `fact_quotation`      | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key`                            | `quotation_id`, `customer_id`, `agent_id`, `provider_code`                   |
+| `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key`                                          | `quotation_item_id`, `quotation_id`                                          |
+| `fact_policy`         | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key`  | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
+| `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key` (Note: `package_key` is out-of-scope for Sprint 1 under Option A)     | `payment_id`, `policy_id`, `transaction_reference`                           |
+| `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key` (Note: `package_key` is out-of-scope for Sprint 1 under Option A)                 | `cancellation_id`, `policy_id`                                               |
 
 ## 7. Review Points
 
-| Topic                     | Review Required                                                                                                                                                   |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dim_vehicle`             | Resolved. Modeled under the assumption that a customer owns exactly one vehicle, allowing `vehicle_key` to be resolved in fact tables using the customer context. |
-| Downstream inherited keys | Confirm whether payment and cancellation facts should physically store inherited `customer_key` and `provider_key`, or only rely on `policy_id`.                  |
+| Topic                     | Status & Decision |
+| ------------------------- | ------------------ |
+| `dim_vehicle`             | Resolved. Keep `dim_vehicle` in scope consistently as a Type 2 conformed dimension. |
+| Downstream inherited keys | Resolved. Fact tables `fact_payment` and `fact_cancellation` physically store inherited keys `customer_key`, `provider_key`, and `vehicle_key` resolved via `policy_id` during ETL to enable direct reporting. |
+| Package context for Payment/Cancellation | Resolved. Implement Option A: `package_key` is not stored in payment/cancellation facts for Sprint 1, and package-level payment/cancellation analysis is out of scope unless package keys are materialized in the Gold ETL. |
 
 ## 8. Output
 

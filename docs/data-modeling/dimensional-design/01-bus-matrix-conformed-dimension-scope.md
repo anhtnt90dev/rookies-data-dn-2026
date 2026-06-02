@@ -57,6 +57,7 @@ This version is aligned with:
 | `dim_provider` | Conformed | Type 2 | One row per provider version | `provider_code` | `provider_key` |
 | `dim_package` | Conformed reference | Type 1 | One row per distinct package code | `package_code` | `package_key` |
 | `dim_coverage` | Conformed reference | Type 1 | One row per distinct coverage type | `coverage_type` | `coverage_key` |
+| `dim_quotation` | Conformed reference | Type 1 | One row per quotation | `quotation_id` | `quotation_key` |
 | `dim_policy` | Transaction identifier dimension | Type 1 | One row per policy | `policy_id` | `policy_key` |
 | `dim_quotation_status` | Status mini-dimension | Type 1 | One row per quotation status | `quotation_status_code` | `quotation_status_key` |
 | `dim_policy_status` | Status mini-dimension | Type 1 | One row per policy status | `policy_status_code` | `policy_status_key` |
@@ -69,17 +70,56 @@ This version is aligned with:
 
 Legend:
 
-- `X` = direct dimension relationship in the fact table.
-- `X*` = inherited context through `quotation_id` or `policy_id`; may be materialized in the fact for reporting convenience only if the team agrees.
-- `Date role` = one or more role-playing date keys to `dim_date`.
+- `X`: direct/materialized key in the fact table.
+- `X*`: inherited/resolved through quotation or policy during Gold ETL.
+- `optional`: include only if payment/cancellation package analytics is required.
 
-| Business Process | Fact Table | Fact Grain | Date | Customer | Agent | Provider | Package | Coverage | Policy | Quotation Status | Policy Status | Payment Status | Payment Method | Cancellation Reason | Vehicle |
-|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Quotation | `fact_quotation` | One row per quotation | X | X | X | X | X |  |  | X |  |  |  |  | X |
-| Quotation Coverage | `fact_quotation_item` | One row per quotation coverage item | X* | X* | X* | X* | X* | X |  | X* |  |  |  |  | X* |
-| Policy Lifecycle | `fact_policy` | One row per policy | Date role | X | X* | X | X* |  | X |  | X |  |  |  | X |
-| Payment | `fact_payment` | One row per payment transaction | X | X* |  | X* |  |  | X |  |  | X | X |  | X* |
-| Cancellation | `fact_cancellation` | One row per cancellation event | X | X* |  | X* |  |  | X |  |  |  |  | X | X* |
+| Fact Table | Date | Customer | Agent | Provider | Package | Coverage | Quotation | Policy | Status | Vehicle |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `fact_quotation` | X | X | X | X | X |  | X |  | quotation_status | X |
+| `fact_quotation_item` | X* | X* | X* | X* | X* | X | X |  | quotation_status* | X* |
+| `fact_policy` | Date role | X | X* | X | X* |  | X | X | policy_status | X |
+| `fact_payment` | X | X* |  | X* | optional |  |  | X | payment_status/method | X* |
+| `fact_cancellation` | X | X* |  | X* | optional |  |  | X | cancellation_reason | X* |
+
+### 6.1 Relationship Diagram
+
+```mermaid
+flowchart LR
+    dim_quotation --> fact_quotation
+    dim_quotation --> fact_quotation_item
+    dim_quotation --> fact_policy
+
+    dim_policy --> fact_policy
+    dim_policy --> fact_payment
+    dim_policy --> fact_cancellation
+
+    dim_customer --> fact_quotation
+    dim_customer -. inherited .-> fact_quotation_item
+    dim_customer --> fact_policy
+    dim_customer -. resolved .-> fact_payment
+    dim_customer -. resolved .-> fact_cancellation
+
+    dim_agent --> fact_quotation
+    dim_agent -. inherited .-> fact_quotation_item
+    dim_agent -. resolved_from_quotation .-> fact_policy
+
+    dim_provider --> fact_quotation
+    dim_provider -. inherited .-> fact_quotation_item
+    dim_provider --> fact_policy
+    dim_provider -. resolved .-> fact_payment
+    dim_provider -. resolved .-> fact_cancellation
+
+    dim_package --> fact_quotation
+    dim_package -. inherited .-> fact_quotation_item
+    dim_package -. resolved_from_quotation .-> fact_policy
+
+    dim_vehicle --> fact_quotation
+    dim_vehicle -. resolved .-> fact_quotation_item
+    dim_vehicle --> fact_policy
+    dim_vehicle -. resolved .-> fact_payment
+    dim_vehicle -. resolved .-> fact_cancellation
+```
 
 ## 7. Role-Playing Date Usage
 
@@ -102,12 +142,10 @@ Legend:
 | `dim_customer` | `fact_quotation`, `fact_quotation_item`, `fact_policy`, optionally downstream payment/cancellation through policy context | Customer-level quotation, policy, payment, and cancellation analysis. |
 | `dim_agent` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Agent performance and policy conversion analysis. Stored directly in quotation facts. In `fact_policy`, the `agent_key` is resolved by joining `policy_info` back to `quotation` via `quotation_id` during the ETL process (defaults to `-1` if the link is null or missing). |
 | `dim_provider` | `fact_quotation`, `fact_quotation_item`, `fact_policy`, optionally downstream payment/cancellation through policy context | Provider performance across quotation, policy, payment, and cancellation. |
-| `dim_package` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Package-code-level analysis. Stored directly in quotation and policy facts. Downstream facts (`fact_payment`, `fact_cancellation`) do not store `package_key` directly but inherit package context transitively through `dim_policy -> dim_package`. |
+| `dim_package` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Package-code-level analysis. Stored directly in quotation and policy facts. Downstream facts (`fact_payment`, `fact_cancellation`) do not store `package_key` directly for Sprint 1 (Option A). Package-level payment/cancellation analysis is out of scope unless `package_key` is materialized during Gold ETL. |
+| `dim_quotation` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Connects all quotation-related processes and facts through a shared physical quotation identifier dimension. |
 | `dim_policy` | `fact_policy`, `fact_payment`, `fact_cancellation` | Allows policy, payment, and cancellation analysis through a shared policy identifier dimension without direct fact-to-fact joins. |
-| `dim_vehicle` | `fact_quotation`, `fact_policy`, optionally other downstream facts | Stores vehicle details (brand, model, value, plate number). Since a customer has exactly one vehicle, the facts resolve the vehicle key via `customer_id` during ETL. |
-
-
-
+| `dim_vehicle` | All five facts | Stores vehicle details (brand, model, value, plate number). `dim_vehicle` is in scope as a Type 2 dimension. Since a customer has exactly one vehicle, the facts resolve the vehicle key via `customer_id` during ETL. |
 
 ## 9. Dimensions Limited to Specific Processes
 
@@ -125,12 +163,13 @@ Legend:
 | Degenerate Identifier | Used By | Details & Design Justification |
 |---|---|---|
 | `policy_id` | `fact_policy`, `fact_payment`, `fact_cancellation` | Retained as a degenerate identifier for operational traceability. The primary analytical relationship to policy context is through `policy_key` → `dim_policy`. |
-| `quotation_id` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Degenerate Dimension. Completely replaces the physical `dim_quotation` and `quotation_key`, allowing direct query grouping and multi-fact drill-across on `quotation_id` without join overhead. |
+| `quotation_id` | `fact_quotation`, `fact_quotation_item`, `fact_policy` | Retained for operational traceability. The primary analytical relationship is through the physical dimension `dim_quotation` and `quotation_key`. |
 
 ## 11. ERD Review Notes
 
 | Topic | Decision |
 |---|---|
+| `dim_quotation` | Restored as a physical dimension table to support a clean star schema relationship across all quotation facts and policy lifecycle facts (`fact_quotation`, `fact_quotation_item`, and `fact_policy`). |
 | `dim_vehicle` | Included in star schema. Modeled under the assumption that one customer owns exactly one vehicle, allowing `vehicle_key` to be resolved in fact tables using the customer context. |
 | `dim_region` | Do not include as standalone dimension in current star schema. Keep geography/region attributes in customer and agent dimensions. |
 | `dim_policy` | Included as a transaction identifier dimension (Type 1). Shared by `fact_policy`, `fact_payment`, and `fact_cancellation` to provide policy context without direct fact-to-fact joins. |

@@ -1,5 +1,7 @@
 # Microsoft Fabric Workspace Folder Structure Standard
 
+## Root point for workspace is foler fabric/*
+
 ## Purpose
 
 This document defines a recommended folder structure 

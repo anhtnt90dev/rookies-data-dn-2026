@@ -1,0 +1,317 @@
+erDiagram
+    %% ========================================
+    %% DIMENSIONS
+    %% ========================================
+
+    dim_date {
+        int date_key PK
+        date full_date
+        int day_number
+        string day_name
+        int week_number
+        int month_number
+        string month_name
+        int quarter_number
+        int year_number
+        string year_month
+        boolean is_weekend
+    }
+
+    dim_customer {
+        bigint customer_key PK
+        string customer_id
+        string full_name
+        string gender
+        date dob
+        string phone_number
+        string email
+        string city
+        string district
+        timestamp effective_from
+        timestamp effective_to
+        boolean is_current
+        boolean is_deleted
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_agent {
+        bigint agent_key PK
+        string agent_id
+        string agent_name
+        string region
+        string branch
+        string manager_name
+        timestamp effective_from
+        timestamp effective_to
+        boolean is_current
+        boolean is_deleted
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_provider {
+        bigint provider_key PK
+        string provider_code
+        string provider_name
+        string provider_group
+        int active_flag
+        timestamp effective_from
+        timestamp effective_to
+        boolean is_current
+        boolean is_deleted
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_package {
+        bigint package_key PK
+        string package_code
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_coverage {
+        bigint coverage_key PK
+        string coverage_type
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_quotation {
+        bigint quotation_key PK
+        string quotation_id
+        string quotation_number
+        date quotation_expiry_date
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_policy {
+        bigint policy_key PK
+        string policy_id
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_quotation_status {
+        bigint quotation_status_key PK
+        string quotation_status_code
+        boolean is_open
+        boolean is_accepted
+        boolean is_converted
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_policy_status {
+        bigint policy_status_key PK
+        string policy_status_code
+        boolean is_active_policy
+        boolean is_terminal_status
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_payment_status {
+        bigint payment_status_key PK
+        string payment_status_code
+        boolean is_successful_payment
+        boolean is_refund_status
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_payment_method {
+        bigint payment_method_key PK
+        string payment_method_code
+        string payment_method_name
+        string payment_method_group
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_cancellation_reason {
+        bigint cancellation_reason_key PK
+        string cancellation_reason
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    dim_vehicle {
+        bigint vehicle_key PK
+        string vehicle_id
+        string customer_id
+        string plate_number
+        string vehicle_brand
+        string vehicle_model
+        int manufacture_year
+        decimal vehicle_value
+        timestamp effective_from
+        timestamp effective_to
+        boolean is_current
+        boolean is_deleted
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    %% ========================================
+    %% FACT TABLES
+    %% ========================================
+
+    fact_quotation {
+        bigint quotation_key FK
+        int quotation_date_key FK
+        int quotation_expiry_date_key FK
+        bigint customer_key FK
+        bigint agent_key FK
+        bigint provider_key FK
+        bigint package_key FK
+        bigint quotation_status_key FK
+        bigint vehicle_key FK
+        decimal premium_amount
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+        string quotation_id
+    }
+
+    fact_quotation_item {
+        bigint quotation_key FK
+        int quotation_date_key FK
+        bigint customer_key FK
+        bigint agent_key FK
+        bigint provider_key FK
+        bigint package_key FK
+        bigint coverage_key FK
+        bigint quotation_status_key FK
+        bigint vehicle_key FK
+        decimal coverage_amount
+        decimal deductible_amount
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+        string quotation_item_id
+    }
+
+    fact_policy {
+        bigint policy_key FK
+        bigint quotation_key FK
+        int issued_date_key FK
+        int policy_start_date_key FK
+        int policy_end_date_key FK
+        bigint customer_key FK
+        bigint agent_key FK
+        bigint provider_key FK
+        bigint package_key FK
+        bigint policy_status_key FK
+        bigint vehicle_key FK
+        decimal premium_amount
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+        string policy_id
+    }
+
+    fact_payment {
+        bigint policy_key FK
+        int payment_date_key FK
+        bigint customer_key FK
+        bigint provider_key FK
+        bigint payment_status_key FK
+        bigint payment_method_key FK
+        bigint vehicle_key FK
+        decimal payment_amount
+        string transaction_reference
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+        string payment_id
+    }
+
+    fact_cancellation {
+        bigint policy_key FK
+        int cancellation_date_key FK
+        bigint customer_key FK
+        bigint provider_key FK
+        bigint cancellation_reason_key FK
+        bigint vehicle_key FK
+        decimal refund_amount
+        string source_system
+        timestamp created_at
+        timestamp updated_at
+        string cancellation_id
+    }
+
+    %% ========================================
+    %% RELATIONSHIPS (1:N)
+    %% ========================================
+
+    dim_date ||--o{ fact_quotation : "quotation_date"
+    dim_date ||--o{ fact_quotation : "quotation_expiry_date"
+    dim_date ||--o{ fact_quotation_item : "quotation_date"
+    dim_date ||--o{ fact_policy : "issued_date"
+    dim_date ||--o{ fact_policy : "policy_start_date"
+    dim_date ||--o{ fact_policy : "policy_end_date"
+    dim_date ||--o{ fact_payment : "payment_date"
+    dim_date ||--o{ fact_cancellation : "cancellation_date"
+
+    dim_customer ||--o{ fact_quotation : "1:N"
+    dim_customer ||--o{ fact_quotation_item : "1:N"
+    dim_customer ||--o{ fact_policy : "1:N"
+    dim_customer ||--o{ fact_payment : "1:N"
+    dim_customer ||--o{ fact_cancellation : "1:N"
+
+    dim_agent ||--o{ fact_quotation : "1:N"
+    dim_agent ||--o{ fact_quotation_item : "1:N"
+    dim_agent ||--o{ fact_policy : "1:N"
+
+    dim_provider ||--o{ fact_quotation : "1:N"
+    dim_provider ||--o{ fact_quotation_item : "1:N"
+    dim_provider ||--o{ fact_policy : "1:N"
+    dim_provider ||--o{ fact_payment : "1:N"
+    dim_provider ||--o{ fact_cancellation : "1:N"
+
+    dim_package ||--o{ fact_quotation : "1:N"
+    dim_package ||--o{ fact_quotation_item : "1:N"
+    dim_package ||--o{ fact_policy : "1:N"
+
+    dim_coverage ||--o{ fact_quotation_item : "1:N"
+
+    dim_quotation ||--o{ fact_quotation : "1:N"
+    dim_quotation ||--o{ fact_quotation_item : "1:N"
+    dim_quotation ||--o{ fact_policy : "1:N"
+
+    dim_policy ||--o{ fact_policy : "1:N"
+    dim_policy ||--o{ fact_payment : "1:N"
+    dim_policy ||--o{ fact_cancellation : "1:N"
+
+    dim_quotation_status ||--o{ fact_quotation : "1:N"
+    dim_quotation_status ||--o{ fact_quotation_item : "1:N"
+
+    dim_policy_status ||--o{ fact_policy : "1:N"
+
+    dim_payment_status ||--o{ fact_payment : "1:N"
+
+    dim_payment_method ||--o{ fact_payment : "1:N"
+
+    dim_cancellation_reason ||--o{ fact_cancellation : "1:N"
+
+    dim_vehicle ||--o{ fact_quotation : "1:N"
+    dim_vehicle ||--o{ fact_quotation_item : "1:N"
+    dim_vehicle ||--o{ fact_policy : "1:N"
+    dim_vehicle ||--o{ fact_payment : "1:N"
+    dim_vehicle ||--o{ fact_cancellation : "1:N"

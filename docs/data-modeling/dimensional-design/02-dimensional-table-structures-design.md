@@ -300,8 +300,8 @@ This version is aligned with the updated source data, the fact grain document ve
 | `fact_quotation`      | `quotation_key`, `quotation_date_key`, `quotation_expiry_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `quotation_status_key`, `vehicle_key`                            | `quotation_id`, `customer_id`, `agent_id`, `provider_code`                   |
 | `fact_quotation_item` | `quotation_key`, `quotation_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `coverage_key`, `quotation_status_key`, `vehicle_key`                                          | `quotation_item_id`, `quotation_id`                                          |
 | `fact_policy`         | `policy_key`, `quotation_key`, `issued_date_key`, `policy_start_date_key`, `policy_end_date_key`, `customer_key`, `agent_key`, `provider_key`, `package_key`, `policy_status_key`, `vehicle_key`  | `policy_id`, `policy_number`, `quotation_id`, `customer_id`, `provider_code` |
-| `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key` (Note: `package_key` is out-of-scope for Sprint 1 under Option A)     | `payment_id`, `policy_id`, `transaction_reference`                           |
-| `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key` (Note: `package_key` is out-of-scope for Sprint 1 under Option A)                 | `cancellation_id`, `policy_id`                                               |
+| `fact_payment`        | `policy_key`, `payment_date_key`, `customer_key`, `provider_key`, `payment_status_key`, `payment_method_key`, `vehicle_key`    | `payment_id`, `policy_id`, `transaction_reference`                           |
+| `fact_cancellation`   | `policy_key`, `cancellation_date_key`, `customer_key`, `provider_key`, `cancellation_reason_key`, `vehicle_key`                 | `cancellation_id`, `policy_id`                                               |
 
 ## 7. Review Points
 

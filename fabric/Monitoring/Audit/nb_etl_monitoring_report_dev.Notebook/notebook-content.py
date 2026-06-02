@@ -1,0 +1,208 @@
+# Fabric notebook source
+
+# METADATA ********************
+
+# META {
+# META   "kernel_info": {
+# META     "name": "synapse_pyspark"
+# META   },
+# META   "dependencies": {}
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC # Welcome to your new notebook
+# MAGIC # Type here in the cell editor to add code!
+# MAGIC %%sql
+# MAGIC 
+# MAGIC CREATE OR REPLACE VIEW log.vw_etl_table_layer_monitor AS
+# MAGIC WITH latest_detail AS (
+# MAGIC     SELECT *
+# MAGIC     FROM (
+# MAGIC         SELECT
+# MAGIC             d.*,
+# MAGIC             ROW_NUMBER() OVER (
+# MAGIC                 PARTITION BY d.table_session_id, d.layer
+# MAGIC                 ORDER BY
+# MAGIC                     CASE WHEN d.target_row_count IS NOT NULL THEN 1 ELSE 0 END DESC,
+# MAGIC                     d.created_at DESC
+# MAGIC             ) AS rn
+# MAGIC         FROM log.audit_detail d
+# MAGIC     )
+# MAGIC     WHERE rn = 1
+# MAGIC )
+# MAGIC 
+# MAGIC SELECT
+# MAGIC     s.id AS session_id,
+# MAGIC     s.batch_id,
+# MAGIC     s.pipeline_name,
+# MAGIC     s.pipeline_run_id,
+# MAGIC     s.run_mode,
+# MAGIC     s.session_status,
+# MAGIC     s.session_started,
+# MAGIC     s.session_finished,
+# MAGIC     s.duration_ms AS pipeline_duration_ms,
+# MAGIC     s.sla_breached AS pipeline_sla_breached,
+# MAGIC 
+# MAGIC     t.id AS table_session_id,
+# MAGIC     t.source_table_id,
+# MAGIC     t.source_table_name,
+# MAGIC     t.target_table_name,
+# MAGIC     t.table_session_status,
+# MAGIC 
+# MAGIC     d.layer,
+# MAGIC 
+# MAGIC     CASE d.layer
+# MAGIC         WHEN 'BRONZE' THEN t.bronze_status
+# MAGIC         WHEN 'SILVER' THEN t.silver_status
+# MAGIC         WHEN 'GOLD' THEN t.gold_status
+# MAGIC         ELSE t.table_session_status
+# MAGIC     END AS layer_status,
+# MAGIC 
+# MAGIC     CASE d.layer
+# MAGIC         WHEN 'BRONZE' THEN t.bronze_started_at
+# MAGIC         WHEN 'SILVER' THEN t.silver_started_at
+# MAGIC         WHEN 'GOLD' THEN t.gold_started_at
+# MAGIC     END AS layer_started_at,
+# MAGIC 
+# MAGIC     CASE d.layer
+# MAGIC         WHEN 'BRONZE' THEN t.bronze_ended_at
+# MAGIC         WHEN 'SILVER' THEN t.silver_ended_at
+# MAGIC         WHEN 'GOLD' THEN t.gold_ended_at
+# MAGIC     END AS layer_ended_at,
+# MAGIC 
+# MAGIC     d.detail_status,
+# MAGIC     d.source_row_count,
+# MAGIC     d.target_row_count,
+# MAGIC     d.inserted_row,
+# MAGIC     d.updated_row,
+# MAGIC     d.deleted_row,
+# MAGIC     d.rejected_row,
+# MAGIC     d.error_type,
+# MAGIC     d.is_retryable,
+# MAGIC     d.error_message,
+# MAGIC     d.created_at AS detail_created_at
+# MAGIC 
+# MAGIC FROM log.audit_session s
+# MAGIC LEFT JOIN log.audit_table_session t
+# MAGIC     ON s.id = t.session_id
+# MAGIC LEFT JOIN latest_detail d
+# MAGIC     ON t.id = d.table_session_id;
+# MAGIC 
+# MAGIC 
+# MAGIC 
+# MAGIC %%sql
+# MAGIC 
+# MAGIC CREATE OR REPLACE VIEW log.vw_etl_pipeline_run_summary AS
+# MAGIC WITH latest_detail AS (
+# MAGIC     SELECT *
+# MAGIC     FROM (
+# MAGIC         SELECT
+# MAGIC             d.*,
+# MAGIC             ROW_NUMBER() OVER (
+# MAGIC                 PARTITION BY d.table_session_id, d.layer
+# MAGIC                 ORDER BY
+# MAGIC                     CASE WHEN d.target_row_count IS NOT NULL THEN 1 ELSE 0 END DESC,
+# MAGIC                     d.created_at DESC
+# MAGIC             ) AS rn
+# MAGIC         FROM log.audit_detail d
+# MAGIC     )
+# MAGIC     WHERE rn = 1
+# MAGIC ),
+# MAGIC 
+# MAGIC joined_log AS (
+# MAGIC     SELECT
+# MAGIC         s.id AS session_id,
+# MAGIC         s.batch_id,
+# MAGIC         s.pipeline_name,
+# MAGIC         s.pipeline_run_id,
+# MAGIC         s.run_mode,
+# MAGIC         s.session_status,
+# MAGIC         s.session_started,
+# MAGIC         s.session_finished,
+# MAGIC         s.duration_ms,
+# MAGIC         s.sla_breached,
+# MAGIC         t.id AS table_session_id,
+# MAGIC         t.table_session_status,
+# MAGIC         d.detail_status,
+# MAGIC         d.source_row_count,
+# MAGIC         d.target_row_count,
+# MAGIC         d.inserted_row,
+# MAGIC         d.updated_row,
+# MAGIC         d.deleted_row,
+# MAGIC         d.rejected_row,
+# MAGIC         d.error_message
+# MAGIC     FROM log.audit_session s
+# MAGIC     LEFT JOIN log.audit_table_session t
+# MAGIC         ON s.id = t.session_id
+# MAGIC     LEFT JOIN latest_detail d
+# MAGIC         ON t.id = d.table_session_id
+# MAGIC )
+# MAGIC 
+# MAGIC SELECT
+# MAGIC     session_id,
+# MAGIC     batch_id,
+# MAGIC     pipeline_name,
+# MAGIC     pipeline_run_id,
+# MAGIC     run_mode,
+# MAGIC     session_status,
+# MAGIC     session_started,
+# MAGIC     session_finished,
+# MAGIC     duration_ms,
+# MAGIC     sla_breached,
+# MAGIC 
+# MAGIC     COUNT(DISTINCT table_session_id) AS table_session_count,
+# MAGIC 
+# MAGIC     SUM(CASE WHEN table_session_status = 'SUCCESS' THEN 1 ELSE 0 END) AS success_table_count,
+# MAGIC     SUM(CASE WHEN table_session_status = 'FAILED' THEN 1 ELSE 0 END) AS failed_table_count,
+# MAGIC 
+# MAGIC     SUM(COALESCE(source_row_count, 0)) AS total_source_row_count,
+# MAGIC     SUM(COALESCE(target_row_count, 0)) AS total_target_row_count,
+# MAGIC     SUM(COALESCE(inserted_row, 0)) AS total_inserted_row,
+# MAGIC     SUM(COALESCE(updated_row, 0)) AS total_updated_row,
+# MAGIC     SUM(COALESCE(deleted_row, 0)) AS total_deleted_row,
+# MAGIC     SUM(COALESCE(rejected_row, 0)) AS total_rejected_row,
+# MAGIC 
+# MAGIC     SUM(
+# MAGIC         CASE
+# MAGIC             WHEN session_status = 'FAILED'
+# MAGIC               OR table_session_status = 'FAILED'
+# MAGIC               OR detail_status = 'FAILED'
+# MAGIC               OR error_message IS NOT NULL
+# MAGIC             THEN 1
+# MAGIC             ELSE 0
+# MAGIC         END
+# MAGIC     ) AS issue_count
+# MAGIC 
+# MAGIC FROM joined_log
+# MAGIC GROUP BY
+# MAGIC     session_id,
+# MAGIC     batch_id,
+# MAGIC     pipeline_name,
+# MAGIC     pipeline_run_id,
+# MAGIC     run_mode,
+# MAGIC     session_status,
+# MAGIC     session_started,
+# MAGIC     session_finished,
+# MAGIC     duration_ms,
+# MAGIC     sla_breached;
+# MAGIC 
+# MAGIC 
+# MAGIC CREATE OR REPLACE VIEW log.vw_etl_investigation_queue AS
+# MAGIC SELECT
+# MAGIC     *
+# MAGIC FROM log.vw_etl_table_layer_monitor
+# MAGIC WHERE session_status = 'FAILED'
+# MAGIC    OR table_session_status = 'FAILED'
+# MAGIC    OR detail_status = 'FAILED'
+# MAGIC    OR error_message IS NOT NULL
+# MAGIC    OR COALESCE(rejected_row, 0) > 0
+# MAGIC    OR COALESCE(pipeline_sla_breached, FALSE) = TRUE;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }

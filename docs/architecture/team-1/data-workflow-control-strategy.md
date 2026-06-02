@@ -55,6 +55,14 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+
+    cfg.next_run_mode {
+        varchar next_run_mode
+        bigint batch_id
+        bigint session_id
+        timestamp created_at
+        timestamp updated_at
+    }
 ```
 
 ### 1.1. `cfg.source_table`
@@ -119,6 +127,17 @@ erDiagram
 | `created_at` | timestamp | Record creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
 
+### 1.5. `cfg.next_run_mode`
+
+**Purpose:** Stores the execution mode and context for the next pipeline run, allowing the pipeline to determine whether to start a new batch or continue a recovery run without manual input.
+
+| Column | Data Type | Description |
+|---|---|---|
+| `next_run_mode` | varchar(20) | Execution mode for the next pipeline run, such as NEW or RECOVERY |
+| `batch_id` | bigint | Batch identifier associated with the next pipeline run |
+| `session_id` | bigint | Session identifier associated with the next pipeline run |
+| `created_at` | timestamp | Record creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
 ---
 
 ## 2. Audit and Logging Tables
@@ -341,19 +360,19 @@ If all retry attempts fail, the related table/layer is marked as `FAILED` in `lo
 
 ## 5. Recovery Rules
 
-Recovery is triggered manually when a previous pipeline execution fails.
-
 Recovery is used to resume processing after a failed execution once the underlying issue has been resolved.
 
 A recovery run creates a new `session_id` and reuses the same `batch_id`.
 
-The failed `batch_id` is determined from `log.audit_session`.
+The recovery context (`batch_id` and `session_id`) is obtained from `cfg.next_run_mode`.
 
 All recovery executions associated with the same failed batch must reuse the same `batch_id` until the batch is completed successfully.
 
 The pipeline may be rerun from the beginning, but completed layers are skipped based on audit status so recovery resumes from the first failed layer.
 
 A layer is considered successful only when all required tables within that layer are successfully processed.
+
+After a batch is successfully completed, `cfg.next_run_mode` is updated to `NEW`.
 
 A new batch must not be started until the failed batch has been successfully recovered.
 

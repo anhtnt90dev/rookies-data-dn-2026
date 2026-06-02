@@ -164,24 +164,3 @@ All fact tables share the following audit and metadata columns.
 | fact_cancellation | refund_amount  | DECIMAL(18,2) | Refund amount issued after cancellation. |
 
 ---
-
-# 7. Open Items and Recommendations
-
-| # | Item                                                  | Recommendation                                                                                          |
-| - | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 1 | Vehicle context in payment and cancellation analytics | Confirm reporting requirements. Vehicle slicing currently resolves through policy relationships.        |
-| 2 | Soft-delete handling                                  | All KPI calculations should filter `is_deleted = 0`.                                                    |
-| 3 | Audit and CDC lineage                                 | Standardize usage of `_batch_id`, `pipeline_run_id`, and `delete_batch_id` across all Gold fact tables. |
-
----
-
-# 8. Revision History
-
-| Version | Date       | Author           | Notes                                                                                                                                                                    |
-| ------- | ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1.0     | 2026-06-02 | Data Engineering | Initial fact table design document.                                                                                                                                      |
-| 1.1     | 2026-06-02 | Data Engineering | Added dim_policy integration, degenerate identifiers, audit and CDC fields, vehicle dimension support, resolved relationship notes, and documentation alignment updates. |
-
-**Document Location**
-
-`docs/data-modeling/dimensional-design/gold-layer-fact-tables.md`

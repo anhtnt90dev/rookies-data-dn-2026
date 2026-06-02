@@ -16,9 +16,9 @@ flowchart LR
     end
 
     subgraph JSON["JSON File Sources"]
-        CAN["cancellation_full_<yyyy-MM-dd>.json"]
-        PAY["payment_full_<yyyy-MM-dd>.json"]
-        POL["policy_full_<yyyy-MM-dd>.json"]
+        CAN["cancellation_*.json"]
+        PAY["payment_*.json"]
+        POL["policy_*.json"]
     end
 
     subgraph BRONZE["Bronze Delta Tables"]
@@ -76,16 +76,18 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 ## 3. JSON Source to Bronze Mapping
 
 > **Note:**
-
-> - Bronze stores raw incremental JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
-
-> - The source file names are based on the provided samples. Despite the naming convention, the JSON sources are incremental (delta) extracts.
+>
+> - Initial ingestion uses *_full_<date>.json files as full-load extracts. Subsequent loads are incremental extracts identified by batch_date, operation_type, and last_updated.
+>
+> - Bronze stores raw JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
+>
+> - Any SQL Server JSON export wrapper (e.g. JSON_F52E2B61-18A1-11d1-B105-00805F49916B) must be removed, and the payload must be converted into valid JSON records before ingestion.
 
 ### 3.1. Cancellations
 
 - **Source system:** policy_system.
 
-- **Source file:** cancellation_full_<yyyy-MM-dd>.json.
+- **Source file:** cancellation_*.json.
 
 - **Target table:** bronze.cancellation.
 
@@ -109,7 +111,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 
 - **Source system:** payment_system.
 
-- **Source file:** payment_full_<yyyy-MM-dd>.json.
+- **Source file:** payment_*.json.
 
 - **Target table:** bronze.payment.
 
@@ -135,7 +137,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 
 - **Source system:** policy_system.
 
-- **Source file:** policy_full_<yyyy-MM-dd>.json.
+- **Source file:** policy_*.json.
 
 - **Target Table:** bronze.policy.
 
@@ -314,7 +316,3 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | TIMESTAMP | N/A | N/A | N/A | TIMESTAMP |
 | BOOLEAN | N/A | N/A | N/A | BOOLEAN |
 | DOUBLE | N/A | N/A | N/A | DOUBLE |
-
-> **Note:**
-
-> - The mappings, metadata columns, and type mappings defined in this document are proposed for the current solution design and may be refined during implementation based on technical constraints, source system changes, or project requirements.

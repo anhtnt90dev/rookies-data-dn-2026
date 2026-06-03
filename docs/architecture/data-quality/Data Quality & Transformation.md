@@ -135,35 +135,36 @@ This ensures both newly inserted and updated records are captured correctly.
 
 ---
 
-# Status Standardization Rules
+# Source-to-Canonical Status Mapping
 
-## Quotation Status
+## Quotation Status Mapping
 
-| Allowed Value |
-| ------------- |
-| QUOTED        |
-| ACCEPTED      |
-| REJECTED      |
-| EXPIRED       |
-| CONVERTED     |
+| Source Status | Canonical Status | Notes                                      |
+| ------------- | ---------------- | ------------------------------------------ |
+| QUOTED        | QUOTED           | No change                                  |
+| ACCEPTED      | ACCEPTED         | No change                                  |
+| REJECTED      | REJECTED         | No change                                  |
+| EXPIRED       | EXPIRED          | No change                                  |
+| CONVERTED     | CONVERTED        | No change                                  |
+## Policy Status Mapping
 
-## Policy Status
+| Source Status | Canonical Status | Notes     |
+| ------------- | ---------------- | --------- |
+| ISSUED        | ISSUED           | No change |
+| ACTIVE        | ACTIVE           | No change |
+| EXPIRED       | EXPIRED          | No change |
+| CANCELLED     | CANCELLED        | No change |
 
-| Allowed Value |
-| ------------- |
-| ISSUED        |
-| ACTIVE        |
-| EXPIRED       |
-| CANCELLED     |
 
-## Payment Status
+## Payment Status Mapping
 
-| Allowed Value |
-| ------------- |
-| PENDING       |
-| PAID          |
-| FAILED        |
-| REFUNDED      |
+| Source Status | Canonical Status | Notes     |
+| ------------- | ---------------- | --------- |
+| PENDING       | PENDING          | No change |
+| PAID          | PAID             | No change |
+| FAILED        | FAILED           | No change |
+| REFUNDED      | REFUNDED         | No change |
+
 
 ---
 

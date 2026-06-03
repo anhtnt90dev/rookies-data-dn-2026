@@ -10,7 +10,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 
 
 
-## 3. Common Audit and Metadata Columns 
+## 2. Common Audit and Metadata Columns
 
 | Bronze Column | Silver Column | Silver Type | Rule |
 | --- | --- | --- | --- |
@@ -19,11 +19,11 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | _source_system | STRING | Pass-through |
 | _source_name | _source_name | STRING | Pass-through |
 
-## 4. JSON Source to Silver Mapping
+## 3. JSON Source to Silver Mapping
 
 > **Note:** Bronze JSON columns are raw strings. Silver casts these to typed columns and aligns naming to the standard.
 
-### 4.1. Cancellations
+### 3.1. Cancellations
 
 - **Source table:** bronze.cancellation
 - **Target table:** silver.cancellation
@@ -43,7 +43,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 4.2. Payments
+### 3.2. Payments
 
 - **Source table:** bronze.payment
 - **Target table:** silver.payment
@@ -65,7 +65,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 4.3. Policies
+### 3.3. Policies
 
 - **Source table:** bronze.policy
 - **Target table:** silver.policy
@@ -90,11 +90,11 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-## 5. CRM Source to Silver Mapping
+## 4. CRM Source to Silver Mapping
 
 > **Note:** CRM Bronze columns are already typed but names are standardized to `_at` for timestamps.
 
-### 5.1. Customers
+### 4.1. Customers
 
 - **Source table:** bronze.customer
 - **Target table:** silver.customer
@@ -116,7 +116,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 5.2. Agents
+### 4.2. Agents
 
 - **Source table:** bronze.agent
 - **Target table:** silver.agent
@@ -135,7 +135,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 5.3. Insurance Providers
+### 4.3. Insurance Providers
 
 - **Source table:** bronze.insurance_provider
 - **Target table:** silver.provider
@@ -153,7 +153,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 5.4. Vehicles
+### 4.4. Vehicles
 
 - **Source table:** bronze.vehicle
 - **Target table:** silver.vehicle
@@ -174,7 +174,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 5.5. Quotations
+### 4.5. Quotations
 
 - **Source table:** bronze.quotation
 - **Target table:** silver.quotation
@@ -197,7 +197,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 
-### 5.6. Quotation Items
+### 4.6. Quotation Items
 
 - **Source table:** bronze.quotation_item
 - **Target table:** silver.quotation_item

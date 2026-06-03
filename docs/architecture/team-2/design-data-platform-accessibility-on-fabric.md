@@ -13,11 +13,6 @@ _CarPro Insurance Analytics - Microsoft Fabric / OneLake_
 
 **Purpose.** This document defines where data lives, who can access it, and how the design supports recovery from failures within the current DEV-only Fabric setup.
 
-Reference context from the current DEV Fabric working environment:
-
-![DEV working environment in Fabric](assets/image1.png)
-
-Figure 1. DEV working environment in Fabric: one trial capacity, team workspaces, Lakehouse, Warehouse, and OneLake concept.
 
 ## 1. Proposed Current-State Fabric Design
 
@@ -199,7 +194,7 @@ lh_insurance_dev/Files/
 
 | Layer          | Owns                                                                                                                                          | Does Not Own                                                                                                                               | Example Outputs                                                                                                   |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| Landing        | Incoming source files stored in original format before ingestion into Delta tables.                                                           | Preserve raw source files for ingestion, replay, troubleshooting, and audit tracking. No business transformation is applied in this layer. | SQL extracts and JSON files partitioned by source system, entity, load type, and ingestion date.                  |
+| Landing        | Incoming source files stored in original format. Preserving raw source files for ingestion, replay, troubleshooting, and audit tracking.     | Any business transformation, data quality checks, or Delta/tabular formatting.                                                            | SQL extracts and JSON files partitioned by source system, entity, load type, and ingestion date.                  |
 | Bronze         | Raw Delta representation of source data with technical metadata. Keeps data traceability and supports replay.                                 | Heavy cleansing, deduplication as business truth, KPI calculation.                                                                         | `bronze.customer`, `bronze.quotation`, `bronze.policy`, `bronze.payment`, `bronze.cancellation`.                  |
 | Silver         | Cleaned, standardized, and validated entity-level data. Applies type conversion, status normalization, deduplication, and data quality flags. | Aggregated KPI outputs and report-specific measures.                                                                                       | `silver.customer`, `silver.quotation`, `silver.policy`, `silver.payment`, `silver.cancellation`.                  |
 | Gold           | Business-ready dimensional model and facts at agreed grain. Used by semantic model and reports.                                               | Raw source fields that are not useful for analytics, unresolved invalid records.                                                           | `gold.dim_customer`, `gold.dim_provider`, `gold.dim_package`, `gold.fact_quotation`, `gold.fact_policy`, `gold.fact_payment`. |

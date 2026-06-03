@@ -83,6 +83,7 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `quotation_date_key` | INT | FK → `dim_date` | Denormalized from parent quote to support native time-based coverage slicing. |
 | `agent_key` | BIGINT | FK → `dim_agent` | Denormalized from parent quote to enable agent-specific coverage analysis. |
 | `provider_key` | BIGINT | FK → `dim_provider` | Denormalized from parent quote to analyze coverage distributions by insurance provider. |
+| `vehicle_key` | BIGINT | FK → `dim_vehicle` | Reference to the insured vehicle for which the quotation was requested. |
 | `package_key` | BIGINT | FK → `dim_package` | Denormalized from parent quote to analyze coverages across core product packages. |
 | `quotation_status_key` | BIGINT | FK → `dim_quotation_status` | Denormalized from parent quote to filter active or converted coverages. |
 | `coverage_key` | BIGINT | FK → `dim_coverage_type` | Reference to the standardized coverage type taxonomy (e.g., Physical Damage, Third Party Liability, PA). |

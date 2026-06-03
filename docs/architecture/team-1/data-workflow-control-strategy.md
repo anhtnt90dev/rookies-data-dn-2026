@@ -20,10 +20,12 @@ erDiagram
         varchar delimiter
         varchar load_type
         varchar primary_key
+        varchar source_to_bronze_mapping_path
+        varchar bronze_to_silver_mapping_path
         varchar silver_transform_name
         varchar watermark_column
         varchar bronze_table_name
-        varchar bronze_path
+        varchar silver_table_name
         int load_sequence
         boolean is_active
         timestamp created_at
@@ -80,10 +82,12 @@ erDiagram
 | `delimiter` | varchar(5) | Delimiter used for delimited file formats |
 | `load_type` | varchar(20) | Loading strategy, such as full or incremental |
 | `primary_key` | varchar(255) | Primary key column(s) used for merge and deduplication |
+| `source_to_bronze_mapping_path` |	varchar(255)  |	Path to the Source-to-Bronze column mapping configuration file |
+| `bronze_to_silver_mapping_path` |	varchar(255)  |	Path to the Bronze-to-Silver column mapping configuration file |
 | `silver_transform_name` | varchar(50) | Custom transformation function applied during Bronze-to-Silver processing |
 | `watermark_column` | varchar(100) | Source column used for incremental extraction |
 | `bronze_table_name` | varchar(100) | Target Bronze table name |
-| `bronze_path` | varchar(255) | Target Bronze storage path |
+| `silver_table_name` | varchar(100) | Target Silver table name |
 | `load_sequence` | int | Execution order of source ingestion |
 | `is_active` | boolean | Indicates whether the source configuration is active |
 | `created_at` | timestamp | Record creation timestamp |

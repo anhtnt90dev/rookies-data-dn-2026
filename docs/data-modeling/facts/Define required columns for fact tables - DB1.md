@@ -49,6 +49,7 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `quotation_key` | BIGINT | FK → `dim_quotation` | Shared dimension surrogate key path to support proper semantic modeling and clean structural relationships. |
 | `quotation_id` | VARCHAR(20) | Degenerate Dimension | Natural key from source retained directly in the fact table for end-to-end traceability and drill-through. |
 | `customer_key` | BIGINT | FK → `dim_customer` | Reference to the customer who requested the quotation. |
+| `vehicle_key` | BIGINT | FK → `dim_vehicle` | Reference to the insured vehicle for which the quotation was requested. |
 | `agent_key` | BIGINT | FK → `dim_agent` | Reference to the agent who handled and generated the quotation. |
 | `provider_key` | BIGINT | FK → `dim_provider` | Reference to the insurance provider associated with the quotation. |
 | `package_key` | BIGINT | FK → `dim_package` | Reference to the insurance package offered (BASIC / STANDARD / PREMIUM / VIP). |
@@ -84,7 +85,7 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `provider_key` | BIGINT | FK → `dim_provider` | Denormalized from parent quote to analyze coverage distributions by insurance provider. |
 | `package_key` | BIGINT | FK → `dim_package` | Denormalized from parent quote to analyze coverages across core product packages. |
 | `quotation_status_key` | BIGINT | FK → `dim_quotation_status` | Denormalized from parent quote to filter active or converted coverages. |
-| `coverage_type_key` | BIGINT | FK → `dim_coverage_type` | Reference to the standardized coverage type taxonomy (e.g., Physical Damage, Third Party Liability, PA). |
+| `coverage_key` | BIGINT | FK → `dim_coverage_type` | Reference to the standardized coverage type taxonomy (e.g., Physical Damage, Third Party Liability, PA). |
 | `coverage_amount` | DECIMAL(18,2) | Measure (Additive) | Maximum insured value for this coverage line. Fully additive. |
 | `deductible_amount` | DECIMAL(18,2) | Measure (Additive) | Customer-borne deductible for this coverage line. Defaults to 0; fully additive. |
 

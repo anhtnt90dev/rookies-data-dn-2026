@@ -11,13 +11,20 @@
 
 # CELL ********************
 
-# Welcome to your new notebook
-# Type here in the cell editor to add code!
-# Welcome to your new notebook
-# Type here in the cell editor to add code!
+from pyspark.sql import functions as F
 
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 def does_table_exist(table_name):
+    table_name = validate_table_name(table_name)
     try:
         spark.table(table_name).limit(1).collect()
         return True
@@ -26,6 +33,7 @@ def does_table_exist(table_name):
 
 
 def has_table_column(table_name, column_name):
+    table_name = validate_table_name(table_name)
     if not does_table_exist(table_name):
         return False
 
@@ -33,44 +41,59 @@ def has_table_column(table_name, column_name):
     return column_name in table_column_names
 
 
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 def count_table_rows(table_name, batch_id=None, batch_column="_batch_id", use_batch_filter=True):
+    table_name = validate_table_name(table_name)
     if not does_table_exist(table_name):
         raise Exception(f"Table not found: {table_name}")
 
-    should_use_batch_filter = (
-        use_batch_filter
-        and batch_id is not None
-        and has_table_column(table_name, batch_column)
-    )
+    table_df = spark.table(table_name)
+    should_use_batch_filter = use_batch_filter and batch_id is not None and has_table_column(table_name, batch_column)
 
     if should_use_batch_filter:
-        query = f"""
-            SELECT COUNT(*) AS row_count
-            FROM {table_name}
-            WHERE {batch_column} = {batch_id}
-        """
-    else:
-        query = f"""
-            SELECT COUNT(*) AS row_count
-            FROM {table_name}
-        """
+        table_df = table_df.where(F.col(batch_column) == F.lit(batch_id))
 
-    return int(spark.sql(query).collect()[0]["row_count"])
+    return int(table_df.count())
 
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 def classify_count_error(error_message):
     lower_error_message = str(error_message).lower()
 
     if "table not found" in lower_error_message or "not found" in lower_error_message:
-        return "CONFIG", False
+        return ErrorType.CONFIG.value, False
 
     if "permission" in lower_error_message or "connection" in lower_error_message or "timeout" in lower_error_message:
-        return "SYSTEM", True
+        return ErrorType.SYSTEM.value, True
 
-    return "UNKNOWN", False
+    return ErrorType.UNKNOWN.value, False
 
 
-# Function to write row count to log.audit_detail.
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 def log_row_count_detail(
     table_session_id,
     layer,
@@ -83,85 +106,63 @@ def log_row_count_detail(
     rejected_row=0,
     error_message=None,
     error_type=None,
-    is_retryable=None
+    is_retryable=None,
+    audit_detail_table=AUDIT_DETAIL_TABLE,
 ):
-    layer = layer.upper()
-    detail_status = detail_status.upper()
-
-    attempt_no = int(spark.sql(f"""
-        SELECT COALESCE(MAX(attempt_no), 0) + 1 AS next_attempt
-        FROM log.audit_detail
-        WHERE table_session_id = {table_session_id}
-          AND layer = {format_sql_value(layer)}
-    """).collect()[0]["next_attempt"])
-
-    audit_detail_id = get_next_id("log.audit_detail")
+    audit_detail_table = validate_table_name(audit_detail_table)
+    layer = require_layer(layer)
+    detail_status = require_status(detail_status, [AuditStatus.SUCCESS, AuditStatus.FAILED, AuditStatus.SKIPPED])
+    attempt_no = get_next_attempt_no(audit_detail_table, str(table_session_id), layer)
     audit_key = f"table_session_{table_session_id}|layer_{layer}|row_count_attempt_{attempt_no}"
 
-    spark.sql(f"""
-        INSERT INTO log.audit_detail (
-            id,
-            table_session_id,
-            audit_key,
-            attempt_no,
-            detail_status,
-            layer,
-            source_row_count,
-            target_row_count,
-            inserted_row,
-            updated_row,
-            deleted_row,
-            rejected_row,
-            error_message,
-            error_type,
-            is_retryable,
-            created_at,
-            updated_at
-        )
-        VALUES (
-            {audit_detail_id},
-            {table_session_id},
-            {format_sql_value(audit_key)},
-            {attempt_no},
-            {format_sql_value(detail_status)},
-            {format_sql_value(layer)},
-            {format_sql_value(source_row_count)},
-            {format_sql_value(target_row_count)},
-            {format_sql_value(inserted_row)},
-            {format_sql_value(updated_row)},
-            {format_sql_value(deleted_row)},
-            {format_sql_value(rejected_row)},
-            {format_sql_value(error_message)},
-            {format_sql_value(error_type)},
-            {format_sql_value(is_retryable)},
-            current_timestamp(),
-            current_timestamp()
-        )
-    """)
+    append_audit_detail({
+        "id": new_audit_id(),
+        "table_session_id": str(table_session_id),
+        "audit_key": audit_key,
+        "attempt_no": attempt_no,
+        "detail_status": detail_status,
+        "layer": layer,
+        "watermark_before": None,
+        "watermark_after": None,
+        "load_window_start": None,
+        "load_window_end": None,
+        "source_row_count": source_row_count,
+        "target_row_count": target_row_count,
+        "inserted_row": inserted_row,
+        "updated_row": updated_row,
+        "deleted_row": deleted_row,
+        "rejected_row": rejected_row,
+        "error_message": error_message,
+        "error_type": enum_value(error_type) if error_type is not None else None,
+        "is_retryable": is_retryable,
+        "duration_ms": None,
+        "sla_target_ms": None,
+        "sla_breached": None,
+    }, audit_detail_table)
 
     print(f"Logged row counts for {layer}, table_session_id={table_session_id}")
 
 
-# Generic row count executor.
-def capture_row_counts(config):
-    required_keys = [
-        "table_session_id",
-        "layer",
-        "source_table",
-        "target_table",
-        "batch_id"
-    ]
+# METADATA ********************
 
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def capture_row_counts(config, audit_detail_table=AUDIT_DETAIL_TABLE):
+    required_keys = ["table_session_id", "layer", "source_table", "target_table", "batch_id"]
     for key in required_keys:
         if key not in config or config[key] is None:
             raise ValueError(f"Missing required config value: {key}")
 
     table_session_id = config["table_session_id"]
-    layer = config["layer"]
-    source_table = config["source_table"]
-    target_table = config["target_table"]
+    layer = require_layer(config["layer"])
+    source_table = validate_table_name(config["source_table"])
+    target_table = validate_table_name(config["target_table"])
     batch_id = config["batch_id"]
-
     batch_column = config.get("batch_column", "_batch_id")
     should_filter_source_by_batch = config.get("source_use_batch_filter", True)
     should_filter_target_by_batch = config.get("target_use_batch_filter", True)
@@ -170,33 +171,21 @@ def capture_row_counts(config):
     deleted_row = config.get("deleted_row", 0)
 
     try:
-        source_row_count = count_table_rows(
-            table_name=source_table,
-            batch_id=batch_id,
-            batch_column=batch_column,
-            use_batch_filter=should_filter_source_by_batch
-        )
-
-        target_row_count = count_table_rows(
-            table_name=target_table,
-            batch_id=batch_id,
-            batch_column=batch_column,
-            use_batch_filter=should_filter_target_by_batch
-        )
-
+        source_row_count = count_table_rows(source_table, batch_id, batch_column, should_filter_source_by_batch)
+        target_row_count = count_table_rows(target_table, batch_id, batch_column, should_filter_target_by_batch)
         inserted_row = config.get("inserted_row")
         if inserted_row is None:
             inserted_row = target_row_count
 
-        status = "SUCCESS"
+        status = AuditStatus.SUCCESS.value
         error_message = None
         error_type = None
         is_retryable = None
 
         if config.get("fail_on_zero_source", False) and source_row_count == 0:
-            status = "FAILED"
+            status = AuditStatus.FAILED.value
             error_message = "Source row count is zero"
-            error_type = "RULE"
+            error_type = ErrorType.RULE.value
             is_retryable = False
 
         log_row_count_detail(
@@ -211,7 +200,8 @@ def capture_row_counts(config):
             rejected_row=rejected_row,
             error_message=error_message,
             error_type=error_type,
-            is_retryable=is_retryable
+            is_retryable=is_retryable,
+            audit_detail_table=audit_detail_table,
         )
 
         return {
@@ -221,7 +211,7 @@ def capture_row_counts(config):
             "inserted_row": inserted_row,
             "updated_row": updated_row,
             "deleted_row": deleted_row,
-            "rejected_row": rejected_row
+            "rejected_row": rejected_row,
         }
 
     except Exception as error:
@@ -231,7 +221,7 @@ def capture_row_counts(config):
         log_row_count_detail(
             table_session_id=table_session_id,
             layer=layer,
-            detail_status="FAILED",
+            detail_status=AuditStatus.FAILED.value,
             source_row_count=None,
             target_row_count=None,
             inserted_row=0,
@@ -240,14 +230,15 @@ def capture_row_counts(config):
             rejected_row=0,
             error_message=error_message,
             error_type=error_type,
-            is_retryable=is_retryable
+            is_retryable=is_retryable,
+            audit_detail_table=audit_detail_table,
         )
 
         return {
-            "status": "FAILED",
+            "status": AuditStatus.FAILED.value,
             "error_message": error_message,
             "error_type": error_type,
-            "is_retryable": is_retryable
+            "is_retryable": is_retryable,
         }
 
 

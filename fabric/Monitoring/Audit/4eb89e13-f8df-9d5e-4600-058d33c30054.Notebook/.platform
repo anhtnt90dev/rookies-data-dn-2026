@@ -2,10 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Notebook",
-    "displayName": "nb_audit_row_count_dev"
+    "displayName": "nb_audit_logging_helper_dev",
+    "description": "New notebook"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "f5b1b083-3058-bfa4-40a0-232e03a0fd03"
+    "logicalId": "4eb89e13-f8df-9d5e-4600-058d33c30054"
   }
 }

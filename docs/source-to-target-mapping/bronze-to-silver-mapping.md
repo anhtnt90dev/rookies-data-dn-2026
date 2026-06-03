@@ -32,7 +32,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | --- | --- | --- | --- | --- |
 | cancellation_id | STRING | cancellation_id | STRING | Direct mapping |
 | policy_id | STRING | policy_id | STRING | Direct mapping |
-| cancellation_date | STRING | cancellation_date | DATE | Cast to `DATE` |
+| cancellation_date | STRING | cancellation_at | TIMESTAMP | Cast to `TIMESTAMP` and and suffix `_at`|
 | cancellation_reason | STRING | cancellation_reason | STRING | Direct mapping |
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
@@ -52,7 +52,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | --- | --- | --- | --- | --- |
 | payment_id | STRING | payment_id | STRING | Direct mapping |
 | policy_id | STRING | policy_id | STRING | Direct mapping |
-| payment_date | STRING | payment_date | DATE | Cast to `DATE` |
+| payment_date | STRING | payment_at | TIMESTAMP | Cast to `TIMESTAMP` and suffix `_at` |
 | payment_method | STRING | payment_method | STRING | Direct mapping |
 | payment_status | STRING | payment_status | STRING | Direct mapping |
 | payment_amount | STRING | payment_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |

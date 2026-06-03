@@ -1,5 +1,19 @@
 # Data Workflow Control Strategy
 
+## Mapping to Project Baseline Control Tables
+
+| Suggested Baseline Table | Detailed Design Table | Notes |
+| --- | --- | --- |
+| `Job_Config` | `cfg.source_table` | Stores source configuration and table-level ingestion metadata |
+| `Watermark` | `cfg.watermark` | Stores Source-to-Bronze ingestion checkpoints |
+| `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status |
+| `Job_Status` / `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail` | Stores table/layer execution status, processing metrics, and reconciliation details |
+| `Job_Error` | `log.audit_table_session` | Stores table-level execution failures through `error_code` and `error_message` |
+| `Pipeline_Error` | `log.invalid_record` | Stores invalid or rejected records and data-quality validation failures |
+| N/A | `log.retry_log` | Stores retry history and retry attempt details |
+| N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context |
+| N/A | `cfg.dim_fact_table`, `cfg.source_dim_fact` | Stores Gold-layer table configuration and source-to-Gold mapping |
+
 ## 1. Configuration Tables
 
 Configuration tables store metadata and configuration used to drive pipeline processing.
@@ -183,6 +197,8 @@ erDiagram
         timestamp bronze_ended_at
         timestamp silver_ended_at
         timestamp gold_ended_at
+        varchar error_code
+        text error_message
         int retry_count
         timestamp last_retry_at
         timestamp created_at
@@ -266,6 +282,8 @@ erDiagram
 | `bronze_ended_at` | timestamp | Bronze processing completion timestamp |
 | `silver_ended_at` | timestamp | Silver processing completion timestamp |
 | `gold_ended_at` | timestamp | Gold processing completion timestamp |
+| `error_code`  |	varchar(100) | Standardized error code for table-level execution failures |
+| `error_message` | varchar(1000)	| Detailed error message for troubleshooting and operational support |
 | `retry_count` | int | Number of retry attempts |
 | `last_retry_at` | timestamp | Timestamp of the latest retry attempt |
 | `created_at` | timestamp | Record creation timestamp |
@@ -326,6 +344,15 @@ erDiagram
 
 ## 3. Incremental Load Strategy
 
+> **Note:**
+>
+> - `watermark_value` is used only as the Source-to-Bronze ingestion checkpoint. It tracks the latest source record successfully ingested into the Bronze layer.
+>
+> - Downstream recovery between Bronze, Silver, and Gold is managed through `_batch_id` and `cfg.next_run_mode`.
+>
+> - Therefore, `watermark_value` is not used as an end-to-end pipeline checkpoint.
+> - `_batch_id` represents the logical batch identifier propagated across Bronze, Silver, and Gold records.
+
 ### Source to Bronze
 
 - Read source records where `watermark_column > watermark_value`.
@@ -364,6 +391,12 @@ If all retry attempts fail, the related table/layer is marked as `FAILED` in `lo
 
 ## 5. Recovery Rules
 
+> **Note:**
+>
+> - `log.audit_session.batch_id` represents the logical batch identifier for the data batch.
+> - `_batch_id` is derived from `log.audit_session.batch_id` and is propagated to Bronze, Silver, and Gold records.
+> - `log.audit_session.id` represents the execution session identifier and is independent of `_batch_id`.
+
 Recovery is used to resume processing after a failed execution once the underlying issue has been resolved.
 
 A recovery run creates a new `session_id` and reuses the same `batch_id`.
@@ -382,7 +415,7 @@ A new batch must not be started until the failed batch has been successfully rec
 
 ### Example Recovery Flow
 
-| batch_id | audit_session_id | run_mode | Bronze | Silver | Gold | Notes |
+| batch_id | session_id | run_mode | Bronze | Silver | Gold | Notes |
 |---:|---:|---|---|---|---|---|
 | 5002 | 1001 | NEW | FAILED | NOT_RUN | NOT_RUN | Bronze failed. Recovery required. |
 | 5002 | 1002 | RECOVERY | SUCCESS | FAILED | NOT_RUN | Bronze completed successfully. Silver failed. |

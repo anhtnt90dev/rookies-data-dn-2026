@@ -290,27 +290,27 @@ erDiagram
     dim_date ||--o{ fact_payment : "payment_date"
     dim_date ||--o{ fact_cancellation : "cancellation_date"
 
-    dim_customer ||--o{ fact_quotation : "1:N"
-    dim_customer ||--o{ fact_quotation_item : "resolved via quotation"
-    dim_customer ||--o{ fact_policy : "1:N"
-    dim_customer ||--o{ fact_payment : "resolved via policy"
-    dim_customer ||--o{ fact_cancellation : "resolved via policy"
+    dim_customer ||--o{ fact_quotation : "quotation_customer_id"
+    dim_customer ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.customer_id"
+    dim_customer ||--o{ fact_policy : "policy.quotation_id -> quotation.customer_id"
+    dim_customer ||--o{ fact_payment : "payment.policy_id -> policy.quotation_id -> quotation.customer_id"
+    dim_customer ||--o{ fact_cancellation : "fact_cancellation.policy_id -> policy.quotation_id -> quotation.customer_id"
 
-    dim_agent ||--o{ fact_quotation : "1:N"
-    dim_agent ||--o{ fact_quotation_item : "resolved via quotation"
-    dim_agent ||--o{ fact_policy : "resolved via quotation"
+    dim_agent ||--o{ fact_quotation : "quotation_agent_id"
+    dim_agent ||--o{ fact_quotation_item : "quotation_item.quotation.id -> quotation.agent_id"
+    dim_agent ||--o{ fact_policy : "policy.quotation.id -> quotation.agent_id"
 
-    dim_provider ||--o{ fact_quotation : "1:N"
-    dim_provider ||--o{ fact_quotation_item : "resolved via quotation"
-    dim_provider ||--o{ fact_policy : "resolved via quotation"
-    dim_provider ||--o{ fact_payment : "resolved via quotation and policy"
-    dim_provider ||--o{ fact_cancellation : "resolved via quotation and policy"
+    dim_provider ||--o{ fact_quotation : "quotation.provider_code"
+    dim_provider ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.provider_code"
+    dim_provider ||--o{ fact_policy : "policy_info.provider_code"
+    dim_provider ||--o{ fact_payment : "payment.policy_id -> policy_info.provider_code"
+    dim_provider ||--o{ fact_cancellation : "cancellation.policy_id -> policy_info.provider_code" 
 
-    dim_package ||--o{ fact_quotation : "1:N"
-    dim_package ||--o{ fact_quotation_item : "resolved via quotation"
-    dim_package ||--o{ fact_policy : "resolved via quotation"
+    dim_package ||--o{ fact_quotation : "quotation.package_code"
+    dim_package ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.package_code"
+    dim_package ||--o{ fact_policy : "policy.quotation_id -> quotation.package_code"
 
-    dim_coverage ||--o{ fact_quotation_item : "resolved via quotation"
+    dim_coverage ||--o{ fact_quotation_item : "quotation_item.coverage_type"
 
     dim_quotation ||--o{ fact_quotation : "1:N"
     dim_quotation ||--o{ fact_quotation_item : "1:N"
@@ -321,7 +321,7 @@ erDiagram
     dim_policy ||--o{ fact_cancellation : "1:N"
 
     dim_quotation_status ||--o{ fact_quotation : "1:N"
-    dim_quotation_status ||--o{ fact_quotation_item : "1:N"
+    dim_quotation_status ||--o{ fact_quotation_item : "quotation_item.quotation.id -> quotation.quotation_status"
 
     dim_policy_status ||--o{ fact_policy : "1:N"
 
@@ -331,8 +331,8 @@ erDiagram
 
     dim_cancellation_reason ||--o{ fact_cancellation : "1:N"
 
-    dim_vehicle ||--o{ fact_quotation : "1:N"
-    dim_vehicle ||--o{ fact_quotation_item : "resolved via quotation"
-    dim_vehicle ||--o{ fact_policy : "resolved via quotation"
-    dim_vehicle ||--o{ fact_payment : "resolved via quotation and policy"
-    dim_vehicle ||--o{ fact_cancellation : "resolved via quotation and policy"
+    dim_vehicle ||--o{ fact_quotation : "quotation.quotation_id -> customers.vehicle_id"
+    dim_vehicle ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.customer_id -> customers.vehicle_id"
+    dim_vehicle ||--o{ fact_policy : "policy_info.quotation_id -> quotation.customer_id -> customer.vehicle_id"
+    dim_vehicle ||--o{ fact_payment : "payment.policy_id -> policy_info.quotation_id -> quotation.customer_id -> customer.vehicle_id"
+    dim_vehicle ||--o{ fact_cancellation : "cancellation.policy_id -> policy_info.quotation_id -> quotation.customer_id -> customer.vehicle_id"

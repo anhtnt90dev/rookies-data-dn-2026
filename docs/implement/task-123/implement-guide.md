@@ -45,7 +45,7 @@
 │  └──────────────┘    │  1. Read Bronze (Delta)                │  │
 │                      │  2. Apply column mapping               │  │
 │  ┌──────────────┐    │  3. Handle nulls / defaults            │  │
-│  │ Bronze Layer │───▶│  4. Run DQ validation                  │  │
+│  │ Bronze Layer │───▶│  4. Run Data Quality validation                  │  │
 │  │ (Delta)      │    │  5. MERGE INTO Silver (Delta)          │  │
 │  └──────────────┘    │  6. Call audit_log()                   │  │
 │                      └────────────────────────────────────────┘  │

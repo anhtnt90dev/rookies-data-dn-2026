@@ -42,13 +42,84 @@ Recommended Fabric item naming in DEV:
 | Semantic model | `sm_insurance_gold_dev`                 | Business-facing serving layer built from Gold tables               |
 | Report         | `rpt_insurance_operations_dev`          | Optional Power BI report connected to the semantic model           |
 
+### 1.2 Microsoft Fabric Workspace Folder Structure
+
+Below is the standard directory and folder hierarchy for the Microsoft Fabric workspace and Git repository to ensure standard deployment, collaboration, and environment isolation.
+
+#### Git Repository Root Artifacts (`fabric/`)
+The root folder for Fabric Git Integration artifacts is `fabric/`. Files under `fabric/` are Fabric Git Integration artifacts exported from the DEV workspace.
+> [!NOTE]
+> The `.platform` files contain Fabric-managed metadata such as `logicalId`. These IDs are workspace-specific and should only be committed for real workspace artifacts, not generic templates.
+
+#### Workspace Folders Hierarchy
+
+```text
+Fabric-Workspace/ (or fabric/ repository folder)
+│
+├── Governance/
+│   ├── Standards/
+│   ├── Naming-Conventions/
+│   ├── Architecture/
+│   └── Documentation/
+│
+├── Source-Control/
+│   ├── Deployment/
+│   ├── CICD/
+│   └── Release-Notes/
+│
+├── Ingestion/
+│   ├── Pipelines/
+│   ├── Dataflows/
+│   ├── Notebooks/
+│   └── Config/
+│
+├── Bronze/
+│   ├── Pipelines/
+│   └── Notebooks/
+│
+├── Silver/
+│   ├── Pipelines/
+│   └── Notebooks/
+│
+├── Gold/
+│   ├── Pipelines/
+│   ├── Notebooks/
+│   └── Semantic-Models/
+│
+├── Shared/
+│   ├── Notebooks/
+│   ├── Libraries/
+│   ├── Functions/
+│   └── Utilities/
+│
+├── Monitoring/
+│   ├── Logs/
+│   ├── Alerts/
+│   ├── Audit/
+│   └── Data-Quality/
+│
+├── Config/
+│   └── Mapping/
+│
+└── Lakehouse/
+    └── lh_insurance_dev (Lakehouse)
+```
+
+#### Repository Path Examples:
+- **Bronze Notebook:** `fabric/Bronze/<NotebookName>.Notebook/`
+- **Silver Notebook:** `fabric/Silver/<NotebookName>.Notebook/`
+- **Gold Notebook:** `fabric/Gold/<NotebookName>.Notebook/`
+- **Lakehouse Item:** `fabric/Lakehouse/<LakehouseName>.Lakehouse/`
+- **Data Pipeline:** `fabric/Pipelines/<PipelineName>.DataPipeline/`
+- **Semantic Model:** `fabric/SemanticModels/<SemanticModelName>.SemanticModel/`
+
 ## 2. OneLake and Lakehouse Storage Convention
 
 **Design principle.** Use one Lakehouse in the DEV workspace (with schemas enabled). Separate layers by custom schemas. Files are used for raw file landing and archival. Delta tables are used for queryable Bronze, Silver, Gold, Audit, and Config data.
 
 | Zone / Layer          | Recommended Table Convention (and OneLake Path)                                                                                     | Owner / Responsibility                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Landing files         | `/Files/landing/{source_system}/{entity}/file_format={sql\|json}/load_type={full\|incremental}/ingestion_date=YYYY-MM-DD/`          | Source-preserved file arrival zone. Stores original SQL or JSON files for ingestion, replay, and troubleshooting.                  |
+| Landing files         | `/Files/landing/{source_system}/{entity}/{load_type}/{batch_date}/`                                                                 | Source-preserved file arrival zone. Stores raw, unmodified data in original format. Organized by source system and entity. |
 | Bronze Delta tables   | `bronze.{entity}` (Path: `/Tables/bronze/{entity}`)                                                                                 | Raw-to-Delta ingestion result. Minimal transformation only: metadata columns, schema capture, batch ID.                            |
 | Silver Delta tables   | `silver.{entity}` (Path: `/Tables/silver/{entity}`)                                                                                 | Cleaned and standardized entity-level data. Applies type casting, deduplication, standard status mapping, and basic quality rules. |
 | Gold Dimension tables | `gold.dim_{business_entity}` (Path: `/Tables/gold/dim_{business_entity}`)                                                           | Conformed dimensions for analytics, e.g., customer, provider, product/package, date.                                               |
@@ -89,29 +160,40 @@ Recommended common technical columns for Delta tables:
 
 - `_is_current / _effective_from / _effective_to`: optional SCD tracking fields for Silver/Gold dimensions if required.
 
-Example path convention
+### 2.2 Lakehouse Files Section Directory Structure
 
-Workspace: INS-DEV
+Within the `lh_insurance_dev` Lakehouse, the raw and metadata files are organized under the `/Files/` directory as follows:
 
-Lakehouse: lh_insurance_dev
+```text
+lh_insurance_dev/Files/
+├── landing/
+│   ├── crm/
+│   │   ├── customers/full/<batch_date>/
+│   │   ├── quotation/full/<batch_date>/
+│   │   └── quotation_item/full/<batch_date>/
+│   ├── policy/
+│   │   ├── policy_info/full/<batch_date>/
+│   │   ├── payment/incremental/<batch_date>/
+│   │   └── cancellation/incremental/<batch_date>/
+│   └── json/
+│       ├── full/
+│       └── incremental/
+├── audit/
+└── quarantine/
+```
 
-Files:
+#### Example Path Conventions (Landing Files):
 
-/Files/landing/insurance_sql_db/customer/file_format=sql/load_type=full/ingestion_date=2026-05-25/
-
-/Files/landing/insurance_sql_db/quotation/file_format=sql/load_type=full/ingestion_date=2026-05-25/
-
-/Files/landing/policy_system/policy/file_format=json/load_type=full/ingestion_date=2026-05-25/
-
-/Files/landing/policy_system/policy/file_format=json/load_type=incremental/ingestion_date=2026-05-26/
-
-/Files/landing/payment_system/payment/file_format=json/load_type=full/ingestion_date=2026-05-25/
-
-/Files/landing/payment_system/payment/file_format=json/load_type=incremental/ingestion_date=2026-05-26/
-
-/Files/landing/policy_system/cancellation/file_format=json/load_type=full/ingestion_date=2026-05-25/
-
-/Files/landing/policy_system/cancellation/file_format=json/load_type=incremental/ingestion_date=2026-05-26/
+- **CRM Customers (Full Load):**
+  `/Files/landing/crm/customers/full/2026-05-25/`
+- **CRM Quotation (Full Load):**
+  `/Files/landing/crm/quotation/full/2026-05-25/`
+- **Policy Info (Full Load):**
+  `/Files/landing/policy/policy_info/full/2026-05-25/`
+- **Policy Payment (Incremental Load):**
+  `/Files/landing/policy/payment/incremental/2026-05-26/`
+- **Policy Cancellation (Incremental Load):**
+  `/Files/landing/policy/cancellation/incremental/2026-05-26/`
 
 ## 3. Data Storage Responsibility by Layer
 

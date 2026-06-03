@@ -1,3 +1,7 @@
+%% ==============================================================================
+%% SOURCE OF TRUTH: This .mermaid file is the primary source of truth for the
+%% insurance business process sequence diagram.
+%% ==============================================================================
 sequenceDiagram
     title Insurance Business Process Sequence Diagram<br/>Quotation → Policy Issuance → Payment → Cancellation
 
@@ -5,11 +9,11 @@ sequenceDiagram
 
     actor Customer
     participant Agent
-    participant Provider as Insurance Provider
+    participant Provider as Selected Insurance Provider
     participant Underwriting as Underwriting Team
     participant PaymentProcessor as Payment Processor
     participant Operations as Operations Team
-    participant System as Insurance Core System
+    participant System as CarPro Platform
 
     %% 1. Quotation Creation
     rect rgb(245, 245, 245)
@@ -27,7 +31,7 @@ sequenceDiagram
     Agent->>System: Add Quotation Item(s)<br/>Coverage, sum insured, deductible
     System-->>Agent: Quotation Item(s) saved
 
-    System->>Provider: Submit quotation information
+    System->>Provider: Request quotation options by provider/package
     Provider->>Underwriting: Request underwriting review if required
 
     alt Underwriting approval required
@@ -37,9 +41,9 @@ sequenceDiagram
         Provider->>Provider: Apply standard pricing and eligibility rules
     end
 
-    Provider-->>System: Return quotation decision and premium
-    System-->>Agent: Quotation ready for customer review
-    Agent->>Customer: Present quotation details<br/>Premium, coverage, expiry date
+    Provider-->>System: Return eligible package options and premium
+    System-->>Agent: Show quotation options
+    Agent->>Customer: Present provider/package options
     end
 
     %% 2. Quotation Decision
@@ -47,7 +51,7 @@ sequenceDiagram
     Note over Customer,System: 2. Quotation Decision
 
     alt Customer accepts quotation before expiry
-        Customer->>Agent: Accept quotation
+        Customer->>Agent: Select preferred quotation option
         Agent->>System: Update Quotation<br/>Status = ACCEPTED
         System-->>Agent: Quotation accepted
 

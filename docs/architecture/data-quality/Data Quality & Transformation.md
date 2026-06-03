@@ -20,81 +20,47 @@ Invalid or non-recoverable records are redirected to the `Error_Record` table fo
 
 ---
 
+## Incremental Processing Rule
+
+All source tables support incremental processing.
+
+Change detection must be based on:
+
+```sql
+COALESCE(updated_date, created_date)
+```
+
+Business rules:
+
+* If `updated_date` exists, use `updated_date`.
+* If `updated_date` is NULL, use `created_date`.
+* Incremental extraction processes records where:
+
+```sql
+COALESCE(updated_date, created_date) > last_successful_watermark
+```
+
+This ensures both newly inserted and updated records are captured correctly.
+
+---
+
 # DATABASE: INSURANCE_CRM_DB
-
-## customers
-
-| Column       | Data Type | Validation Rule                               | Cleansing Action                                   |
-| ------------ | --------- | --------------------------------------------- | -------------------------------------------------- |
-| customer_id  | STRING    | not null, unique                              | remove duplicates; null → Error_Record             |
-| full_name    | STRING    | not null                                      | trim spaces; null → Error_Record                   |
-| gender       | STRING    | valid values (Male, Female, Other)            | capitalize standardization                         |
-| dob          | DATE      | valid date, format yyyy-MM-dd, < current_date | convert to ISO 8601 format; invalid → Error_Record |
-| phone_number | STRING    | must contain exactly 10 digits                | trim spaces; invalid → Error_Record                |
-| email        | STRING    | valid email format                            | lowercase standardization; invalid → Error_Record  |
-| city         | STRING    | nullable                                      | capitalize standardization                         |
-| district     | STRING    | nullable                                      | capitalize standardization                         |
-| created_date | TIMESTAMP | valid date, <= current_date                   | convert to ISO 8601 format; invalid → Error_Record |
-
----
-
-## vehicle
-
-| Column           | Data Type     | Validation Rule                       | Cleansing Action                                       |
-| ---------------- | ------------- | ------------------------------------- | ------------------------------------------------------ |
-| vehicle_id       | STRING        | not null, unique                      | remove duplicates; null → Error_Record                 |
-| customer_id      | STRING        | not null, valid FK                    | invalid FK/null → Error_Record                         |
-| plate_number     | STRING        | not null, unique                      | uppercase standardization; invalid/null → Error_Record |
-| vehicle_brand    | STRING        | nullable                              | capitalize standardization                             |
-| vehicle_model    | STRING        | nullable                              | capitalize standardization                             |
-| manufacture_year | INT           | valid year, <= current_year           | invalid values → Error_Record                          |
-| vehicle_value    | DECIMAL(18,2) | > 0                                   | invalid values → Error_Record                          |
-| created_date     | TIMESTAMP     | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record     |
-| updated_date     | TIMESTAMP     | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record     |
-
----
-
-## agents
-
-| Column       | Data Type | Validation Rule                       | Cleansing Action                                   |
-| ------------ | --------- | ------------------------------------- | -------------------------------------------------- |
-| agent_id     | STRING    | not null, unique                      | remove duplicates; null → Error_Record             |
-| agent_name   | STRING    | nullable                              | trim spaces                                        |
-| region       | STRING    | nullable                              | capitalize standardization                         |
-| branch       | STRING    | nullable                              | capitalize standardization                         |
-| manager_name | STRING    | nullable                              | capitalize standardization                         |
-| created_date | TIMESTAMP | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record |
-
----
-
-## insurance_providers
-
-| Column         | Data Type | Validation Rule                       | Cleansing Action                                          |
-| -------------- | --------- | ------------------------------------- | --------------------------------------------------------- |
-| provider_code  | STRING    | not null, unique                      | uppercase standardization; duplicates/null → Error_Record |
-| provider_name  | STRING    | not null                              | trim spaces; null → Error_Record                          |
-| provider_group | STRING    | not null                              | capitalize standardization; null → Error_Record           |
-| active_flag    | INT       | valid values (0,1)                    | invalid → Error_Record                                    |
-| created_date   | TIMESTAMP | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record        |
-| updated_date   | TIMESTAMP | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record        |
-
----
 
 ## quotation
 
-| Column                | Data Type     | Validation Rule                                               | Cleansing Action                                   |
-| --------------------- | ------------- | ------------------------------------------------------------- | -------------------------------------------------- |
-| quotation_id          | STRING        | not null, unique                                              | remove duplicates; null → Error_Record             |
-| customer_id           | STRING        | not null, valid FK                                            | invalid FK/null → Error_Record                     |
-| agent_id              | STRING        | not null, valid FK                                            | invalid FK → Error_Record                          |
-| provider_code         | STRING        | not null, valid FK                                            | invalid FK/null → Error_Record                     |
-| quotation_date        | DATE          | valid date, format yyyy-MM-dd                                 | convert to ISO 8601 format; invalid → Error_Record |
-| quotation_status      | STRING        | valid values (QUOTED, ACCEPTED, REJECTED, EXPIRED, CONVERTED) | uppercase standardization; invalid → Error_Record  |
-| package_code          | STRING        | not null                                                      | uppercase standardization; null → Error_Record     |
-| premium_amount        | DECIMAL(18,2) | > 0                                                           | round to 2 decimals; invalid → Error_Record        |
-| quotation_expiry_date | DATE          | format yyyy-MM-dd, >= quotation_date                          | convert to ISO 8601 format; invalid → Error_Record |
-| created_date          | TIMESTAMP     | not null, valid date, <= current_date                         | convert to ISO 8601 format; invalid → Error_Record |
-| updated_date          | TIMESTAMP     | not null, valid date, <= current_date                         | convert to ISO 8601 format; invalid → Error_Record |
+| Column                | Data Type     | Validation Rule                                                    | Cleansing Action                                   |
+| --------------------- | ------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
+| quotation_id          | STRING        | not null, unique                                                   | remove duplicates; null → Error_Record             |
+| customer_id           | STRING        | not null, valid FK                                                 | invalid FK/null → Error_Record                     |
+| agent_id              | STRING        | not null, valid FK                                                 | invalid FK → Error_Record                          |
+| provider_code         | STRING        | not null, valid FK                                                 | invalid FK/null → Error_Record                     |
+| quotation_date        | DATE          | valid date, format yyyy-MM-dd                                      | convert to ISO 8601 format; invalid → Error_Record |
+| quotation_status      | STRING        | allowed values: QUOTED · ACCEPTED · REJECTED · EXPIRED · CONVERTED | uppercase standardization; invalid → Error_Record  |
+| package_code          | STRING        | not null                                                           | uppercase standardization; null → Error_Record     |
+| premium_amount        | DECIMAL(18,2) | > 0                                                                | round to 2 decimals; invalid → Error_Record        |
+| quotation_expiry_date | DATE          | format yyyy-MM-dd, >= quotation_date                               | convert to ISO 8601 format; invalid → Error_Record |
+| created_date          | TIMESTAMP     | not null, valid date, <= current_date                              | convert to ISO 8601 format; invalid → Error_Record |
+| updated_date          | TIMESTAMP     | NULLABLE, valid date, <= current_date                              | convert to ISO 8601 format; invalid → Error_Record |
 
 ---
 
@@ -108,7 +74,7 @@ Invalid or non-recoverable records are redirected to the `Error_Record` table fo
 | coverage_amount   | DECIMAL(18,2) | > 0                                   | round to 2 decimals; invalid → Error_Record        |
 | deductible_amount | DECIMAL(18,2) | >= 0 and < coverage_amount            | round to 2 decimals; invalid → Error_Record        |
 | created_date      | TIMESTAMP     | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record |
-| updated_date      | TIMESTAMP     | not null, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record |
+| updated_date      | TIMESTAMP     | NULLABLE, valid date, <= current_date | convert to ISO 8601 format; invalid → Error_Record |
 
 ---
 
@@ -116,18 +82,22 @@ Invalid or non-recoverable records are redirected to the `Error_Record` table fo
 
 ## policy_info
 
-| Column            | Data Type     | Validation Rule                           | Cleansing Action                                       |
-| ----------------- | ------------- | ----------------------------------------- | ------------------------------------------------------ |
-| policy_id         | STRING        | not null, unique PK                       | remove duplicates; null → Error_Record                 |
-| quotation_id      | STRING        | not null, valid FK                        | invalid FK/null → Error_Record                         |
-| customer_id       | STRING        | not null, valid FK                        | invalid FK/null → Error_Record                         |
-| provider_code     | STRING        | not null, valid FK                        | uppercase standardization; invalid → Error_Record      |
-| policy_number     | STRING        | not null, unique, pattern match           | trim whitespace; null/duplicate → Error_Record         |
-| policy_start_date | DATE          | not null, valid date, <= policy_end_date  | ISO 8601 format; invalid/null → Error_Record           |
-| policy_end_date   | DATE          | not null, valid date, > policy_start_date | ISO 8601 format; invalid/null → Error_Record           |
-| policy_status     | STRING        | not null, allowed values                  | uppercase standardization; invalid/null → Error_Record |
-| premium_amount    | DECIMAL(18,2) | not null, > 0, numeric                    | round to 2 decimals; invalid/null → Error_Record       |
-| issued_date       | DATE          | not null, valid date, <= today            | ISO 8601 format; future date → Error_Record            |
+| Column            | Data Type     | Validation Rule                                                 | Cleansing Action                                  |
+| ----------------- | ------------- | --------------------------------------------------------------- | ------------------------------------------------- |
+| policy_id         | STRING        | not null, unique PK                                             | remove duplicates; null → Error_Record            |
+| quotation_id      | STRING        | not null, valid FK                                              | invalid FK/null → Error_Record                    |
+| customer_id       | STRING        | not null, valid FK                                              | invalid FK/null → Error_Record                    |
+| provider_code     | STRING        | not null, valid FK                                              | uppercase standardization; invalid → Error_Record |
+| policy_number     | STRING        | not null, unique, pattern match                                 | trim whitespace; null/duplicate → Error_Record    |
+| policy_start_date | DATE          | not null, valid date, <= policy_end_date                        | ISO 8601 format; invalid → Error_Record           |
+| policy_end_date   | DATE          | not null, valid date, > policy_start_date                       | ISO 8601 format; invalid → Error_Record           |
+| policy_status     | STRING        | not null, allowed values: ISSUED · ACTIVE · EXPIRED · CANCELLED | uppercase standardization; invalid → Error_Record |
+| premium_amount    | DECIMAL(18,2) | not null, > 0                                                   | round to 2 decimals; invalid → Error_Record       |
+| issued_date       | DATE          | not null, valid date, <= today                                  | ISO 8601 format; future date → Error_Record       |
+| last_updated      | TIMESTAMP     | nullable, valid timestamp                                       | ISO 8601 format                                   |
+| operation_type    | STRING        | allowed values: I · U · D                                       | invalid → Error_Record                            |
+| batch_date        | DATE          | valid date                                                      | ISO 8601 format                                   |
+| source_system     | STRING        | not null                                                        | uppercase standardization                         |
 
 ---
 
@@ -137,23 +107,63 @@ Invalid or non-recoverable records are redirected to the `Error_Record` table fo
 | ------------------- | ------------- | ------------------------------------------ | ------------------------------------------------------ |
 | cancellation_id     | STRING        | not null, unique PK                        | remove duplicates; null → Error_Record                 |
 | policy_id           | STRING        | not null, valid FK                         | invalid FK/null → Error_Record                         |
-| cancellation_date   | DATE          | not null, valid date, >= policy_start_date | ISO 8601 format; invalid/null → Error_Record           |
-| cancellation_reason | STRING        | nullable                                   |                                                        |
+| cancellation_date   | DATE          | not null, valid date, >= policy_start_date | ISO 8601 format; invalid → Error_Record                |
+| cancellation_reason | STRING        | nullable                                   | trim whitespace                                        |
 | refund_amount       | DECIMAL(18,2) | >= 0, numeric                              | round to 2 decimals; null → 0; negative → Error_Record |
+| last_updated        | TIMESTAMP     | nullable, valid timestamp                  | ISO 8601 format                                        |
+| operation_type      | STRING        | allowed values: I · U · D                  | invalid → Error_Record                                 |
+| batch_date          | DATE          | valid date                                 | ISO 8601 format                                        |
+| source_system       | STRING        | not null                                   | uppercase standardization                              |
 
 ---
 
 ## payment
 
-| Column                | Data Type     | Validation Rule                | Cleansing Action                                       |
-| --------------------- | ------------- | ------------------------------ | ------------------------------------------------------ |
-| payment_id            | STRING        | not null, unique PK            | remove duplicates; null → Error_Record                 |
-| policy_id             | STRING        | not null, valid FK             | invalid FK/null → Error_Record                         |
-| payment_date          | DATE          | not null, valid date, <= today | ISO 8601 format; future/null → Error_Record            |
-| payment_method        | STRING        | allowed values                 | uppercase standardization                              |
-| payment_status        | STRING        | not null, allowed values       | uppercase standardization; null/invalid → Error_Record |
-| payment_amount        | DECIMAL(18,2) | not null, > 0, numeric         | round to 2 decimals; invalid/null → Error_Record       |
-| transaction_reference | STRING        | not null, unique               | trim whitespace; null/duplicate → Error_Record         |
+| Column                | Data Type     | Validation Rule                                               | Cleansing Action                                  |
+| --------------------- | ------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| payment_id            | STRING        | not null, unique PK                                           | remove duplicates; null → Error_Record            |
+| policy_id             | STRING        | not null, valid FK                                            | invalid FK/null → Error_Record                    |
+| payment_date          | DATE          | not null, valid date, <= today                                | ISO 8601 format; future/null → Error_Record       |
+| payment_method        | STRING        | allowed values: CREDIT CARD · BANK TRANSFER · CASH · E-WALLET | uppercase standardization                         |
+| payment_status        | STRING        | not null, allowed values: PENDING · PAID · FAILED · REFUNDED  | uppercase standardization; invalid → Error_Record |
+| payment_amount        | DECIMAL(18,2) | not null, > 0                                                 | round to 2 decimals; invalid → Error_Record       |
+| transaction_reference | STRING        | not null, unique                                              | trim whitespace; null/duplicate → Error_Record    |
+| last_updated          | TIMESTAMP     | nullable, valid timestamp                                     | ISO 8601 format                                   |
+| operation_type        | STRING        | allowed values: I · U · D                                     | invalid → Error_Record                            |
+| batch_date            | DATE          | valid date                                                    | ISO 8601 format                                   |
+| source_system         | STRING        | not null                                                      | uppercase standardization                         |
+
+---
+
+# Status Standardization Rules
+
+## Quotation Status
+
+| Allowed Value |
+| ------------- |
+| QUOTED        |
+| ACCEPTED      |
+| REJECTED      |
+| EXPIRED       |
+| CONVERTED     |
+
+## Policy Status
+
+| Allowed Value |
+| ------------- |
+| ISSUED        |
+| ACTIVE        |
+| EXPIRED       |
+| CANCELLED     |
+
+## Payment Status
+
+| Allowed Value |
+| ------------- |
+| PENDING       |
+| PAID          |
+| FAILED        |
+| REFUNDED      |
 
 ---
 

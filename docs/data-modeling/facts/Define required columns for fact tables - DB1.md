@@ -86,7 +86,7 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `vehicle_key` | BIGINT | FK → `dim_vehicle` | Reference to the insured vehicle for which the quotation was requested. |
 | `package_key` | BIGINT | FK → `dim_package` | Denormalized from parent quote to analyze coverages across core product packages. |
 | `quotation_status_key` | BIGINT | FK → `dim_quotation_status` | Denormalized from parent quote to filter active or converted coverages. |
-| `coverage_key` | BIGINT | FK → `dim_coverage_type` | Reference to the standardized coverage type taxonomy (e.g., Physical Damage, Third Party Liability, PA). |
+| `coverage_key` | BIGINT | FK → `dim_coverage` | Reference to the standardized coverage type taxonomy (e.g., Physical Damage, Third Party Liability, PA). |
 | `coverage_amount` | DECIMAL(18,2) | Measure (Additive) | Maximum insured value for this coverage line. Fully additive. |
 | `deductible_amount` | DECIMAL(18,2) | Measure (Additive) | Customer-borne deductible for this coverage line. Defaults to 0; fully additive. |
 
@@ -106,7 +106,7 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `dim_provider` | ✓ | ✓ (Denormalized) |
 | `dim_package` | ✓ | ✓ (Denormalized) |
 | `dim_quotation_status` | ✓ | ✓ (Denormalized) |
-| `dim_coverage_type` | — | ✓ |
+| `dim_coverage` | — | ✓ |
 
 ---
 
@@ -152,7 +152,7 @@ All measures are fully additive. Analysts must ensure filters exclude soft-delet
 | (Via `quotation` join) | `provider_key` | Extract parent `provider_code` → Lookup → `dim_provider` |
 | (Via `quotation` join) | `package_key` | Extract parent `package_code` → Lookup → `dim_package` |
 | (Via `quotation` join) | `quotation_status_key`| Extract parent `quotation_status` → Lookup → `dim_quotation_status` |
-| `coverage_type` | `coverage_type_key` | Standardize free-text string → Lookup → `dim_coverage_type` |
+| `coverage_type` | `coverage_type_key` | Standardize free-text string → Lookup → `dim_coverage` |
 | `coverage_amount` | `coverage_amount` | Direct mapping |
 | `deductible_amount` | `deductible_amount` | `COALESCE(deductible_amount, 0.00)` |
 | *Pipeline Metadata* | *Technical Columns* | Generated via Spark/Data Factory run context (`batch_id`, `run_id`, etc.) |
@@ -162,7 +162,7 @@ All measures are fully additive. Analysts must ensure filters exclude soft-delet
 ## 8. Open Items and Recommendations
 | # | Table | Item | Recommendation |
 | :--- | :--- | :--- | :--- |
-| 1 | `fact_quotation_item` | Limited coverage profiles in early seed records | Pre-populate `dim_coverage_type` master data with standard industry groupings (Third Party, Passenger Alternative, Comprehensive, Fire) before production release. |
+| 1 | `fact_quotation_item` | Limited coverage profiles in early seed records | Pre-populate `dim_coverage` master data with standard industry groupings (Third Party, Passenger Alternative, Comprehensive, Fire) before production release. |
 | 2 | `fact_quotation_item` | Free-text source values (`NVARCHAR(100)`) | Build robust regex cleanup rules inside the Silver processing notebooks to guarantee standardized routing into dimension keys. |
 | 3 | `fact_quotation` | Absence of vehicle-level attributes | Keep as a future enhancement phase. If telemetry or asset segment pricing analytics are needed, a `vehicle_key` from source can be denormalized directly. |
 

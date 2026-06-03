@@ -30,8 +30,6 @@ erDiagram
         timestamp effective_from
         timestamp effective_to
         boolean is_current
-        boolean is_deleted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -46,8 +44,6 @@ erDiagram
         timestamp effective_from
         timestamp effective_to
         boolean is_current
-        boolean is_deleted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -61,8 +57,6 @@ erDiagram
         timestamp effective_from
         timestamp effective_to
         boolean is_current
-        boolean is_deleted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -70,7 +64,6 @@ erDiagram
     dim_package {
         bigint package_key PK
         string package_code
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -78,7 +71,6 @@ erDiagram
     dim_coverage {
         bigint coverage_key PK
         string coverage_type
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -87,7 +79,6 @@ erDiagram
         bigint quotation_key PK
         string quotation_id
         date quotation_expiry_date
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -95,7 +86,6 @@ erDiagram
     dim_policy {
         bigint policy_key PK
         string policy_id
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -103,10 +93,6 @@ erDiagram
     dim_quotation_status {
         bigint quotation_status_key PK
         string quotation_status_code
-        boolean is_open
-        boolean is_accepted
-        boolean is_converted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -114,10 +100,6 @@ erDiagram
     dim_policy_status {
         bigint policy_status_key PK
         string policy_status_code
-        boolean is_active_policy
-        boolean is_terminal_status
-        string is_accepted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -125,9 +107,6 @@ erDiagram
     dim_payment_status {
         bigint payment_status_key PK
         string payment_status_code
-        boolean is_successful_payment
-        boolean is_refund_status
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -135,7 +114,6 @@ erDiagram
     dim_payment_method {
         bigint payment_method_key PK
         string payment_method_code
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -143,8 +121,6 @@ erDiagram
     dim_cancellation_reason {
         bigint cancellation_reason_key PK
         string cancellation_reason
-        string is_accepted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }
@@ -161,9 +137,6 @@ erDiagram
         timestamp effective_from
         timestamp effective_to
         boolean is_current
-        boolean is_deleted
-        string is_accepted
-        string _source_system
         timestamp created_at
         timestamp updated_at
     }

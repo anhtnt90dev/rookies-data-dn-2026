@@ -1,3 +1,11 @@
+# BPMN - Insurance Business Process
+
+> **Note:**
+>
+> - `docs/business-process/diagram/bpmn.svg` has been intentionally replaced by the Mermaid diagram in this document.
+> - Mermaid (Diagram as Code) is the single source of truth for this business process diagram.
+
+
 ```mermaid
 flowchart TB
      subgraph Customer
@@ -26,7 +34,6 @@ flowchart TB
          S8[Activate policy<br/>Status = ACTIVE]
          S9[Natural expiry<br/>Status = EXPIRED]
          S10[Cancel policy<br/>Status = CANCELLED]
-         S11[Record refund<br/>Status = REFUNDED]
          SReject[Close quotation<br/>Status = REJECTED or EXPIRED]
      end
 
@@ -42,11 +49,12 @@ flowchart TB
          PP2[Payment PAID]
          PP3[Payment FAILED]
          PP4[Process refund]
+         PP5[Record refund<br/>Payment Status = REFUNDED]
      end
 
      subgraph Operations_Team
-         O1[Follow up failed payment]
-         O2[Validate cancellation]
+         O1[Follow up pending/failed payment]
+         O2{Validate cancellation?}
          O3[Refund follow-up]
      end
 
@@ -58,17 +66,27 @@ flowchart TB
      C3 -- Reject or expire --> SReject --> CEnd
      C3 -- Accept --> A3 --> S3 --> S4 --> P3 --> S5 --> S6
      
-     %% --- Payment Lifecycle Connection ---
+     %% --- Payment Lifecycle ---
      S6 --> C4
      C4 --> PP1
      
      PP1 -- Paid --> PP2 --> S7 --> S8
      
-     %% --- Failed Payment & Retry ---
-     PP1 -- Failed --> PP3 --> O1 --> C4
+     %% --- Optimized Failed Payment Loop ---
+     PP1 -- Failed --> PP3 
+     PP3 --> C4                         
+     PP3 -.-> O1                        
+     O1 -.-> C4
      
      %% --- Post-Active Lifecycle ---
      S8 -- policy_end_date reached --> S9 --> CEnd
-     S8 --> C5 --> A4 --> O2 --> P4 --> S10
-     S10 -- refund if applicable --> PP4 --> S11 --> O3 --> CEnd
+     
+     %% --- Cancellation Path ---
+     S8 --> C5 --> A4 --> O2
+     
+     O2 -- Rejected --> S8               
+     O2 -- Approved --> P4 --> S10       
+     
+     %% --- Refund Path ---
+     S10 -- refund if applicable --> PP4 --> PP5 --> O3 --> CEnd
 ```

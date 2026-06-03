@@ -30,8 +30,8 @@ This version is aligned with:
 | CRM SQL | `agents` | `dim_agent` | `region`, `branch`, and `manager_name` are kept as agent attributes. |
 | CRM SQL | `insurance_providers` | `dim_provider` | Provider attributes include provider name, group, and active flag. |
 | CRM SQL | `vehicle` | `dim_vehicle` | Source vehicle details are resolved into a conformed vehicle dimension. |
-| CRM SQL | `quotation.package_code` | `Dim_Package` |
-| CRM SQL | `quotation` | `Dim_Quotation_Status`, `Dim_Date` |
+| CRM SQL | `quotation.package_code` | `dim_package` | |
+| CRM SQL | `quotation` | `dim_quotation`, `dim_quotation_status`, `dim_date` | |
 | CRM SQL | `quotation_item` | `dim_coverage` | Coverage belongs to quotation item grain. |
 | Policy DB / JSON | `policy_info` | `dim_policy`, `dim_policy_status`, `dim_date` | Policy keeps `policy_id`. Policy transaction dates, status, premium, and context keys are resolved into `fact_policy`. `dim_policy` serves as the transaction identifier dimension. |
 | Payment DB / JSON | `payment` | `dim_payment_status`, `dim_payment_method`, `dim_date` | Payment is linked to policy by `policy_id`. |

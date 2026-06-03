@@ -113,10 +113,10 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id` (or inherit from `fact_quotation` context by joining on `quotation_id`). |
+| `quotation_key` | Lookup `dim_quotation` by `quotation_id`, or resolve from the quotation header/source context during Gold ETL. |
 | `coverage_key` | Lookup `dim_coverage` by `coverage_type`. |
-| `quotation_date_key` | Inherit from quotation header by joining `quotation_item.quotation_id` to `quotation.quotation_id`. |
-| Customer/agent/provider/package/status/vehicle keys | Inherit from `fact_quotation` context by joining on `quotation_id`. |
+| `quotation_date_key` | Resolve from the quotation header/source context during Gold ETL. |
+| Customer/agent/provider/package/status/vehicle keys | Resolve from the quotation header/source context during Gold ETL. |
 
 ## 7.3 `fact_policy`
 

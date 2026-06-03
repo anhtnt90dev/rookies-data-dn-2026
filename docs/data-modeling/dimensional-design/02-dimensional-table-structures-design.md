@@ -204,7 +204,7 @@ This version is aligned with the updated source data, the fact grain document ve
 | `updated_at`    | TIMESTAMP       | Gold row update time.                                  |
 
 > [!NOTE]
-> `dim_policy` is highly simplified to contain only the surrogate `policy_key` and business `policy_id`. It acts as a lightweight conformed dimension to link `fact_policy`, `fact_payment`, and `fact_cancellation` together in the BI semantic model, avoiding direct fact-to-fact joins. All policy dates, status keys, premium amounts, and context keys (customer, provider, vehicle) are resolved directly at the fact table level (`fact_policy`).
+> `dim_policy` is highly simplified to contain only the surrogate `policy_key` and business `policy_id`. It acts as a lightweight conformed dimension to link `fact_policy`, `fact_payment`, and `fact_cancellation` together in the BI semantic model, avoiding direct fact-to-fact joins. All policy dates, status keys, premium amounts, and context keys (customer, provider, vehicle) are resolved at the respective fact table levels (`fact_policy`, `fact_payment`, and `fact_cancellation`).
 
 ## 5.9 `dim_quotation_status`
 

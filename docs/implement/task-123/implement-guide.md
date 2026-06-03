@@ -63,13 +63,13 @@
 
 | Component | Type | Status | Owner |
 |---|---|---|---|
-| Config table reader | Notebook utility | 🔨 To build | Teammate |
+| Config table reader | Notebook utility | 🔨 To build | VinhPM |
 | JSON mapping file loader | Utility function | ✅ Already done | — |
 | Config reader utility | Utility function | ✅ Already done | — |
 | DB connection / session manager | Utility function | ✅ Already done | — |
 | Bronze reader (Delta) | Notebook | 🔨 To build | VinhPM |
 | Column transformation engine | Notebook | 🔨 To build | VinhPM |
-| Null / default handler | Notebook | 🔨 To build | Trang |
+| Null / default handler   | Notebook | 🔨 To build | Trang |
 | DQ validation engine | Notebook | 🔨 To build | Trang |
 | Silver MERGE INTO (Delta upsert) | Notebook | 🔨 To build | VinhPM |
 | Audit log caller | Wrapper call | 🔨 To build | Trang |
@@ -83,7 +83,7 @@
 
 ### Step 1 — Read Config Table
 
-**Owner:** Trang
+**Owner:** VinhPM
 **Type:** Notebook cell / utility function
 
 #### Purpose
@@ -150,7 +150,7 @@ For each row from the config table, load the corresponding JSON mapping file tha
 #### Output
 
 ```python
-# Parsed mapping object — this is the HANDOFF CONTRACT to VinhPM's step 3 & 4
+# Parsed mapping object — this is the HANDOFF CONTRACT 
 mapping: dict = {
     "source_table": "bronze.agent",
     "target_table": "silver.agent",
@@ -186,18 +186,6 @@ Read the Bronze Delta table into a Spark DataFrame using the `source_table` from
 | `mapping["source_table"]` | String, e.g. `"bronze.agent"` |
 | Spark session | From existing DB connection/session manager |
 
-#### Implementation
-
-```python
-def read_bronze_table(spark: SparkSession, source_table: str) -> DataFrame:
-    """
-    Read source table from Bronze layer (Delta format).
-    Returns raw DataFrame with all original columns.
-    """
-    df = spark.read.format("delta").table(source_table)
-    return df
-```
-
 #### Output
 
 | Output | Type | Detail |
@@ -221,7 +209,7 @@ def read_bronze_table(spark: SparkSession, source_table: str) -> DataFrame:
 Build the Silver DataFrame by selecting and transforming columns from Bronze based on the mapping JSON. Handle:
 1. Direct column renames (`expression == source_column_name`)
 2. SQL expressions (`expression == "concat(a, ' ', b)"`)
-3. Null / default value handling (`expression == null`)
+3. Generate by system or default value handling   (`expression == null`)
 
 #### Input
 
@@ -231,52 +219,6 @@ Build the Silver DataFrame by selecting and transforming columns from Bronze bas
 | `mapping["columns"]` | `List[dict]` | Output of Step 2 — `[{target, expression}]` |
 | `null_defaults` | `dict` | Config-level defaults per data type (e.g. `{"string": "", "int": 0}`) |
 
-#### Implementation
-
-```python
-from pyspark.sql import functions as F
-
-def apply_column_mapping(
-    df: DataFrame,
-    columns: list,
-    null_defaults: dict = None
-) -> DataFrame:
-    """
-    Dynamically build SELECT based on mapping JSON columns list.
-    
-    Rules:
-      - expression == column_name  → df[expression].alias(target)
-      - expression is SQL string   → F.expr(expression).alias(target)
-      - expression is None         → F.lit(null_defaults.get(type, None)).alias(target)
-    """
-    select_exprs = []
-
-    for col_map in columns:
-        target     = col_map["target"]
-        expression = col_map["expression"]
-
-        if expression is None:
-            # Null / default handling
-            default_val = _get_default(target, null_defaults)
-            select_exprs.append(F.lit(default_val).alias(target))
-
-        elif expression in df.columns:
-            # Direct column reference
-            select_exprs.append(F.col(expression).alias(target))
-
-        else:
-            # SQL expression (e.g. concat, coalesce, cast)
-            select_exprs.append(F.expr(expression).alias(target))
-
-    return df.select(*select_exprs)
-
-
-def _get_default(col_name: str, null_defaults: dict) -> any:
-    """Return configured default or None."""
-    if null_defaults and col_name in null_defaults:
-        return null_defaults[col_name]
-    return None
-```
 
 #### Output
 
@@ -317,51 +259,6 @@ dq_rules = [
 ]
 ```
 
-#### Implementation
-
-```python
-def run_dq_validation(df: DataFrame, dq_rules: list) -> tuple:
-    """
-    Apply DQ rules. Returns:
-      - df_valid   : rows that pass all rules
-      - df_rejected: rows that fail at least one rule (with __dq_failure_reason column)
-    """
-    df = df.withColumn("__dq_pass", F.lit(True))
-    df = df.withColumn("__dq_failure_reason", F.lit(""))
-
-    for rule in dq_rules:
-        col_name = rule["column"]
-
-        if rule["rule"] == "not_null":
-            condition = F.col(col_name).isNull()
-
-        elif rule["rule"] == "unique":
-            # Flag duplicates
-            w = Window.partitionBy(col_name)
-            df = df.withColumn("__cnt", F.count("*").over(w))
-            condition = F.col("__cnt") > 1
-            df = df.drop("__cnt")
-
-        elif rule["rule"] == "in_set":
-            condition = ~F.col(col_name).isin(rule["values"])
-
-        # Mark failed rows
-        df = df.withColumn(
-            "__dq_pass",
-            F.when(condition, F.lit(False)).otherwise(F.col("__dq_pass"))
-        ).withColumn(
-            "__dq_failure_reason",
-            F.when(condition, F.concat(
-                F.col("__dq_failure_reason"),
-                F.lit(f"{col_name}:{rule['rule']}; ")
-            )).otherwise(F.col("__dq_failure_reason"))
-        )
-
-    df_valid    = df.filter(F.col("__dq_pass") == True).drop("__dq_pass", "__dq_failure_reason")
-    df_rejected = df.filter(F.col("__dq_pass") == False)
-
-    return df_valid, df_rejected
-```
 
 #### Output
 
@@ -394,53 +291,8 @@ Write validated records to the Silver Delta table using a dynamic `MERGE INTO` s
 | `mapping["target_table"]` | `str` | e.g. `"silver.agent"` |
 | `config["merge_keys"]` | `List[str]` | Join keys for MERGE, e.g. `["agent_id"]` |
 
-#### Implementation
 
-```python
-from delta.tables import DeltaTable
 
-def merge_into_silver(
-    spark: SparkSession,
-    df_valid: DataFrame,
-    target_table: str,
-    merge_keys: list
-) -> dict:
-    """
-    Dynamic MERGE INTO Silver Delta table.
-    Returns merge stats: rows_inserted, rows_updated.
-    """
-    # Register incoming data as temp view
-    tmp_view = f"tmp_{target_table.replace('.', '_')}"
-    df_valid.createOrReplaceTempView(tmp_view)
-
-    # Build merge condition dynamically from merge_keys
-    merge_condition = " AND ".join([
-        f"target.{k} = source.{k}" for k in merge_keys
-    ])
-
-    # Build SET clause: update all non-key columns
-    non_key_cols = [c for c in df_valid.columns if c not in merge_keys]
-    set_clause = ", ".join([f"target.{c} = source.{c}" for c in non_key_cols])
-
-    merge_sql = f"""
-        MERGE INTO {target_table} AS target
-        USING {tmp_view} AS source
-        ON {merge_condition}
-        WHEN MATCHED THEN
-            UPDATE SET {set_clause}
-        WHEN NOT MATCHED THEN
-            INSERT ({', '.join(df_valid.columns)})
-            VALUES ({', '.join(['source.' + c for c in df_valid.columns])})
-    """
-
-    spark.sql(merge_sql)
-
-    # Return stats for audit log
-    return {
-        "target_table": target_table,
-        "rows_attempted": df_valid.count()
-    }
-```
 
 #### Output
 
@@ -482,38 +334,7 @@ Collect the following metadata during steps 1–6 and pass to `audit_log()`:
 | `status` | `str` | `"SUCCESS"` / `"WARNING"` / `"FAILED"` |
 | `error_message` | `str` | Exception message if any, else `None` |
 
-#### Implementation
 
-```python
-def call_audit_log(
-    audit_log_fn,       # existing common function reference
-    source_table: str,
-    target_table: str,
-    run_timestamp,
-    rows_read: int,
-    rows_valid: int,
-    rows_rejected: int,
-    rows_merged: int,
-    status: str,
-    error_message: str = None
-):
-    """
-    Wrapper to call the existing audit_log common function
-    with all Bronze→Silver metadata.
-    """
-    audit_log_fn(
-        pipeline_name   = "bronze_to_silver",
-        source_table    = source_table,
-        target_table    = target_table,
-        run_timestamp   = run_timestamp,
-        rows_read       = rows_read,
-        rows_valid      = rows_valid,
-        rows_rejected   = rows_rejected,
-        rows_merged     = rows_merged,
-        status          = status,
-        error_message   = error_message
-    )
-```
 
 #### Output
 
@@ -530,7 +351,7 @@ def call_audit_log(
 
 ## 4. Team Task Assignment
 
-### VinhPM — PySpark Core (Steps 3, 4, 6)
+### VinhPM — PySpark  (Steps 3, 4, 6)
 
 | Task | Step | Notes |
 |---|---|---|
@@ -541,11 +362,10 @@ def call_audit_log(
 | Error handling + retry wrapper | All | Wrap per-table loop in try/except |
 | End-to-end integration test | — | Test with 1 real table pair |
 
-### Trang — Config, Quality, Audit (Steps 1, 2, 5, 7)
+### Trang —  Quality, Audit (Steps 1, 2, 5, 7)
 
 | Task | Step | Notes |
 |---|---|---|
-| Read config table, iterate per row | Step 1 | Use config reader utility |
 | Load and validate mapping JSON per row | Step 2 | Use JSON loader utility |
 | DQ rule engine (null, type, range, unique) | Step 5 | Generic, table-agnostic |
 | DQ quarantine write (rejected rows) | Step 5 | Write to `silver_quarantine.*` |

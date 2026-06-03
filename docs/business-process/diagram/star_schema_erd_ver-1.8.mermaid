@@ -33,15 +33,21 @@ flowchart LR
     fact_quotation --- dim_package
 
     dim_date --- fact_cancellation
-    dim_customer --- fact_cancellation
-    dim_provider --- fact_cancellation
-    dim_vehicle --- fact_cancellation
+    dim_customer -. "resolved" .-> fact_cancellation
+    dim_provider -. "resolved" .-> fact_cancellation
+    dim_vehicle -. "resolved" .-> fact_cancellation
     fact_cancellation --- dim_cancellation_reason
     fact_cancellation --- dim_policy
 
     dim_coverage --- fact_quotation_item
     dim_vehicle --- fact_quotation_item
     fact_quotation_item --- dim_quotation
+    dim_date -. "inherited" .-> fact_quotation_item
+    dim_customer -. "inherited" .-> fact_quotation_item
+    dim_agent -. "inherited" .-> fact_quotation_item
+    dim_provider -. "inherited" .-> fact_quotation_item
+    dim_package -. "inherited" .-> fact_quotation_item
+    dim_quotation_status -. "inherited" .-> fact_quotation_item
 
     dim_date --- fact_policy
     dim_customer --- fact_policy
@@ -49,13 +55,14 @@ flowchart LR
     dim_vehicle --- fact_policy
     fact_policy --- dim_agent
     fact_policy --- dim_package
+    fact_policy --- dim_quotation
     fact_policy --- dim_policy
     fact_policy --- dim_policy_status
 
     dim_date --- fact_payment
-    dim_customer --- fact_payment
-    dim_provider --- fact_payment
-    dim_vehicle --- fact_payment
+    dim_customer -. "resolved" .-> fact_payment
+    dim_provider -. "resolved" .-> fact_payment
+    dim_vehicle -. "resolved" .-> fact_payment
     fact_payment --- dim_policy
     fact_payment --- dim_payment_status
     fact_payment --- dim_payment_method

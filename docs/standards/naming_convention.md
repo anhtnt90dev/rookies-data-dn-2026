@@ -1,4 +1,4 @@
-﻿# CarPro Naming Convention Guide
+# CarPro Naming Convention Guide
 
 **Project:** CarPro Insurance Analytics
 **Purpose:** Provide one shared naming standard for Python code and SQL objects so the team can develop consistently.
@@ -339,7 +339,7 @@ nb_bronze_policy_ingest_dev
 nb_silver_policy_clean_dev
 nb_silver_payment_validate_dev
 nb_gold_policy_fact_build_dev
-nb_audit_pipeline_log_dev
+nb_log_audit_session_dev
 ```
 
 ### 2.14 Python Script File Names
@@ -450,7 +450,7 @@ This project should use simple, readable, SQL-friendly names. The default SQL ob
 
 | SQL Object             | Pattern                            | Example                                             |
 | ---------------------- | ---------------------------------- | --------------------------------------------------- |
-| Schema                 | `lower_snake_case`                 | `gold`, `audit`, `cfg`, `etl`                       |
+| Schema                 | `lower_snake_case`                 | `gold`, `log`, `cfg`, `etl`                         |
 | Table                  | `lower_snake_case`                 | `fact_policy`                                  |
 | View                   | `vw_<purpose>`                     | `vw_policy_performance`                             |
 | Stored procedure       | `usp_<verb>_<object>`              | `usp_load_silver_policy`                            |
@@ -461,7 +461,7 @@ This project should use simple, readable, SQL-friendly names. The default SQL ob
 | Foreign key constraint | `fk_<child_table>__<parent_table>` | `fk_fact_policy_dim_customer`            |
 | Unique constraint      | `uq_<table>__<columns>`            | `uq_dim_customer__customer_id`                 |
 | Check constraint       | `ck_<table>__<rule>`               | `ck_fact_payment__payment_amount_non_negative` |
-| Default constraint     | `df_<table>__<column>`             | `df_audit_pipeline_execution__created_at`           |
+| Default constraint     | `df_<table>__<column>`             | `df_log_audit_session__created_at`           |
 | Index                  | `ix_<table>__<columns>`            | `ix_fact_policy__policy_date_key`              |
 | Unique index           | `ux_<table>__<columns>`            | `ux_silver_policy__policy_id`                       |
 | Temporary table        | `#tmp_<purpose>`                   | `#tmp_policy_dedup`                                 |
@@ -507,15 +507,37 @@ If working in a SQL Warehouse or relational database, use schemas to separate re
 | `bronze` | Raw or source-aligned tables.                        |
 | `silver` | Cleaned and standardized tables.                     |
 | `gold`   | Business-ready dimensional model.                    |
-| `audit`  | Execution logs, row counts, errors, quality results. |
+| `log`    | Execution logs, row counts, errors, quality results. |
 | `cfg`    | Config, watermark, source metadata, load control.    |
 | `ref`    | Reference lists and controlled mapping tables.       |
 | `etl`    | Stored procedures/functions used for ETL logic.      |
 | `rpt`    | Report-facing views if needed.                       |
 
+**Main Control and Log Table Examples:**
+
+```text
+cfg.job_config
+cfg.watermark
+cfg.next_run_mode
+log.audit_session
+log.audit_table_session
+log.audit_detail
+log.invalid_record
+```
+
 ### 3.4 Lakehouse vs Warehouse Table Naming
 
-The current Lakehouse design uses layer prefixes because all tables are listed together:
+The current approved Lakehouse design has schemas enabled, so the standard is schema-qualified names:
+
+```text
+bronze.policy
+silver.policy
+gold.fact_policy
+log.audit_session
+cfg.watermark
+```
+
+Prefix-style names should only be used as a fallback when Lakehouse schemas are disabled:
 
 ```text
 bronze_policy
@@ -523,26 +545,16 @@ silver_policy
 fact_policy
 ```
 
-If a future SQL Warehouse uses schemas, prefer schema separation and avoid repeating the layer in the table name:
+Do not mix both styles in the same database unless there is a clear reason.
 
-```sql
-bronze.policy
-silver.policy
-gold.fact_policy
-audit.pipeline_execution
-cfg.watermark
-```
-
-Do not mix both styles in the same SQL database unless there is a clear reason.
-
-Bad future Warehouse example:
+Bad schema-qualified example:
 
 ```sql
 gold.dim_customer_table
 silver.silver_policy
 ```
 
-Good future Warehouse example:
+Good schema-qualified example:
 
 ```sql
 gold.fact_policy
@@ -859,7 +871,7 @@ Always name important constraints explicitly. Do not rely on system-generated na
 | Foreign key | `fk_<child_table>__<parent_table>` | `fk_fact_policy__dim_customer`            |
 | Unique      | `uq_<table>__<columns>`            | `uq_dim_customer__customer_id`                 |
 | Check       | `ck_<table>__<rule>`               | `ck_fact_payment__payment_amount_non_negative` |
-| Default     | `df_<table>__<column>`             | `df_audit_pipeline_execution__created_at`           |
+| Default     | `df_<table>__<column>`             | `df_log_audit_session__created_at`                 |
 
 Use double underscore `__` to separate the table name from the target columns or related table.
 

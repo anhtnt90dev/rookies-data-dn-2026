@@ -14,7 +14,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 
 - Silver tables use Lakehouse prefix naming: `silver.<entity>` (if using schemas, replace with `silver.<entity>`).
 - Timestamp columns end with `_at`; date-only columns end with `_date`.
-- JSON-derived dates are already cast to `DATE` in Silver (e.g., `payment_date`, `cancellation_at`).
+- JSON-derived timestamps are already cast to `TIMESTAMP` in Silver (e.g., `payment_at`, `cancellation_at`).
 - Provider active flag is standardized as `is_active` (BOOLEAN) in Silver.
 - Metadata and audit columns `_batch_id`, `_source_system`, and `_source_name` are carried directly from the Silver layer to the Gold layer for traceability. The `_loaded_at` column is generated new at the Gold layer.
 
@@ -429,9 +429,9 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `policy_id`             | STRING        | `policy_key`             | BIGINT        | Lookup `dim_policy` by `policy_id`.                                                                                                   |
 | `payment_status`        | STRING        | `payment_status_key`     | BIGINT        | Lookup `dim_payment_status` by `payment_status_code`.                                                                                 |
 | `payment_method`        | STRING        | `payment_method_key`     | BIGINT        | Standardize -> lookup `dim_payment_method` by `payment_method_code`.                                                                  |
-| `payment_at`          | TIMESTAMP          | `payment_date_key`       | INT           | `CAST(FORMAT(payment_date, 'yyyyMMdd') AS INT)`; lookup `dim_date`.                                                                   |
-| _(via join to policy)_  | STRING        | `customer_key`           | BIGINT        | Join `payment.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `payment_date` BETWEEN `effective_from` AND `effective_to`. |
-| _(via join to policy)_  | STRING        | `provider_key`           | BIGINT        | Join `payment.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `payment_date` BETWEEN `effective_from` AND `effective_to`. |
+| `payment_at`          | TIMESTAMP          | `payment_date_key`       | INT           | `CAST(FORMAT(payment_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`.                                                                   |
+| _(via join to policy)_  | STRING        | `customer_key`           | BIGINT        | Join `payment.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
+| _(via join to policy)_  | STRING        | `provider_key`           | BIGINT        | Join `payment.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
 | `payment_amount`        | DECIMAL(18,2) | `payment_amount`         | DECIMAL(18,2) | `COALESCE(payment_amount, 0)`.                                                                                                        |
 | `created_at`            | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                     |
 | `updated_at`            | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                     |
@@ -453,7 +453,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `policy_id`            | STRING        | `policy_id`              | STRING        | Direct mapping. Degenerate dimension.                                                                                                           |
 | `policy_id`            | STRING        | `policy_key`             | BIGINT        | Lookup `dim_policy` by `policy_id`.                                                                                                             |
 | `cancellation_reason`  | STRING        | `cancellation_reason_key`| BIGINT        | Lookup `dim_cancellation_reason` by `cancellation_reason`.                                                                                      |
-| `cancellation_at`    | DATE          | `cancellation_date_key`  | INT           | `CAST(FORMAT(cancellation_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`.                                                                        |
+| `cancellation_at`    | TIMESTAMP     | `cancellation_date_key`  | INT           | `CAST(FORMAT(cancellation_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`.                                                                        |
 | _(via join to policy)_ | STRING        | `customer_key`           | BIGINT        | Join `cancellation.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `cancellation_at` BETWEEN `effective_from` AND `effective_to`. |
 | _(via join to policy)_ | STRING        | `provider_key`           | BIGINT        | Join `cancellation.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `cancellation_at` BETWEEN `effective_from` AND `effective_to`. |
 | `refund_amount`        | DECIMAL(18,2) | `refund_amount`          | DECIMAL(18,2) | `COALESCE(refund_amount, 0)`.                                                                                                                   |

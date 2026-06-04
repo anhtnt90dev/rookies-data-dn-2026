@@ -76,10 +76,18 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 ## 3. JSON Source to Bronze Mapping
 
 > **Note:**
-
-> - Bronze stores raw incremental JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
-
-> - The source file names are based on the provided samples. Despite the naming convention, the JSON sources are incremental (delta) extracts.
+>
+> - Initial ingestion uses *_full_.json files as full-load extracts. Subsequent loads are incremental extracts identified by batch_date, operation_type, and last_updated_at.
+>
+> - Bronze stores raw JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
+>
+> - Any SQL Server JSON export wrapper (e.g. `JSON_F52E2B61-18A1-11d1-B105-00805F49916B`) must be removed, and any wrapped or multi-line payload must be normalized into valid JSON records before parsing.
+>
+> - `source_system` is a business field from the JSON payload.
+>
+> - `_source_system` is pipeline metadata populated from source configuration for ingestion lineage.
+>
+> - Although they may have the same value, they serve different purposes.
 
 ### 3.1. Cancellations
 
@@ -122,7 +130,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | payment_status | STRING | payment_status | STRING | 50 | N/A | N/A | Direct Mapping |
 | payment_amount | STRING | payment_amount | STRING | 30 | N/A | N/A | Direct Mapping |
 | transaction_reference | STRING | transaction_reference | STRING | 100 | N/A | N/A | Direct Mapping |
-| last_updated | STRING | last_updated | STRING | 23 | N/A | N/A | Direct Mapping |
+| last_updated | STRING | last_updated_at | TIMESTAMP | 23 | N/A | N/A | Direct Mapping |
 | operation_type | STRING | operation_type | STRING | 1 | N/A | N/A | Direct Mapping |
 | batch_date | STRING | batch_date | STRING | 10 | N/A | N/A | Direct Mapping |
 | source_system | STRING | source_system | STRING | 50 | N/A | N/A | Direct Mapping |
@@ -151,7 +159,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | policy_status | STRING | policy_status | STRING | 50 | N/A | N/A | Direct Mapping |
 | premium_amount | STRING | premium_amount | STRING | 30 | N/A | N/A | Direct Mapping |
 | issued_date | STRING | issued_date | STRING | 23 | N/A | N/A | Direct Mapping |
-| last_updated | STRING | last_updated | STRING | 23 | N/A | N/A | Direct Mapping |
+| last_updated | STRING | last_updated_at | STRING | 23 | N/A | N/A | Direct Mapping |
 | operation_type | STRING | operation_type | STRING | 1 | N/A | N/A | Direct Mapping |
 | batch_date | STRING | batch_date | STRING | 10 | N/A | N/A | Direct Mapping |
 | source_system | STRING | source_system | STRING | 50 | N/A | N/A | Direct Mapping |

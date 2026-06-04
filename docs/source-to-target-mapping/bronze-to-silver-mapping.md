@@ -32,10 +32,12 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | --- | --- | --- | --- | --- |
 | cancellation_id | STRING | cancellation_id | STRING | Direct mapping |
 | policy_id | STRING | policy_id | STRING | Direct mapping |
-| cancellation_date | STRING | cancellation_at | TIMESTAMP | Cast to `TIMESTAMP` and and suffix `_at`|
+| cancellation_date | STRING | cancellation_at | TIMESTAMP | Cast to `TIMESTAMP` and suffix `_at` |
 | cancellation_reason | STRING | cancellation_reason | STRING | Direct mapping |
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
-| last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
+| last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
+| cancellation_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
+| last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
@@ -57,7 +59,9 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | payment_status | STRING | payment_status | STRING | Direct mapping |
 | payment_amount | STRING | payment_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | transaction_reference | STRING | transaction_reference | STRING | Direct mapping |
-| last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
+| last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
+| payment_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
+| last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
@@ -84,7 +88,9 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | issued_date | STRING | issued_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
-| last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
+| last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
+| issued_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
+| last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |

@@ -23,7 +23,7 @@
       "expression": "refund_amount"
     },
     {
-      "target": "last_updated",
+      "target": "last_updated_at",
       "expression": "last_updated"
     },
     {

@@ -31,8 +31,16 @@
       "expression": "transaction_reference"
     },
     {
-      "target": "last_updated",
-      "expression": "last_updated"
+      "target": "last_updated_at",
+      "expression": "last_updated_at"
+    },
+    {
+      "target": "created_at",
+      "expression": "payment_date"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
     },
     {
       "target": "operation_type",

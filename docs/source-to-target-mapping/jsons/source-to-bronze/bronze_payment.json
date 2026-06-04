@@ -31,7 +31,7 @@
       "expression": "transaction_reference"
     },
     {
-      "target": "last_updated",
+      "target": "last_updated_at",
       "expression": "last_updated"
     },
     {

@@ -11,22 +11,6 @@
       "expression": "payment_status"
     },
     {
-      "target": "payment_status_name",
-      "expression": null
-    },
-    {
-      "target": "status_group",
-      "expression": null
-    },
-    {
-      "target": "is_successful_payment",
-      "expression": null
-    },
-    {
-      "target": "is_refund_status",
-      "expression": null
-    },
-    {
       "target": "created_at",
       "expression": "created_at"
     },

@@ -11,38 +11,6 @@
       "expression": "policy_id"
     },
     {
-      "target": "policy_number",
-      "expression": "policy_number"
-    },
-    {
-      "target": "quotation_id",
-      "expression": "quotation_id"
-    },
-    {
-      "target": "customer_id",
-      "expression": "customer_id"
-    },
-    {
-      "target": "provider_code",
-      "expression": "provider_code"
-    },
-    {
-      "target": "policy_start_date",
-      "expression": "policy_start_date"
-    },
-    {
-      "target": "policy_end_date",
-      "expression": "policy_end_date"
-    },
-    {
-      "target": "premium_amount",
-      "expression": "premium_amount"
-    },
-    {
-      "target": "issued_at",
-      "expression": "issued_at"
-    },
-    {
       "target": "created_at",
       "expression": "created_at"
     },

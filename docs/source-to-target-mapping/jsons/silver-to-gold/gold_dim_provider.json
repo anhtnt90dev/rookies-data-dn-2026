@@ -19,8 +19,8 @@
       "expression": "provider_group"
     },
     {
-      "target": "is_active",
-      "expression": "is_active"
+      "target": "active_flag",
+      "expression": "CAST(is_active AS INT)"
     },
     {
       "target": "effective_from",
@@ -32,10 +32,6 @@
     },
     {
       "target": "is_current",
-      "expression": null
-    },
-    {
-      "target": "is_deleted",
       "expression": null
     },
     {

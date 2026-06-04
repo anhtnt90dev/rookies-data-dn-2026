@@ -11,14 +11,6 @@
       "expression": "payment_method"
     },
     {
-      "target": "payment_method_name",
-      "expression": null
-    },
-    {
-      "target": "payment_method_group",
-      "expression": null
-    },
-    {
       "target": "created_at",
       "expression": "created_at"
     },

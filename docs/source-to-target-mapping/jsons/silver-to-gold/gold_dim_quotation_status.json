@@ -11,22 +11,6 @@
       "expression": "quotation_status"
     },
     {
-      "target": "quotation_status_name",
-      "expression": null
-    },
-    {
-      "target": "is_open",
-      "expression": null
-    },
-    {
-      "target": "is_accepted",
-      "expression": null
-    },
-    {
-      "target": "is_converted",
-      "expression": null
-    },
-    {
       "target": "created_at",
       "expression": "created_at"
     },

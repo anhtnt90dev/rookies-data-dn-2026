@@ -11,10 +11,6 @@
       "expression": "quotation_id"
     },
     {
-      "target": "quotation_number",
-      "expression": "quotation_id"
-    },
-    {
       "target": "quotation_expiry_date",
       "expression": "quotation_expiry_at"
     },

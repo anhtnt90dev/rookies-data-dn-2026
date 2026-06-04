@@ -8,6 +8,10 @@
 
 This document defines the Source-to-Bronze mapping for CRM database tables and JSON-based sources, including field mappings, logical data types, Bronze metadata columns, and proposed type mappings for Microsoft Fabric Lakehouse.
 
+> **Note:**
+>
+> - Table names such as `bronze.customer`, `bronze.payment`, etc. follow the Lakehouse schema naming convention, as Lakehouse schemas are enabled.
+
 ```mermaid
 flowchart LR
     subgraph CRM["CRM Database"]
@@ -96,6 +100,12 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 > - Bronze stores raw JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
 >
 > - Any SQL Server JSON export wrapper (e.g. `JSON_F52E2B61-18A1-11d1-B105-00805F49916B`) must be removed, and any wrapped or multi-line payload must be normalized into valid JSON records before parsing.
+>
+> - `source_system` is a business field from the JSON payload.
+>
+> - `_source_system` is pipeline metadata populated from source configuration for ingestion lineage.
+>
+> - Although they may have the same value, they serve different purposes.
 
 ### 3.1. Cancellations
 
@@ -180,7 +190,9 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 
 > **Note:**
 >
-> - `_operation_type` is inferred as `I` when `updated_date` is null and `U` when `updated_date` is not null. `_batch_date` is generated from the pipeline execution date.
+> - `_operation_type` is inferred as `I` when `updated_date` is null and `U` when `updated_date` is not null. 
+>
+> - `_batch_date` is generated from the pipeline execution date.
 
 ### 4.1. Customers
 

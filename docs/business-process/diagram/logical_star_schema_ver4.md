@@ -254,6 +254,7 @@ erDiagram
     fact_payment {
         bigint policy_key FK
         int payment_date_key FK
+        int issued_date_key FK
         bigint customer_key FK
         bigint provider_key FK
         bigint payment_status_key FK

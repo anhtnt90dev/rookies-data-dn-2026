@@ -37,7 +37,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
+| operation_type | STRING | is_deleted | BOOLEAN | Check Condition |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
 | _source_system | STRING | _source_system | STRING | Pass-through |

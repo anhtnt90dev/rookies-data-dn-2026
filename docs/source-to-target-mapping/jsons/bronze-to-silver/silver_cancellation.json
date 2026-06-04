@@ -11,7 +11,7 @@
       "expression": "policy_id"
     },
     {
-      "target": "cancellation_date",
+      "target": "cancellation_at",
       "expression": "cancellation_date"
     },
     {
@@ -31,7 +31,7 @@
       "expression": "operation_type"
     },
     {
-      "target": "is_delete",
+      "target": "is_deleted",
       "expression": "operation_type"
     },
     {

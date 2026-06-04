@@ -11,7 +11,7 @@
       "expression": "policy_id"
     },
     {
-      "target": "payment_date",
+      "target": "payment_at",
       "expression": "payment_date"
     },
     {

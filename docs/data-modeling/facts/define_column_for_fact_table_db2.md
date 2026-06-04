@@ -36,15 +36,17 @@ The design identifies foreign keys (dimension references), measures, degenerate 
 
 All fact tables share the following audit and metadata columns.
 
-> **Metadata name mapping (baseline alignment):**
-> `_source_system` → `source_system`
-> `_batch_id` → `batch_id`
+**Metadata name mapping (baseline alignment):**
+| Implementation Field | Baseline Field |
+|---------------------|----------------|
+| _source_system | source_system |
+| _batch_id | batch_id |
 
 | Column          | Type      | Description                                        |
 | --------------- | --------- | -------------------------------------------------- |
-| source_system   | STRING    | Source system name.                                |
-| batch_id        | STRING    | Processing batch identifier.                       |
-| pipeline_run_id | STRING    | Pipeline execution identifier.                     |
+| _source_system   | STRING    | Source system name.                                |
+| _batch_id        | STRING    | Processing batch identifier.                       |
+| pipeline_run_id | STRING    | pipeline_run_id maps to the session identifier stored in log.audit_session                   |
 | is_deleted      | TINYINT   | Soft delete flag (0 = Active, 1 = Deleted).        |
 | deleted_at      | TIMESTAMP | Timestamp when the record was marked as deleted.   |
 | delete_batch_id | STRING    | Batch identifier that processed the delete event.  |
@@ -65,10 +67,10 @@ All fact tables share the following audit and metadata columns.
 | --------------------- | ------------- | ---------------------- | ------------------------------------------------------------------------ |
 | policy_key            | BIGINT        | FK → dim_policy        | Shared policy dimension surrogate key.                                   |
 | policy_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
-| policy_number             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
-| quotation_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
-| customer_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
-| provider_code             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
+| policy_number             | STRING        | Degenerate Dimension   | source policy number retained for traceability |
+| quotation_id             | STRING        | Degenerate Dimension   | originating quotation identifier |
+| customer_id             | STRING        | Degenerate Dimension   | source customer identifier |
+| provider_code             | STRING        | Degenerate Dimension   | source provider identifier/code |
 | quotation_key         | BIGINT        | FK → dim_quotation     | Reference to the originating quotation.                                  |
 | customer_key          | BIGINT        | FK → dim_customer      | Reference to the customer who holds the policy.                          |
 | provider_key          | BIGINT        | FK → dim_provider      | Reference to the insurance provider (direct from `policy_info.provider_code`). |
@@ -83,8 +85,9 @@ All fact tables share the following audit and metadata columns.
 
 ### Design Notes
 
-* `agent_key` and `package_key` are resolved through `quotation_id → quotation` during Gold ETL processing.
-* `provider_key` is resolved directly from `policy_info.provider_code → dim_provider`.
+* `agent_key` is resolved via `policy_info.quotation_id → quotation.agent_id → dim_agent.agent_key`.
+*  `package_key` is resolved via `policy_info.quotation_id → quotation.package_code → dim_package.package_key`.
+* `provider_key` is resolved directly from `policy_info.provider_code → dim_provider.provider_key`.
 * `vehicle_key` is resolved via `policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key`.
 
 ---
@@ -111,7 +114,16 @@ All fact tables share the following audit and metadata columns.
 
 ### Design Notes
 
-* `customer_key`, `provider_key`, and `vehicle_key` are resolved through `payment.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key` during Gold ETL processing.
+Dimension keys are resolved during Gold ETL processing using the policy relationship chain:
+
+* `customer_key`:
+  `payment.policy_id → policy_info.customer_id → dim_customer.customer_key`
+
+* `provider_key`:
+  `payment.policy_id → policy_info.provider_code → dim_provider.provider_key`
+
+* `vehicle_key`:
+  `payment.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key`
 
 ---
 
@@ -135,7 +147,16 @@ All fact tables share the following audit and metadata columns.
 
 ### Design Notes
 
-* `customer_key`, `provider_key`, and `vehicle_key` are resolved through `cancellation.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key` during Gold ETL processing.
+Dimension keys are resolved during Gold ETL processing using the policy relationship chain:
+
+* `customer_key`:
+  `cancellation.policy_id → policy_info.customer_id → dim_customer.customer_key`
+
+* `provider_key`:
+  `cancellation.policy_id → policy_info.provider_code → dim_provider.provider_key`
+
+* `vehicle_key`:
+  `cancellation.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key`
 
 ---
 

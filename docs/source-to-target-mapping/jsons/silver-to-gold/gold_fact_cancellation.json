@@ -20,7 +20,7 @@
     },
     {
       "target": "cancellation_date_key",
-      "expression": "cancellation_date"
+      "expression": "cancellation_at"
     },
     {
       "target": "customer_key",

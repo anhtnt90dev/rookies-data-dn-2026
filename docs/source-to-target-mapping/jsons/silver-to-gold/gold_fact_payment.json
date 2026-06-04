@@ -28,7 +28,7 @@
     },
     {
       "target": "payment_date_key",
-      "expression": "payment_date"
+      "expression": "payment_at"
     },
     {
       "target": "customer_key",

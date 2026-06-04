@@ -29,7 +29,7 @@
 | M-25 | Refund Amount | KPI Card | KPI Card | `CALCULATE(SUM(fact_cancellation[refund_amount]))` | Total refunded amount | Financial leakage | fact_cancellation | - | - |
 | M-26 | Refund Rate | KPI Card | KPI Card | `DIVIDE([Refund Amount], [Refund Amount] + [Total Collected Premium], 0) * 100` | Percentage of collected premium that was refunded | Leakage ratio | fact_cancellation + fact_payment | - | PAID payments recommended |
 
-**Lưu ý:**  
+**Notes:**  
 The `aging_days` column used in KPIs M-16 to M-20 is a **Calculated Column** in the fact_payment table, calculated using the following formula in Power BI:
 ```dax
 aging_days = 

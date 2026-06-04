@@ -60,6 +60,9 @@ All fact tables share the following standard Gold lineage, batch control, and au
 | `quotation_id`              | VARCHAR(20)   | Degenerate Dimension        | Natural key retained for traceability and drill-through.                                                    |
 | `customer_key`              | BIGINT        | FK → `dim_customer`         | Reference to the customer who requested the quotation.                                                      |
 | `vehicle_key`               | BIGINT        | FK → `dim_vehicle`          | Reference to the insured vehicle associated with the quotation.                                             |
+| `customer_id`               | BIGINT       | FK → `dim_customer`           | Reference to the customer who requested the quotation. |
+| `agent_id`                  | BIGINT       | FK → `dim_agent`              | Reference to the agent responsible for the quotation. |
+| `provider_code`             | VARCHAR(50)  | FK → `dim_insurance_provider` | Reference to the insurance provider associated with the quotation. |
 | `agent_key`                 | BIGINT        | FK → `dim_agent`            | Reference to the agent who handled the quotation.                                                           |
 | `provider_key`              | BIGINT        | FK → `dim_provider`         | Reference to the insurance provider.                                                                        |
 | `package_key`               | BIGINT        | FK → `dim_package`          | Reference to the insurance package offered.                                                                 |

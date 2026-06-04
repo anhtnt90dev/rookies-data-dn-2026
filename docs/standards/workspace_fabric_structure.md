@@ -137,11 +137,11 @@ lh_insurance_dev/Tables/
 │   ├── fact_policy
 │   ├── fact_payment
 │   └── fact_cancellation
-├── audit/
+├── log/
 │   ├── audit_session
 │   ├── audit_table_session
 │   ├── audit_detail
-│   └── invalid_record
+│   ├── invalid_record
 │   └── retry_log
 └── cfg/
     ├── watermark
@@ -150,5 +150,23 @@ lh_insurance_dev/Tables/
     ├── dim_fact_table
     └── source_dim_fact
 ```
+
+## Canonical Control and Audit Table 
+
+To ensure consistency across architecture designs and physical implementations, the following mapping defines how canonical control and audit concepts correspond to physical tables under the `cfg` and `log` schemas :
+
+| Canonical Concept | Physical Table / Schema | Description / Purpose |
+| :--- | :--- | :--- |
+| `Job_Config` | `cfg.source_table` | Stores source configurations, data formats, paths, keys, and table-level ingestion metadata. |
+| `Watermark` | `cfg.watermark` | Stores the latest processed watermark value used for incremental extraction from Source to Bronze. |
+| `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status, pipeline metadata, and run metrics. |
+| `Pipeline_Log` | `log.audit_table_session`<br>`log.audit_detail` | `log.audit_table_session` tracks table-level layer execution status (Bronze, Silver, Gold).<br>`log.audit_detail` tracks layer-level metrics (source/inserted/updated/deleted/rejected row counts). |
+| `Pipeline_Error` | `log.invalid_record` | Stores records that fail validation, schema compliance, or transformation rules. |
+| N/A | `log.retry_log` | Stores retry attempt details and transient execution errors. |
+| N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context. |
+| N/A | `cfg.dim_fact_table` | Stores Gold-layer table configuration. |
+| N/A | `cfg.source_dim_fact` | Defines the relationship mapping between source tables and Gold tables. |
+
+
 
 

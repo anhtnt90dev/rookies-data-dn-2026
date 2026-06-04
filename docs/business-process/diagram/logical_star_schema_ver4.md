@@ -167,6 +167,9 @@ erDiagram
         decimal premium_amount
 
         string quotation_id
+        string customer_id
+        string agent_id
+        string provider_code
 
         string _source_system
         timestamp created_at
@@ -195,6 +198,7 @@ erDiagram
         decimal deductible_amount
 
         string quotation_item_id
+        string quotation_id
 
         string _source_system
         timestamp created_at
@@ -223,6 +227,10 @@ erDiagram
         decimal premium_amount
 
         string policy_id
+        string policy_number
+        string quotation_id
+        string customer_id
+        string provider_code
 
         string _source_system
         timestamp created_at

@@ -7,9 +7,8 @@
 | `Job_Config` | `cfg.source_table` | Stores source configuration and table-level ingestion metadata |
 | `Watermark` | `cfg.watermark` | Stores Source-to-Bronze ingestion checkpoints |
 | `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status |
-| `Job_Status` / `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail` | Stores table/layer execution status, processing metrics, and reconciliation details |
-| `Job_Error` | `log.audit_table_session` | Stores table-level execution failures through `error_code` and `error_message` |
-| `Pipeline_Error` | `log.invalid_record` | Stores invalid or rejected records and data-quality validation failures |
+| `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail` | Stores table/layer execution status, processing metrics, reconciliation details, and execution-level failures (`error_code`, `error_message`) |
+| `Pipeline_Error` | `log.invalid_record` | Stores invalid records, rejected records, and data-quality validation failures |
 | N/A | `log.retry_log` | Stores retry history and retry attempt details |
 | N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context |
 | N/A | `cfg.dim_fact_table`, `cfg.source_dim_fact` | Stores Gold-layer table configuration and source-to-Gold mapping |

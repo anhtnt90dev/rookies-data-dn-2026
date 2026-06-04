@@ -16,7 +16,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 - Timestamp columns end with `_at`; date-only columns end with `_date`.
 - JSON-derived dates are already cast to `DATE` in Silver (e.g., `payment_date`, `cancellation_date`).
 - Provider active flag is standardized as `is_active` (BOOLEAN) in Silver.
-- Metadata and audit columns `_batch_id`, `_loaded_at`, `_source_system`, and `_source_name` are carried directly from the Silver layer to the Gold layer for traceability.
+- Metadata and audit columns `_batch_id`, `_source_system`, and `_source_name` are carried directly from the Silver layer to the Gold layer for traceability. The `_loaded_at` column is generated new at the Gold layer.
 
 ---
 
@@ -79,7 +79,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                              |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                       |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                              |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                              |
 
@@ -105,7 +105,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                              |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                       |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                              |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                              |
 
@@ -130,7 +130,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                              |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                       |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                              |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                              |
 
@@ -148,7 +148,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                         |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                |
 
@@ -166,7 +166,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                      |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                               |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                      |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                      |
 
@@ -186,7 +186,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                                  |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                  |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                                  |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                                  |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                           |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                                  |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                                  |
 
@@ -212,7 +212,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer. |
 | `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer. |
 | `_batch_id`            | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer. |
-| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer. |
+| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                          |
 | `_source_system`       | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer. |
 | `_source_name`         | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer. |
 
@@ -234,7 +234,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                   |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                   |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                   |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                   |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                            |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                   |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                   |
 
@@ -256,7 +256,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                      |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                      |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                                                                                                      |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                      |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                                                                                               |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                                                                                                      |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                                                                                                      |
 
@@ -278,7 +278,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                                                                                                                              |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                                                                                                                       |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                                                                                                                              |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                                                                                                                              |
 
@@ -298,7 +298,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer.                                                                                                                              |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                                                                                                                                                       |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer.                                                                                                                              |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer.                                                                                                                              |
 
@@ -316,7 +316,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer. |
 | `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer. |
 | `_batch_id`            | STRING      | `_batch_id`              | STRING    | Direct mapping from Silver layer. |
-| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Direct mapping from Silver layer. |
+| `_loaded_at`           | TIMESTAMP   | `_loaded_at`             | TIMESTAMP | Generate                          |
 | `_source_system`       | STRING      | `_source_system`         | STRING    | Direct mapping from Silver layer. |
 | `_source_name`         | STRING      | `_source_name`           | STRING    | Direct mapping from Silver layer. |
 
@@ -344,7 +344,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                              |
 | `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                              |
 | `_batch_id`            | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                              |
-| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                              |
+| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                       |
 | `_source_system`       | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                              |
 | `_source_name`         | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                              |
 
@@ -374,7 +374,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
 | `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
 | `_batch_id`            | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                          |
-| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
+| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                                                                   |
 | `_source_system`       | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                          |
 | `_source_name`         | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                          |
 
@@ -405,7 +405,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`              | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
 | `updated_at`              | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
 | `_batch_id`               | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                          |
-| `_loaded_at`              | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
+| `_loaded_at`              | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                                                                   |
 | `_source_system`          | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                          |
 | `_source_name`            | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                          |
 
@@ -437,7 +437,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`              | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                                             |
 | `updated_at`              | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                                             |
 | `_batch_id`               | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                                                                             |
-| `_loaded_at`              | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                                             |
+| `_loaded_at`              | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                                                                                                                      |
 | `_source_system`          | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                                                                             |
 | `_source_name`            | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                                                                             |
 
@@ -463,7 +463,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`            | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                     |
 | `updated_at`            | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                     |
 | `_batch_id`             | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                                                     |
-| `_loaded_at`            | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                     |
+| `_loaded_at`            | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                                                                                              |
 | `_source_system`        | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                                                     |
 | `_source_name`          | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                                                     |
 
@@ -487,7 +487,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                               |
 | `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                               |
 | `_batch_id`            | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                                                               |
-| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                                                               |
+| `_loaded_at`           | TIMESTAMP     | `_loaded_at`             | TIMESTAMP     | Generate                                                                                                                      |
 | `_source_system`       | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                                                               |
 | `_source_name`         | STRING        | `_source_name`           | STRING        | Direct mapping from Silver layer.                                                                                                               |
 
@@ -547,3 +547,4 @@ All dimension lookups that fail to resolve must default to the unknown member ro
 | ------- | ---------- | --------------------- | ----------------------------------------------------------------------------------------- |
 | 1.1     | 2026-06-01 | Data Engineering Team | Updated Silver to Gold mapping to match naming conventions and the Bronze-to-Silver spec. |
 | 1.2     | 2026-06-01 | Data Engineering Team | Integrated metadata columns (_batch_id, _loaded_at, etc.) and direct Silver mapping rules.|
+| 1.3     | 2026-06-04 | Data Engineering Team | Updated _loaded_at to be generated new at each layer.                                     |

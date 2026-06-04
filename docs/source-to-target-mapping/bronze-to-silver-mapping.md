@@ -39,7 +39,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | Check Condition |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
-| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Pass-through |
+| _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
 | _source_name | STRING | _source_name | STRING | Pass-through |
 

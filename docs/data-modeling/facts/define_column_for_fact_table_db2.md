@@ -104,6 +104,7 @@ All fact tables share the following audit and metadata columns.
 | payment_id            | STRING        | Degenerate Dimension    | Source payment identifier retained for traceability.                     |
 | policy_id             | STRING        | Degenerate Dimension    | Source policy identifier retained for traceability and grain validation. |
 | payment_date_key      | INT           | FK → dim_date           | Payment date.                                                            |
+| issued_date_key       | INT           | FK → dim_date           | Policy issued date. Materialized from `fact_policy.issued_date_key` via `payment.policy_id → policy_info.policy_id` during Gold ETL. Used to calculate M-22 Average Payment Time. |
 | customer_key          | BIGINT        | FK → dim_customer       | Reference to the customer making the payment.                            |
 | provider_key          | BIGINT        | FK → dim_provider       | Reference to the insurance provider receiving payment.                   |
 | payment_status_key    | BIGINT        | FK → dim_payment_status | Reference to the payment status.                                         |
@@ -124,6 +125,10 @@ Dimension keys are resolved during Gold ETL processing using the policy relation
 
 * `vehicle_key`:
   `payment.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key`
+
+* `issued_date_key`:
+  `payment.policy_id → policy_info.policy_id → fact_policy.issued_date_key`
+  Materialized during Gold ETL to support M-22 Average Payment Time without a fact-to-fact relationship in Power BI.
 
 ---
 
@@ -164,7 +169,7 @@ Dimension keys are resolved during Gold ETL processing using the policy relation
 
 | Dimension Table         | fact_policy                                      | fact_payment                                                                        | fact_cancellation                                                                        |
 | ----------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| dim_date                | 3x (issued, start, end)                          | 1x (payment_date)                                                                   | 1x (cancellation_date)                                                                   |
+| dim_date                | 3x (issued, start, end)                          | 2x (issued, payment_date)                                                                   | 1x (cancellation_date)                                                                   |
 | dim_customer            | Yes                                              | Yes (resolved via `payment.policy_id → policy_info`)                               | Yes (resolved via `cancellation.policy_id → policy_info`)                               |
 | dim_agent               | Yes (resolved via quotation)                     | —                                                                                   | —                                                                                        |
 | dim_provider            | Yes (direct from `policy_info.provider_code`)    | Yes (resolved via `payment.policy_id → policy_info`)                               | Yes (resolved via `cancellation.policy_id → policy_info`)                               |

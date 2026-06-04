@@ -55,7 +55,7 @@ source_table = globals().get("source_table", "test_crm_customer_source")
 bronze_table = globals().get("bronze_table", "bronze_customer")
 silver_table = globals().get("silver_table", "silver_customer")
 gold_table = globals().get("gold_table", "gold_dim_customer")
-batch_id = globals().get("batch_id", 2001)
+batch_id = globals().get("batch_id", 2003)
 source_table_id = 1
 source_table_name = source_table
 if "rejected_row_count" in globals():

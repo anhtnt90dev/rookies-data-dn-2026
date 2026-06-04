@@ -37,7 +37,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| operation_type | STRING | is_deleted | BOOLEAN | Check Condition |
+| operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
@@ -59,7 +59,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | transaction_reference | STRING | transaction_reference | STRING | Direct mapping |
 | last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
+| operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |
@@ -82,7 +82,7 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | policy_status | STRING | policy_status | STRING | Direct mapping |
 | premium_amount | STRING | premium_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
-| operation_type | STRING | is_delete | BOOLEAN | Check Condition |
+| operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | issued_date | STRING | issued_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
 | last_updated | STRING | last_updated | TIMESTAMP | Cast to `TIMESTAMP` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |

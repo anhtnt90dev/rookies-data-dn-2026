@@ -113,12 +113,10 @@ def log_row_count_detail(
     layer = require_layer(layer)
     detail_status = require_status(detail_status, [AuditStatus.SUCCESS, AuditStatus.FAILED, AuditStatus.SKIPPED])
     attempt_no = get_next_attempt_no(audit_detail_table, str(table_session_id), layer)
-    audit_key = f"table_session_{table_session_id}|layer_{layer}|row_count_attempt_{attempt_no}"
 
     append_audit_detail({
         "id": new_audit_id(),
         "table_session_id": str(table_session_id),
-        "audit_key": audit_key,
         "attempt_no": attempt_no,
         "detail_status": detail_status,
         "layer": layer,
@@ -212,6 +210,10 @@ def capture_row_counts(config, audit_detail_table=AUDIT_DETAIL_TABLE):
             "updated_row": updated_row,
             "deleted_row": deleted_row,
             "rejected_row": rejected_row,
+            "error_code": error_type,
+            "error_message": error_message,
+            "error_type": error_type,
+            "is_retryable": is_retryable,
         }
 
     except Exception as error:
@@ -236,6 +238,7 @@ def capture_row_counts(config, audit_detail_table=AUDIT_DETAIL_TABLE):
 
         return {
             "status": AuditStatus.FAILED.value,
+            "error_code": error_type,
             "error_message": error_message,
             "error_type": error_type,
             "is_retryable": is_retryable,

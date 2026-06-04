@@ -42,7 +42,6 @@
 # MAGIC %%sql
 # MAGIC CREATE TABLE IF NOT EXISTS log.audit_session (
 # MAGIC     id STRING,
-# MAGIC     audit_key STRING,
 # MAGIC     session_status STRING,
 # MAGIC     run_mode STRING,
 # MAGIC     batch_id BIGINT,
@@ -72,7 +71,6 @@
 # MAGIC CREATE TABLE IF NOT EXISTS log.audit_table_session (
 # MAGIC     id STRING,
 # MAGIC     session_id STRING,
-# MAGIC     audit_key STRING,
 # MAGIC     source_table_id BIGINT,
 # MAGIC     batch_id BIGINT,
 # MAGIC     table_session_status STRING,
@@ -91,6 +89,8 @@
 # MAGIC     bronze_ended_at TIMESTAMP,
 # MAGIC     silver_ended_at TIMESTAMP,
 # MAGIC     gold_ended_at TIMESTAMP,
+# MAGIC     error_code STRING,
+# MAGIC     error_message STRING,
 # MAGIC     retry_count INT,
 # MAGIC     last_retry_at TIMESTAMP,
 # MAGIC     duration_ms BIGINT,
@@ -98,8 +98,7 @@
 # MAGIC     sla_breached BOOLEAN,
 # MAGIC     created_at TIMESTAMP,
 # MAGIC     updated_at TIMESTAMP,
-# MAGIC     source_table_name STRING,
-# MAGIC     target_table_name STRING
+# MAGIC     source_table_name STRING
 # MAGIC )
 # MAGIC USING DELTA;
 
@@ -117,7 +116,6 @@
 # MAGIC CREATE TABLE IF NOT EXISTS log.audit_detail (
 # MAGIC     id STRING,
 # MAGIC     table_session_id STRING,
-# MAGIC     audit_key STRING,
 # MAGIC     attempt_no INT,
 # MAGIC     detail_status STRING,
 # MAGIC     layer STRING,
@@ -177,7 +175,6 @@ except Exception as error:
 # MAGIC CREATE TABLE IF NOT EXISTS log.retry_log (
 # MAGIC     id STRING,
 # MAGIC     table_session_id STRING,
-# MAGIC     audit_key STRING,
 # MAGIC     attempt_no INT,
 # MAGIC     layer STRING,
 # MAGIC     status STRING,
@@ -206,7 +203,6 @@ except Exception as error:
 # MAGIC CREATE TABLE IF NOT EXISTS log.invalid_record (
 # MAGIC     id STRING,
 # MAGIC     table_session_id STRING,
-# MAGIC     audit_key STRING,
 # MAGIC     layer STRING,
 # MAGIC     target_table STRING,
 # MAGIC     record_key STRING,

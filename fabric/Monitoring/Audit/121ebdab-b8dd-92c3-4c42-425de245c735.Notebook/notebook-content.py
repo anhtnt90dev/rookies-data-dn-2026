@@ -56,6 +56,8 @@ bronze_table = globals().get("bronze_table", "bronze_customer")
 silver_table = globals().get("silver_table", "silver_customer")
 gold_table = globals().get("gold_table", "gold_dim_customer")
 batch_id = globals().get("batch_id", 2001)
+source_table_id = 1
+source_table_name = source_table
 if "rejected_row_count" in globals():
     rejected_row_count = globals()["rejected_row_count"]
 else:
@@ -90,9 +92,8 @@ audit_session_id = start_pipeline_session(
 
 bronze_table_session_id = start_table_layer(
     session_id=audit_session_id,
-    source_table_id=1,
-    source_table_name=source_table,
-    target_table_name=bronze_table,
+    source_table_id=source_table_id,
+    source_table_name=source_table_name,
     layer=Layer.BRONZE,
     batch_id=batch_id,
     load_type="FULL",
@@ -112,7 +113,9 @@ finish_table_layer(
     table_session_id=bronze_table_session_id,
     layer=Layer.BRONZE,
     status=bronze_row_count_result["status"],
-    is_final_table_step=True,
+    is_final_table_step=False,
+    error_code=bronze_row_count_result.get("error_code"),
+    error_message=bronze_row_count_result.get("error_message"),
     write_detail=False,
 )
 
@@ -128,9 +131,8 @@ finish_table_layer(
 
 silver_table_session_id = start_table_layer(
     session_id=audit_session_id,
-    source_table_id=2,
-    source_table_name=bronze_table,
-    target_table_name=silver_table,
+    source_table_id=source_table_id,
+    source_table_name=source_table_name,
     layer=Layer.SILVER,
     batch_id=batch_id,
     load_type="FULL",
@@ -151,7 +153,9 @@ finish_table_layer(
     table_session_id=silver_table_session_id,
     layer=Layer.SILVER,
     status=silver_row_count_result["status"],
-    is_final_table_step=True,
+    is_final_table_step=False,
+    error_code=silver_row_count_result.get("error_code"),
+    error_message=silver_row_count_result.get("error_message"),
     write_detail=False,
 )
 
@@ -167,9 +171,8 @@ finish_table_layer(
 
 gold_table_session_id = start_table_layer(
     session_id=audit_session_id,
-    source_table_id=3,
-    source_table_name=silver_table,
-    target_table_name=gold_table,
+    source_table_id=source_table_id,
+    source_table_name=source_table_name,
     layer=Layer.GOLD,
     batch_id=batch_id,
     load_type="FULL",
@@ -190,8 +193,13 @@ finish_table_layer(
     layer=Layer.GOLD,
     status=gold_row_count_result["status"],
     is_final_table_step=True,
+    error_code=gold_row_count_result.get("error_code"),
+    error_message=gold_row_count_result.get("error_message"),
     write_detail=False,
 )
+
+assert bronze_table_session_id == silver_table_session_id
+assert silver_table_session_id == gold_table_session_id
 
 
 # METADATA ********************

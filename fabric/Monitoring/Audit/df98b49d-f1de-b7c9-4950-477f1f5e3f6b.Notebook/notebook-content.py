@@ -31,9 +31,7 @@
 # MAGIC             d.*,
 # MAGIC             ROW_NUMBER() OVER (
 # MAGIC                 PARTITION BY d.table_session_id, d.layer
-# MAGIC                 ORDER BY
-# MAGIC                     CASE WHEN d.target_row_count IS NOT NULL THEN 1 ELSE 0 END DESC,
-# MAGIC                     d.created_at DESC
+# MAGIC                 ORDER BY d.attempt_no DESC, d.created_at DESC
 # MAGIC             ) AS rn
 # MAGIC         FROM log.audit_detail d
 # MAGIC     )
@@ -53,8 +51,9 @@
 # MAGIC     t.id AS table_session_id,
 # MAGIC     t.source_table_id,
 # MAGIC     t.source_table_name,
-# MAGIC     t.target_table_name,
 # MAGIC     t.table_session_status,
+# MAGIC     t.error_code AS table_error_code,
+# MAGIC     t.error_message AS table_error_message,
 # MAGIC     d.layer,
 # MAGIC     CASE d.layer
 # MAGIC         WHEN 'BRONZE' THEN t.bronze_status
@@ -81,7 +80,7 @@
 # MAGIC     d.rejected_row,
 # MAGIC     d.error_type,
 # MAGIC     d.is_retryable,
-# MAGIC     d.error_message,
+# MAGIC     d.error_message AS detail_error_message,
 # MAGIC     d.created_at AS detail_created_at
 # MAGIC FROM log.audit_session s
 # MAGIC LEFT JOIN log.audit_table_session t
@@ -108,9 +107,7 @@
 # MAGIC             d.*,
 # MAGIC             ROW_NUMBER() OVER (
 # MAGIC                 PARTITION BY d.table_session_id, d.layer
-# MAGIC                 ORDER BY
-# MAGIC                     CASE WHEN d.target_row_count IS NOT NULL THEN 1 ELSE 0 END DESC,
-# MAGIC                     d.created_at DESC
+# MAGIC                 ORDER BY d.attempt_no DESC, d.created_at DESC
 # MAGIC             ) AS rn
 # MAGIC         FROM log.audit_detail d
 # MAGIC     )
@@ -130,6 +127,8 @@
 # MAGIC         s.sla_breached,
 # MAGIC         t.id AS table_session_id,
 # MAGIC         t.table_session_status,
+# MAGIC         t.error_code AS table_error_code,
+# MAGIC         t.error_message AS table_error_message,
 # MAGIC         d.detail_status,
 # MAGIC         d.source_row_count,
 # MAGIC         d.target_row_count,
@@ -137,7 +136,7 @@
 # MAGIC         d.updated_row,
 # MAGIC         d.deleted_row,
 # MAGIC         d.rejected_row,
-# MAGIC         d.error_message
+# MAGIC         d.error_message AS detail_error_message
 # MAGIC     FROM log.audit_session s
 # MAGIC     LEFT JOIN log.audit_table_session t
 # MAGIC         ON s.id = t.session_id
@@ -169,7 +168,9 @@
 # MAGIC             WHEN session_status = 'FAILED'
 # MAGIC               OR table_session_status = 'FAILED'
 # MAGIC               OR detail_status = 'FAILED'
-# MAGIC               OR error_message IS NOT NULL
+# MAGIC               OR table_error_code IS NOT NULL
+# MAGIC               OR table_error_message IS NOT NULL
+# MAGIC               OR detail_error_message IS NOT NULL
 # MAGIC             THEN 1
 # MAGIC             ELSE 0
 # MAGIC         END
@@ -205,7 +206,9 @@
 # MAGIC WHERE session_status = 'FAILED'
 # MAGIC    OR table_session_status = 'FAILED'
 # MAGIC    OR detail_status = 'FAILED'
-# MAGIC    OR error_message IS NOT NULL
+# MAGIC    OR table_error_code IS NOT NULL
+# MAGIC    OR table_error_message IS NOT NULL
+# MAGIC    OR detail_error_message IS NOT NULL
 # MAGIC    OR COALESCE(rejected_row, 0) > 0
 # MAGIC    OR COALESCE(pipeline_sla_breached, FALSE) = TRUE;
 

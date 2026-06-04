@@ -128,20 +128,22 @@ def create_temp_view_from_rows(rows, schema, view_prefix="audit_source"):
     return view_name
 
 
-def get_id_by_audit_key(table_name: str, audit_key: str) -> str:
+def get_single_id(table_name: str, filters: dict) -> str:
     table_name = validate_table_name(table_name)
-    result = (
-        spark.table(table_name)
-        .where(F.col("audit_key") == F.lit(audit_key))
-        .select("id")
-        .limit(1)
-        .collect()
-    )
+    result_df = spark.table(table_name)
 
-    if not result:
-        raise Exception(f"No record found in {table_name} for audit_key = {audit_key}")
+    for column_name, value in filters.items():
+        result_df = result_df.where(F.col(column_name) == F.lit(value))
 
-    return str(result[0]["id"])
+    rows = result_df.select("id").limit(2).collect()
+
+    if len(rows) == 0:
+        raise Exception(f"No record found in {table_name} for filters={filters}")
+
+    if len(rows) > 1:
+        raise Exception(f"Multiple records found in {table_name} for filters={filters}")
+
+    return str(rows[0]["id"])
 
 
 def get_next_attempt_no(audit_detail_table: str, table_session_id: str, layer: str) -> int:
@@ -175,11 +177,9 @@ def start_pipeline_session(
 ) -> str:
     audit_session_table = validate_table_name(audit_session_table)
     run_mode = require_status(run_mode, [RunMode.NEW, RunMode.RECOVERY])
-    audit_key = f"{pipeline_name}|{batch_id}|{pipeline_run_id}"
 
     schema = StructType([
         StructField("id", StringType(), False),
-        StructField("audit_key", StringType(), False),
         StructField("session_status", StringType(), False),
         StructField("run_mode", StringType(), False),
         StructField("batch_id", LongType(), False),
@@ -190,7 +190,6 @@ def start_pipeline_session(
     source_view = create_temp_view_from_rows([
         Row(
             id=new_audit_id(),
-            audit_key=audit_key,
             session_status=AuditStatus.RUNNING.value,
             run_mode=run_mode,
             batch_id=int(batch_id),
@@ -205,7 +204,6 @@ def start_pipeline_session(
         USING (
             SELECT
                 id,
-                audit_key,
                 session_status,
                 run_mode,
                 batch_id,
@@ -220,7 +218,7 @@ def start_pipeline_session(
                 current_timestamp() AS updated_at
             FROM {source_view}
         ) AS source
-        ON target.audit_key = source.audit_key
+        ON target.pipeline_run_id = source.pipeline_run_id
         WHEN MATCHED THEN UPDATE SET
             target.session_status = source.session_status,
             target.session_started = source.session_started,
@@ -230,20 +228,20 @@ def start_pipeline_session(
             target.sla_breached = NULL,
             target.updated_at = source.updated_at
         WHEN NOT MATCHED THEN INSERT (
-            id, audit_key, session_status, run_mode, batch_id,
+            id, session_status, run_mode, batch_id,
             pipeline_name, pipeline_run_id, session_started,
             session_finished, duration_ms, sla_target_ms,
             sla_breached, created_at, updated_at
         ) VALUES (
-            source.id, source.audit_key, source.session_status, source.run_mode, source.batch_id,
+            source.id, source.session_status, source.run_mode, source.batch_id,
             source.pipeline_name, source.pipeline_run_id, source.session_started,
             source.session_finished, source.duration_ms, source.sla_target_ms,
             source.sla_breached, source.created_at, source.updated_at
         )
     """)
 
-    session_id = get_id_by_audit_key(audit_session_table, audit_key)
-    print(f"Started pipeline session: session_id={session_id}, audit_key={audit_key}")
+    session_id = get_single_id(audit_session_table, {"pipeline_run_id": pipeline_run_id})
+    print(f"Started pipeline session: session_id={session_id}, pipeline_run_id={pipeline_run_id}")
     return session_id
 
 
@@ -303,7 +301,6 @@ def start_table_layer(
     source_table_name: str,
     layer: str,
     batch_id: int,
-    target_table_name: str = None,
     load_type: str = "FULL",
     watermark_column: str = None,
     watermark_before: str = None,
@@ -315,16 +312,14 @@ def start_table_layer(
     audit_table_session_table = validate_table_name(audit_table_session_table)
     layer = require_layer(layer)
     layer_started_column = {Layer.BRONZE.value: "bronze_started_at", Layer.SILVER.value: "silver_started_at", Layer.GOLD.value: "gold_started_at"}[layer]
+    layer_ended_column = {Layer.BRONZE.value: "bronze_ended_at", Layer.SILVER.value: "silver_ended_at", Layer.GOLD.value: "gold_ended_at"}[layer]
     layer_status_column = {Layer.BRONZE.value: "bronze_status", Layer.SILVER.value: "silver_status", Layer.GOLD.value: "gold_status"}[layer]
-    audit_key = f"session_{session_id}|source_{source_table_id}|table_{source_table_name}"
 
     schema = StructType([
         StructField("id", StringType(), False),
         StructField("session_id", StringType(), False),
-        StructField("audit_key", StringType(), False),
         StructField("source_table_id", LongType(), False),
         StructField("source_table_name", StringType(), False),
-        StructField("target_table_name", StringType(), True),
         StructField("batch_id", LongType(), False),
         StructField("load_type", StringType(), True),
         StructField("watermark_column", StringType(), True),
@@ -337,10 +332,8 @@ def start_table_layer(
         Row(
             id=new_audit_id(),
             session_id=str(session_id),
-            audit_key=audit_key,
             source_table_id=int(source_table_id),
             source_table_name=source_table_name,
-            target_table_name=target_table_name,
             batch_id=int(batch_id),
             load_type=load_type,
             watermark_column=watermark_column,
@@ -355,7 +348,7 @@ def start_table_layer(
         MERGE INTO {audit_table_session_table} AS target
         USING (
             SELECT
-                id, session_id, audit_key, source_table_id, source_table_name, target_table_name, batch_id,
+                id, session_id, source_table_id, source_table_name, batch_id,
                 '{AuditStatus.RUNNING.value}' AS table_session_status,
                 '{AuditStatus.NOT_RUN.value}' AS bronze_status,
                 '{AuditStatus.NOT_RUN.value}' AS silver_status,
@@ -370,6 +363,8 @@ def start_table_layer(
                 CAST(NULL AS TIMESTAMP) AS bronze_ended_at,
                 CAST(NULL AS TIMESTAMP) AS silver_ended_at,
                 CAST(NULL AS TIMESTAMP) AS gold_ended_at,
+                CAST(NULL AS STRING) AS error_code,
+                CAST(NULL AS STRING) AS error_message,
                 0 AS retry_count,
                 CAST(NULL AS TIMESTAMP) AS last_retry_at,
                 CAST(NULL AS BIGINT) AS duration_ms,
@@ -379,22 +374,27 @@ def start_table_layer(
                 current_timestamp() AS updated_at
             FROM {source_view}
         ) AS source
-        ON target.audit_key = source.audit_key
+        ON target.session_id = source.session_id
+           AND target.source_table_id = source.source_table_id
         WHEN MATCHED THEN UPDATE SET
             target.table_session_status = source.table_session_status,
             target.{layer_status_column} = source.table_session_status,
             target.{layer_started_column} = source.updated_at,
+            target.{layer_ended_column} = NULL,
+            target.error_code = NULL,
+            target.error_message = NULL,
             target.updated_at = source.updated_at
         WHEN NOT MATCHED THEN INSERT (
-            id, session_id, audit_key, source_table_id, batch_id, table_session_status,
+            id, session_id, source_table_id, batch_id, table_session_status,
             bronze_status, silver_status, gold_status, load_type, watermark_column,
             watermark_before, watermark_after, load_window_start, load_window_end,
             bronze_started_at, silver_started_at, gold_started_at,
             bronze_ended_at, silver_ended_at, gold_ended_at,
+            error_code, error_message,
             retry_count, last_retry_at, duration_ms, sla_target_ms, sla_breached,
-            created_at, updated_at, source_table_name, target_table_name
+            created_at, updated_at, source_table_name
         ) VALUES (
-            source.id, source.session_id, source.audit_key, source.source_table_id, source.batch_id, source.table_session_status,
+            source.id, source.session_id, source.source_table_id, source.batch_id, source.table_session_status,
             CASE WHEN '{layer}' = '{Layer.BRONZE.value}' THEN '{AuditStatus.RUNNING.value}' ELSE source.bronze_status END,
             CASE WHEN '{layer}' = '{Layer.SILVER.value}' THEN '{AuditStatus.RUNNING.value}' ELSE source.silver_status END,
             CASE WHEN '{layer}' = '{Layer.GOLD.value}' THEN '{AuditStatus.RUNNING.value}' ELSE source.gold_status END,
@@ -404,12 +404,19 @@ def start_table_layer(
             CASE WHEN '{layer}' = '{Layer.SILVER.value}' THEN source.updated_at ELSE source.silver_started_at END,
             CASE WHEN '{layer}' = '{Layer.GOLD.value}' THEN source.updated_at ELSE source.gold_started_at END,
             source.bronze_ended_at, source.silver_ended_at, source.gold_ended_at,
+            source.error_code, source.error_message,
             source.retry_count, source.last_retry_at, source.duration_ms, source.sla_target_ms, source.sla_breached,
-            source.created_at, source.updated_at, source.source_table_name, source.target_table_name
+            source.created_at, source.updated_at, source.source_table_name
         )
     """)
 
-    table_session_id = get_id_by_audit_key(audit_table_session_table, audit_key)
+    table_session_id = get_single_id(
+        audit_table_session_table,
+        {
+            "session_id": str(session_id),
+            "source_table_id": int(source_table_id),
+        },
+    )
     print(f"Started {layer} layer: table_session_id={table_session_id}, table={source_table_name}")
     return table_session_id
 
@@ -426,7 +433,6 @@ def start_table_layer(
 AUDIT_DETAIL_SCHEMA = StructType([
     StructField("id", StringType(), False),
     StructField("table_session_id", StringType(), False),
-    StructField("audit_key", StringType(), False),
     StructField("attempt_no", IntegerType(), True),
     StructField("detail_status", StringType(), True),
     StructField("layer", StringType(), True),
@@ -479,6 +485,7 @@ def finish_table_layer(
     updated_row: int = None,
     deleted_row: int = None,
     rejected_row: int = None,
+    error_code: str = None,
     error_message: str = None,
     error_type: str = None,
     is_retryable: bool = None,
@@ -507,11 +514,21 @@ def finish_table_layer(
         StructField("id", StringType(), False),
         StructField("layer_status", StringType(), False),
         StructField("table_session_status", StringType(), False),
+        StructField("error_code", StringType(), True),
+        StructField("error_message", StringType(), True),
         StructField("watermark_after", StringType(), True),
         StructField("sla_target_ms", LongType(), True),
     ])
     source_view = create_temp_view_from_rows([
-        Row(id=str(table_session_id), layer_status=status, table_session_status=table_session_status, watermark_after=watermark_after, sla_target_ms=sla_target_ms)
+        Row(
+            id=str(table_session_id),
+            layer_status=status,
+            table_session_status=table_session_status,
+            error_code=error_code,
+            error_message=error_message,
+            watermark_after=watermark_after,
+            sla_target_ms=sla_target_ms,
+        )
     ], schema, "finish_table_layer")
 
     spark.sql(f"""
@@ -521,6 +538,8 @@ def finish_table_layer(
                 id,
                 layer_status,
                 table_session_status,
+                error_code,
+                error_message,
                 watermark_after,
                 sla_target_ms,
                 current_timestamp() AS finished_at
@@ -532,6 +551,14 @@ def finish_table_layer(
             target.{layer_ended_column} = source.finished_at,
             target.watermark_after = COALESCE(source.watermark_after, target.watermark_after),
             target.table_session_status = source.table_session_status,
+            target.error_code = CASE
+                WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_code
+                ELSE NULL
+            END,
+            target.error_message = CASE
+                WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_message
+                ELSE NULL
+            END,
             target.duration_ms = CAST(
                 (unix_timestamp(source.finished_at) - unix_timestamp(COALESCE(target.{layer_started_column}, target.created_at))) * 1000 AS BIGINT
             ),
@@ -559,11 +586,9 @@ def finish_table_layer(
 
         table_row = table_snapshot[0]
         attempt_no = get_next_attempt_no(audit_detail_table, str(table_session_id), layer)
-        detail_audit_key = f"table_session_{table_session_id}|layer_{layer}|attempt_{attempt_no}"
         append_audit_detail({
             "id": new_audit_id(),
             "table_session_id": str(table_session_id),
-            "audit_key": detail_audit_key,
             "attempt_no": attempt_no,
             "detail_status": status,
             "layer": layer,

@@ -34,6 +34,16 @@ audit_session_id = start_pipeline_session(
     sla_target_ms=30 * 60 * 1000,
 )
 
+reused_audit_session_id = start_pipeline_session(
+    pipeline_name="pl_audit_mvp_test",
+    pipeline_run_id=pipeline_run_id,
+    batch_id=batch_id,
+    run_mode=RunMode.NEW,
+    sla_target_ms=30 * 60 * 1000,
+)
+
+assert reused_audit_session_id == audit_session_id
+
 
 # METADATA ********************
 
@@ -48,7 +58,6 @@ audit_table_session_id = start_table_layer(
     session_id=audit_session_id,
     source_table_id=1,
     source_table_name="customer",
-    target_table_name="bronze_customer",
     layer=Layer.BRONZE,
     batch_id=batch_id,
     load_type="FULL",

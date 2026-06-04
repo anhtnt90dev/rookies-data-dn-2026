@@ -87,7 +87,6 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | issued_date | STRING | issued_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
 | last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
-| last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |
 | _source_system | STRING | _source_system | STRING | Pass-through |

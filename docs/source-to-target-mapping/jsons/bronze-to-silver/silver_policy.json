@@ -55,10 +55,6 @@
       "expression": "last_updated_at"
     },
     {
-      "target": "updated_at",
-      "expression": "last_updated_at"
-    },
-    {
       "target": "_batch_id",
       "expression": "_batch_id"
     },

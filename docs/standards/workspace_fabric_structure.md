@@ -139,9 +139,16 @@ lh_insurance_dev/Tables/
 │   └── fact_cancellation
 ├── audit/
 │   ├── audit_session
-│   └── audit_table_session
+│   ├── audit_table_session
+│   ├── audit_detail
+│   └── invalid_record
+│   └── retry_log
 └── cfg/
-    └── watermark
+    ├── watermark
+    ├── source_table
+    ├── next_run_mode
+    ├── dim_fact_table
+    └── source_dim_fact
 ```
 
 

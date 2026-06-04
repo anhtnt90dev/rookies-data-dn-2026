@@ -26,7 +26,7 @@ flowchart TD
     %% ── BRONZE LAYER ──────────────────────────────────────
     subgraph BRONZE[" Bronze Layer"]
         direction TB
-        E[Extract from Source System<br/> FULL -> SELECT *; INCREMENTAL -> WHERE updated_date > watermark_value]
+        E["Extract from Source System<br/> FULL -> SELECT *;<br/> INCREMENTAL -> Source-specific logic:<br/> - updated_date (if supported)<br/> - created_date / full refresh + compare (append-only/non-updated sources)<br/> - JSON batch/date files + operation_type "]
         F[Schema Validation<br/> validate column types;  reject invalids -> log.invalid_record]
         H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
         I{Bronze Load<br/>Success?}

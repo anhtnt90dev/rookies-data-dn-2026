@@ -2,6 +2,8 @@
 
 _CarPro Insurance Analytics - Microsoft Fabric / OneLake_
 
+This Markdown document is the source of truth for the data platform accessibility design. The previous .docx version has been deprecated.
+
 | Field             | Value                                                                  |
 | ----------------- | ---------------------------------------------------------------------- |
 | Project           | Data Analytics for CarPro Insurance                                    |

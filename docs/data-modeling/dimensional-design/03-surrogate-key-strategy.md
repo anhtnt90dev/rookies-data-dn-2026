@@ -37,7 +37,7 @@ The strategy ensures that fact tables use stable dimension surrogate keys instea
 | `dim_vehicle` | `vehicle_key` | `vehicle_id` |
 
 > [!NOTE]
-> `policy_id` is also retained as a degenerate identifier in the facts (`fact_policy`, `fact_payment`, `fact_cancellation`) for operational traceability, but the primary analytical relationship to policy context is through `policy_key` → `dim_policy`.
+> `policy_id` and `quotation_id` are also retained as degenerate identifiers in the facts for operational traceability, but their primary analytical relationships are resolved through their surrogate keys (`policy_key` → `dim_policy`, `quotation_key` → `dim_quotation`).
 
 ## 4. Recommended Key Data Types
 
@@ -113,17 +113,17 @@ Example unknown customer row:
 
 | Dimension Key | Resolution Rule |
 |---|---|
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
+| `quotation_key` | Lookup `dim_quotation` by `quotation_id`, or resolve from the quotation header/source context during Gold ETL. |
 | `coverage_key` | Lookup `dim_coverage` by `coverage_type`. |
-| `quotation_date_key` | Inherit from quotation header by joining `quotation_item.quotation_id` to `quotation.quotation_id`. |
-| Customer/agent/provider/package/status/vehicle keys | Inherit from quotation header context. |
+| `quotation_date_key` | Resolve from the quotation header/source context during Gold ETL. |
+| Customer/agent/provider/package/status/vehicle keys | Resolve from the quotation header/source context during Gold ETL. |
 
 ## 7.3 `fact_policy`
 
 | Dimension Key | Resolution Rule |
 |---|---|
 | `policy_key` | Lookup `dim_policy` by `policy_id`. |
-| `quotation_key` | Lookup `dim_quotation` by `quotation_id`. |
+| `quotation_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_quotation` by `quotation_id`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
 | `customer_key` | Lookup `dim_customer` by `customer_id` using `issued_date` or `policy_start_date`. |
 | `provider_key` | Lookup `dim_provider` by `provider_code` using `issued_date` or `policy_start_date`. |
 | `agent_key` | Resolve by joining `policy_info` back to `quotation` using `quotation_id`, then lookup `dim_agent` by `agent_id` using `quotation_date`. If `quotation_id` is null or not found, default to `-1` (Unknown). |
@@ -193,6 +193,15 @@ Facts may keep selected natural keys for audit and traceability, but these shoul
 | Item | Handling |
 |---|---|
 | `region_key` | Not generated or stored in current facts because no confirmed `dim_region` mapping is in scope. Use `city`, `district`, or `agent.region` attributes for reporting until a mapping is confirmed. |
+
+## 10. Physical Dimension Strategy for Quotation ID
+
+Following the decision to retain the physical `dim_quotation` table, `quotation_id` acts as the natural business key of `dim_quotation`. Fact tables store the surrogate key `quotation_key` pointing to `dim_quotation`, while preserving the natural key `quotation_id` as a degenerate identifier for traceability.
+
+### Key Benefits:
+- **Star Schema Alignment:** Enables a clean, standard star schema relationship across all quotation facts (`fact_quotation`, `fact_quotation_item`) and the policy lifecycle fact (`fact_policy`).
+- **Traceability:** Keeps direct operational traceability from fact records back to source quotation headers.
+- **Drill-Across Capability:** Facilitates easy drill-across reporting and quote-to-policy conversions in BI tools (e.g. Power BI) via standard dimension relationships without complex DAX queries.
 
 ## 11. Key Quality Checks
 

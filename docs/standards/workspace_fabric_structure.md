@@ -121,19 +121,27 @@ lh_insurance_dev/Files/
 
 ```text
 lh_insurance_dev/Tables/
-├── bronze_customers
-├── bronze_quotation
-├── bronze_payment
-├── silver_customers
-├── silver_quotation
-├── silver_payment
-├── dim_customer
-├── dim_date
-├── dim_policy
-├── fact_quotation
-├── fact_policy
-├── fact_payment
-└── fact_cancellation
+├── bronze/
+│   ├── customer
+│   ├── quotation
+│   └── payment
+├── silver/
+│   ├── customer
+│   ├── quotation
+│   └── payment
+├── gold/
+│   ├── dim_customer
+│   ├── dim_date
+│   ├── dim_policy
+│   ├── fact_quotation
+│   ├── fact_policy
+│   ├── fact_payment
+│   └── fact_cancellation
+├── audit/
+│   ├── audit_session
+│   └── audit_table_session
+└── cfg/
+    └── watermark
 ```
 
 

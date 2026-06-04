@@ -57,7 +57,7 @@ CREATE TABLE silver.payment (
     transaction_reference   STRING,
     last_updated            TIMESTAMP,
     operation_type          STRING,
-    is_deleted              BOOLEAN, -- Standardized from is_delete
+    is_deleted              BOOLEAN, 
     
     -- Technical Metadata Columns
     _batch_id               STRING,
@@ -82,7 +82,7 @@ CREATE TABLE silver.policy (
     policy_status       STRING,
     premium_amount      DECIMAL(18,2),
     operation_type      STRING,
-    is_deleted          BOOLEAN, -- Standardized from is_delete
+    is_deleted          BOOLEAN, 
     issued_at           TIMESTAMP,
     last_updated_at     TIMESTAMP,
     

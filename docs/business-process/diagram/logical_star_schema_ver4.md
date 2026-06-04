@@ -301,9 +301,9 @@ erDiagram
 
     dim_customer ||--o{ fact_quotation : "quotation.customer_id"
     dim_customer ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.customer_id"
-    dim_customer ||--o{ fact_policy : "policy_info.quotation_id -> quotation.customer_id"
-    dim_customer ||--o{ fact_payment : "payment.policy_id -> policy_info.quotation_id -> quotation.customer_id"
-    dim_customer ||--o{ fact_cancellation : "cancellation.policy_id -> policy_info.quotation_id -> quotation.customer_id"
+    dim_customer ||--o{ fact_policy : "policy_info.customer_id"
+    dim_customer ||--o{ fact_payment : "payment.policy_id -> policy_info.customer_id"
+    dim_customer ||--o{ fact_cancellation : "cancellation.policy_id -> policy_info.customer_id"
 
     dim_agent ||--o{ fact_quotation : "quotation.agent_id"
     dim_agent ||--o{ fact_quotation_item : "quotation_item.quotation_id -> quotation.agent_id"
@@ -345,3 +345,4 @@ erDiagram
     dim_vehicle ||--o{ fact_policy : "policy_info.customer_id -> vehicle.customer_id -> dim_vehicle.vehicle_key"
     dim_vehicle ||--o{ fact_payment : "payment.policy_id -> policy_info.customer_id -> vehicle.customer_id -> dim_vehicle.vehicle_key"
     dim_vehicle ||--o{ fact_cancellation : "cancellation.policy_id -> policy_info.customer_id -> vehicle.customer_id -> dim_vehicle.vehicle_key"
+```

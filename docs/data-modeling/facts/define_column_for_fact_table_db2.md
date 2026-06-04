@@ -65,6 +65,10 @@ All fact tables share the following audit and metadata columns.
 | --------------------- | ------------- | ---------------------- | ------------------------------------------------------------------------ |
 | policy_key            | BIGINT        | FK → dim_policy        | Shared policy dimension surrogate key.                                   |
 | policy_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
+| policy_number             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
+| quotation_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
+| customer_id             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
+| provider_code             | STRING        | Degenerate Dimension   | Source policy identifier retained for traceability and grain validation. |
 | quotation_key         | BIGINT        | FK → dim_quotation     | Reference to the originating quotation.                                  |
 | customer_key          | BIGINT        | FK → dim_customer      | Reference to the customer who holds the policy.                          |
 | provider_key          | BIGINT        | FK → dim_provider      | Reference to the insurance provider (direct from `policy_info.provider_code`). |

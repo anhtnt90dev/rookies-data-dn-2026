@@ -1,80 +1,94 @@
 flowchart TD
     Start([Start Pipeline])
+    AS[Insert audit_session<br/> status = Running; pipeline_id; batch_id]
 
     %% ── INITIAL ──────────────────────────────────────────
     subgraph INIT["Initial"]
         direction TB
-        A[Read Job_Config Table\nJob_ID · Source_System\nLoad_Type · Schedule · Max_Retry]
-        B[Read Watermark Table\nLast_Run_Timestamp per source\nNULL → Full Load triggered]
+        A[Read Job_Config Table<br/> Job_ID; Source_System; Load_Type; Schedule; Max_Retry]
+        B[Read Watermark Table<br/> last_run_timestamp per source; NULL -> Full load triggered]
     end
 
     %% ── STATUS SETUP ──────────────────────────────────────
     subgraph STATUS["Status Stage"]
         direction TB
-        C[Insert audit_detail\nstatus = Running\nsource · batch_id · load_type]
-        D[Insert audit_table_session\nOne record per active table\nbronze/silver/gold = Pending]
+        C[Insert audit_detail<br/> status = Running; source; batch_id; load_type]
+        D[Insert audit_table_session<br/> one record per active table; bronze/silver/gold = Pending]
     end
 
     %% ── BRONZE LAYER ──────────────────────────────────────
     subgraph BRONZE[" Bronze Layer"]
         direction TB
-        E[Extract from Source System\nFULL → SELECT *\nINCREMENTAL → WHERE updated_at > watermark]
-        F[Schema Validation\nValidate column types\nCheck NOT NULL fields\nReject invalids → Pipeline_Error_Record]
-        G[Deduplication Engine\nHash on business key\nRemove exact duplicates\nKeep latest by updated_at]
-        H[Load Bronze\nFULL → Truncate + INSERT\nINCREMENTAL → APPEND new\nHash all fields for change detection]
-        I{Bronze Load\nSuccess?}
-        J[Update audit_table_session\nbronze_status = Success\nbronze_end_at = NOW\nrows_extracted · rows_loaded]
-        K[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
-        L[Update Watermark Table\nLast_Run_Timestamp = MAX updated_at\nLast_Batch_ID = current Batch_ID]
-        ERR_B1[Update audit_table_session\n— Failed]
-        ERR_B2[Update audit_detail\n= Failed + Error message]
+        E[Extract from Source System<br/> FULL -> SELECT *; INCREMENTAL -> WHERE updated_at > watermark]
+        F[Schema Validation<br/> validate column types;  reject invalids -> Pipeline_Error_Record]
+        H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
+        I{Bronze Load<br/>Success?}
+        RB{Retry Bronze?<br/>Condition: retry_count < max_retry}
+        RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
+        J[Update audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
+        K[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        L[Update Watermark Table<br/> last_run_timestamp = MAX updated_at; last_batch_id = current batch_id]
+        ERR_B1[Update audit_table_session<br/>— Failed]
+        ERR_B2[Update audit_detail<br/> status = Failed; error message]
         END_B([End this Bronze table])
     end
 
     %% ── SILVER LAYER ──────────────────────────────────────
     subgraph SILVER["Silver Layer"]
         direction TB
-        M[Insert audit_detail\nstatus = Running]
-        N[Load Silver\nInitial → Truncate table\nRead Bronze via audit_table_session_id\nCleansing · Business rules · SCD logic\nPartition by ingestion_date + source]
-        O{Silver Load\nSuccess?}
-        P[Update audit_table_session\nsilver_status = Success\nsilver_end_at = NOW]
-        Q[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
-        ERR_S1[Update audit_table_session\n— Failed]
-        ERR_S2[Update audit_detail\n= Failed + Error message]
+        M[Insert audit_detail<br/> status = Running]
+        G1[Cleansing<br/> mandatory cleaning null]
+        G2[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
+        N[Load Silver<br/> initial -> truncate table; read bronze via audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
+        O{Silver Load<br/>Success?}
+        RS{Retry Silver?<br/>Condition: retry_count < max_retry}
+        RS_WAIT[Schedule Silver Retry<br/> increment retry_count; backoff delay]
+        P[Update audit_table_session<br/> silver_status = Success; silver_end_at = NOW]
+        Q[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_S1[Update audit_table_session<br/>— Failed]
+        ERR_S2[Update audit_detail<br/> status = Failed; error message]
         END_S([End this Silver table])
     end
 
     %% ── GOLD LAYER ────────────────────────────────────────
     subgraph GOLD["Gold Layer"]
         direction TB
-        R[Insert audit_detail\nstatus = Running]
-        S[Load Gold\nRead Silver conformed tables\nAggregation + KPI logic\nMERGE into Fact / Dimension\nPartition by report_date + region]
-        T{Gold Load\nSuccess?}
-        U[Update audit_table_session\ngold_status = Success\ngold_end_at = NOW]
-        V[Update audit_detail\nstatus = Success\ninserted/updated/deleted rows]
-        ERR_G1[Update audit_table_session\n— Failed]
-        ERR_G2[Update audit_detail\n= Failed + Error message]
+        R[Insert audit_detail<br/> status = Running]
+        S[Load Gold<br/> read silver conformed tables; aggregation and KPI logic; merge into fact/dimension; partition by report_date + region]
+        T{Gold Load<br/>Success?}
+        RG{Retry Gold?<br/>Condition: retry_count < max_retry}
+        RG_WAIT[Schedule Gold Retry<br/> increment retry_count; backoff delay]
+        U[Update audit_table_session<br/> gold_status = Success; gold_end_at = NOW]
+        V[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_G1[Update audit_table_session<br/>— Failed]
+        ERR_G2[Update audit_detail<br/> status = Failed; error message]
         END_G([End this Gold table])
     end
 
     End([Pipeline Complete])
 
     %% ── CONNECTIONS ───────────────────────────────────────
-    Start --> INIT
+    Start --> AS --> INIT
     A --> B
     B --> STATUS
     C --> D
     D --> BRONZE
-    E --> F --> G --> H --> I
-    I -- No  --> ERR_B1 --> ERR_B2 --> END_B
+    E --> F --> H --> I
+    I -- No  --> ERR_B1 --> ERR_B2 --> RB
+    RB -- Yes --> RB_WAIT --> E
+    RB -- No  --> END_B
     I -- Yes --> J --> K --> L
     L --> SILVER
-    M --> N --> O
-    O -- No  --> ERR_S1 --> ERR_S2 --> END_S
+    M --> G1 --> G2 --> N --> O
+    O -- No  --> ERR_S1 --> ERR_S2 --> RS
+    RS -- Yes --> RS_WAIT --> M
+    RS -- No  --> END_S
     O -- Yes --> P --> Q
     Q --> GOLD
     R --> S --> T
-    T -- No  --> ERR_G1 --> ERR_G2 --> END_G
+    T -- No  --> ERR_G1 --> ERR_G2 --> RG
+    RG -- Yes --> RG_WAIT --> R
+    RG -- No  --> END_G
     T -- Yes --> U --> V --> End
 
     %% ── STYLES ────────────────────────────────────────────
@@ -88,10 +102,10 @@ flowchart TD
     classDef stopNode  fill:#9B2020,stroke:#7a0e0e,color:#fff,rx:20
 
     class Start,End startEnd
-    class A,B,C,D config
-    class E,F,G,H,J,K,L bronze
-    class M,N,P,Q silver
+    class A,B,C,D,AS config
+    class E,F,H,J,K,L bronze
+    class M,G1,G2,N,P,Q silver
     class R,S,U,V gold
-    class I,O,T decision
+    class I,O,T,RB,RS,RG decision
     class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2 error
     class END_B,END_S,END_G stopNode

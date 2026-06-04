@@ -24,9 +24,10 @@ CREATE SCHEMA IF NOT EXISTS bronze;
 -- ---------------------------------------------------------------------
 -- TABLE: bronze.cancellation
 -- Source System: policy_system
--- Source File: cancellation_full_<yyyy-MM-dd>.json
+-- Source File: cancellation_*.json
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.cancellation (
+DROP TABLE IF EXISTS bronze.cancellation;
+CREATE TABLE bronze.cancellation (
     -- Business Columns (Raw JSON values read as STRING)
     cancellation_id     STRING,
     policy_id           STRING,
@@ -34,12 +35,12 @@ CREATE TABLE IF NOT EXISTS bronze.cancellation (
     cancellation_reason STRING,
     refund_amount       STRING,
     last_updated        STRING,
-    operation_type      STRING,
-    batch_date          STRING,
     source_system       STRING,
     
     -- Technical Metadata Columns
     _batch_id           STRING,
+    _operation_type     STRING,
+    _batch_date         DATE,
     _loaded_at          TIMESTAMP,
     _source_system      STRING,
     _source_name        STRING
@@ -48,9 +49,10 @@ CREATE TABLE IF NOT EXISTS bronze.cancellation (
 -- ---------------------------------------------------------------------
 -- TABLE: bronze.payment
 -- Source System: payment_system
--- Source File: payment_full_<yyyy-MM-dd>.json
+-- Source File: payment_*.json
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.payment (
+DROP TABLE IF EXISTS bronze.payment;
+CREATE TABLE bronze.payment (
     -- Business Columns (Raw JSON values read as STRING)
     payment_id              STRING,
     policy_id               STRING,
@@ -60,12 +62,12 @@ CREATE TABLE IF NOT EXISTS bronze.payment (
     payment_amount          STRING,
     transaction_reference   STRING,
     last_updated            STRING,
-    operation_type          STRING,
-    batch_date              STRING,
     source_system           STRING,
     
     -- Technical Metadata Columns
     _batch_id               STRING,
+    _operation_type         STRING,
+    _batch_date             DATE,
     _loaded_at              TIMESTAMP,
     _source_system          STRING,
     _source_name            STRING
@@ -74,9 +76,10 @@ CREATE TABLE IF NOT EXISTS bronze.payment (
 -- ---------------------------------------------------------------------
 -- TABLE: bronze.policy
 -- Source System: policy_system
--- Source File: policy_full_<yyyy-MM-dd>.json
+-- Source File: policy_*.json
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.policy (
+DROP TABLE IF EXISTS bronze.policy;
+CREATE TABLE bronze.policy (
     -- Business Columns (Raw JSON values read as STRING)
     policy_id           STRING,
     quotation_id        STRING,
@@ -89,12 +92,12 @@ CREATE TABLE IF NOT EXISTS bronze.policy (
     premium_amount      STRING,
     issued_date         STRING,
     last_updated        STRING,
-    operation_type      STRING,
-    batch_date          STRING,
     source_system       STRING,
     
     -- Technical Metadata Columns
     _batch_id           STRING,
+    _operation_type     STRING,
+    _batch_date         DATE,
     _loaded_at          TIMESTAMP,
     _source_system      STRING,
     _source_name        STRING
@@ -110,7 +113,8 @@ CREATE TABLE IF NOT EXISTS bronze.policy (
 -- Source System: crm_system
 -- Source Table: dbo.customers
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.customer (
+DROP TABLE IF EXISTS bronze.customer;
+CREATE TABLE bronze.customer (
     -- Business Columns
     customer_id     STRING,
     full_name       STRING,
@@ -125,6 +129,8 @@ CREATE TABLE IF NOT EXISTS bronze.customer (
     
     -- Technical Metadata Columns
     _batch_id       STRING,
+    _operation_type STRING,
+    _batch_date     DATE,
     _loaded_at      TIMESTAMP,
     _source_system  STRING,
     _source_name    STRING
@@ -135,7 +141,8 @@ CREATE TABLE IF NOT EXISTS bronze.customer (
 -- Source System: crm_system
 -- Source Table: dbo.agents
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.agent (
+DROP TABLE IF EXISTS bronze.agent;
+CREATE TABLE bronze.agent (
     -- Business Columns
     agent_id        STRING,
     agent_name      STRING,
@@ -147,6 +154,8 @@ CREATE TABLE IF NOT EXISTS bronze.agent (
     
     -- Technical Metadata Columns
     _batch_id       STRING,
+    _operation_type STRING,
+    _batch_date     DATE,
     _loaded_at      TIMESTAMP,
     _source_system  STRING,
     _source_name    STRING
@@ -157,7 +166,8 @@ CREATE TABLE IF NOT EXISTS bronze.agent (
 -- Source System: crm_system
 -- Source Table: dbo.insurance_providers
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.insurance_provider (
+DROP TABLE IF EXISTS bronze.insurance_provider;
+CREATE TABLE bronze.insurance_provider (
     -- Business Columns
     provider_code   STRING,
     provider_name   STRING,
@@ -168,6 +178,8 @@ CREATE TABLE IF NOT EXISTS bronze.insurance_provider (
     
     -- Technical Metadata Columns
     _batch_id       STRING,
+    _operation_type STRING,
+    _batch_date     DATE,
     _loaded_at      TIMESTAMP,
     _source_system  STRING,
     _source_name    STRING
@@ -178,7 +190,8 @@ CREATE TABLE IF NOT EXISTS bronze.insurance_provider (
 -- Source System: crm_system
 -- Source Table: dbo.vehicle
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.vehicle (
+DROP TABLE IF EXISTS bronze.vehicle;
+CREATE TABLE bronze.vehicle (
     -- Business Columns
     vehicle_id        STRING,
     customer_id       STRING,
@@ -192,6 +205,8 @@ CREATE TABLE IF NOT EXISTS bronze.vehicle (
     
     -- Technical Metadata Columns
     _batch_id         STRING,
+    _operation_type   STRING,
+    _batch_date       DATE,
     _loaded_at        TIMESTAMP,
     _source_system    STRING,
     _source_name      STRING
@@ -202,7 +217,8 @@ CREATE TABLE IF NOT EXISTS bronze.vehicle (
 -- Source System: crm_system
 -- Source Table: dbo.quotation
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.quotation (
+DROP TABLE IF EXISTS bronze.quotation;
+CREATE TABLE bronze.quotation (
     -- Business Columns
     quotation_id            STRING,
     customer_id             STRING,
@@ -218,6 +234,8 @@ CREATE TABLE IF NOT EXISTS bronze.quotation (
     
     -- Technical Metadata Columns
     _batch_id               STRING,
+    _operation_type         STRING,
+    _batch_date             DATE,
     _loaded_at              TIMESTAMP,
     _source_system          STRING,
     _source_name            STRING
@@ -228,7 +246,8 @@ CREATE TABLE IF NOT EXISTS bronze.quotation (
 -- Source System: crm_system
 -- Source Table: dbo.quotation_item
 -- ---------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bronze.quotation_item (
+DROP TABLE IF EXISTS bronze.quotation_item;
+CREATE TABLE bronze.quotation_item (
     -- Business Columns
     quotation_item_id   STRING,
     quotation_id        STRING,
@@ -240,6 +259,8 @@ CREATE TABLE IF NOT EXISTS bronze.quotation_item (
     
     -- Technical Metadata Columns
     _batch_id           STRING,
+    _operation_type     STRING,
+    _batch_date         DATE,
     _loaded_at          TIMESTAMP,
     _source_system      STRING,
     _source_name        STRING

@@ -1,8 +1,9 @@
 # CarPro Insurance - Business Process Documentation
-
+## This Markdown document is the source of truth. The previous .docx version has been deprecated.
 ## Documentation Approach
 
-The documentation stands on three independent foundations: business context from the project PDF, actual source data structure from the SQL file, agreed business rules from the team discussion, and the updated BPMN business process diagram.
+
+The documentation stands on four independent foundations: business context from the project PDF, actual source data structure from the SQL file, agreed business rules from the team discussion, and the updated BPMN business process diagram.
 
 - Use business actors and business actions first.
 
@@ -136,9 +137,4 @@ flowchart LR
     P -->|"Customer payment successful"| PA
     P -->|"Payment processing failed"| F
     PA -->|"Refund approved / processed"| R
-```
-
-```mermaid
-flowchart LR
-    A["Test"] --> B["OK"]
 ```

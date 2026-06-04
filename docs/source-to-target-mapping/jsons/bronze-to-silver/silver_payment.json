@@ -39,7 +39,7 @@
       "expression": "operation_type"
     },
     {
-      "target": "is_delete",
+      "target": "is_deleted",
       "expression": "operation_type"
     },
     {

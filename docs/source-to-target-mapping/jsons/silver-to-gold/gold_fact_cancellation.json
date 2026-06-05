@@ -12,11 +12,11 @@
     },
     {
       "target": "customer_key",
-      "expression": null
+      "expression": "policy.customer_id"
     },
     {
       "target": "provider_key",
-      "expression": null
+      "expression": "policy.provider_code"
     },
     {
       "target": "cancellation_reason_key",
@@ -24,7 +24,7 @@
     },
     {
       "target": "vehicle_key",
-      "expression": null
+      "expression": "policy.customer_id"
     },
     {
       "target": "refund_amount",

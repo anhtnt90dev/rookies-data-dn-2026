@@ -12,15 +12,15 @@
     },
     {
       "target": "issued_date_key",
-      "expression": null
+      "expression": "policy.issued_at"
     },
     {
       "target": "customer_key",
-      "expression": null
+      "expression": "policy.customer_id"
     },
     {
       "target": "provider_key",
-      "expression": null
+      "expression": "policy.provider_code"
     },
     {
       "target": "payment_status_key",
@@ -32,7 +32,7 @@
     },
     {
       "target": "vehicle_key",
-      "expression": null
+      "expression": "policy.customer_id"
     },
     {
       "target": "payment_amount",

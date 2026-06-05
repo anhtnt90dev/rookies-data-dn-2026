@@ -4,27 +4,27 @@
   "columns": [
     {
       "target": "quotation_key",
-      "expression": null
+      "expression": "quotation.quotation_id"
     },
     {
       "target": "quotation_date_key",
-      "expression": null
+      "expression": "quotation.quotation_at"
     },
     {
       "target": "customer_key",
-      "expression": null
+      "expression": "quotation.customer_id"
     },
     {
       "target": "agent_key",
-      "expression": null
+      "expression": "quotation.agent_id"
     },
     {
       "target": "provider_key",
-      "expression": null
+      "expression": "quotation.provider_code"
     },
     {
       "target": "package_key",
-      "expression": null
+      "expression": "quotation.package_code"
     },
     {
       "target": "coverage_key",
@@ -32,11 +32,11 @@
     },
     {
       "target": "quotation_status_key",
-      "expression": null
+      "expression": "quotation.quotation_status"
     },
     {
       "target": "vehicle_key",
-      "expression": null
+      "expression": "quotation.customer_id"
     },
     {
       "target": "coverage_amount",

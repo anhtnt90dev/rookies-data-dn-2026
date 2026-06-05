@@ -28,7 +28,7 @@
     },
     {
       "target": "agent_key",
-      "expression": null
+      "expression": "quotation.agent_id"
     },
     {
       "target": "provider_key",
@@ -36,7 +36,7 @@
     },
     {
       "target": "package_key",
-      "expression": null
+      "expression": "quotation.package_code"
     },
     {
       "target": "policy_status_key",

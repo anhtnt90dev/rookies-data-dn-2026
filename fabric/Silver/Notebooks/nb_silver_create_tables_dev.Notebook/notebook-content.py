@@ -28,9 +28,15 @@
 # MAGIC -- Layer: Silver (Delta Tables)
 # MAGIC -- Platform: Microsoft Fabric Lakehouse (lh_insurance_dev)
 # MAGIC --
+# MAGIC -- References:
+# MAGIC --   - Documentation: docs/source-to-target-mapping/bronze-to-silver-mapping.md
+# MAGIC --   - Configurations: docs/source-to-target-mapping/jsons/bronze-to-silver/*.json
+# MAGIC --   - Naming Conventions: docs/standards/naming_convention.md
+# MAGIC --
 # MAGIC -- Purpose:
 # MAGIC -- This script creates the Silver schema and all Silver Delta Lake tables.
-# MAGIC -- The Silver layer stores cleansed, typed, and standardized data.
+# MAGIC -- Standardizes naming (e.g., last_updated_at and updated_at added to tables),
+# MAGIC -- performs basic cleansing, and prepares data for Gold layer lookup.
 # MAGIC --
 # MAGIC -- File Location: sql/lakehouse/create_silver_tables.sql
 # MAGIC -- =====================================================================
@@ -55,7 +61,8 @@
 # MAGIC     cancellation_at     TIMESTAMP,
 # MAGIC     cancellation_reason STRING,
 # MAGIC     refund_amount       DECIMAL(18,2),
-# MAGIC     last_updated        TIMESTAMP,
+# MAGIC     last_updated_at     TIMESTAMP,
+# MAGIC     updated_at          TIMESTAMP,
 # MAGIC     operation_type      STRING,
 # MAGIC     is_deleted          BOOLEAN,
 # MAGIC     
@@ -79,7 +86,8 @@
 # MAGIC     payment_status          STRING,
 # MAGIC     payment_amount          DECIMAL(18,2),
 # MAGIC     transaction_reference   STRING,
-# MAGIC     last_updated            TIMESTAMP,
+# MAGIC     last_updated_at         TIMESTAMP,
+# MAGIC     updated_at              TIMESTAMP,
 # MAGIC     operation_type          STRING,
 # MAGIC     is_deleted              BOOLEAN, 
 # MAGIC     
@@ -109,6 +117,7 @@
 # MAGIC     is_deleted          BOOLEAN, 
 # MAGIC     issued_at           TIMESTAMP,
 # MAGIC     last_updated_at     TIMESTAMP,
+# MAGIC     updated_at          TIMESTAMP,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,

@@ -28,10 +28,15 @@
 # MAGIC -- Layer: Bronze (Delta Tables)
 # MAGIC -- Platform: Microsoft Fabric Lakehouse (lh_insurance_dev)
 # MAGIC --
+# MAGIC -- References:
+# MAGIC --   - Documentation: docs/source-to-target-mapping/source-to-bronze-mapping.md
+# MAGIC --   - Configurations: docs/source-to-target-mapping/jsons/source-to-bronze/*.json
+# MAGIC --   - Naming Conventions: docs/standards/naming_convention.md
+# MAGIC --
 # MAGIC -- Purpose:
 # MAGIC -- This script creates the Bronze schema and all Bronze Delta Lake tables.
-# MAGIC -- The Bronze layer stores raw data from source systems with minimal
-# MAGIC -- transformation, preserving history and including pipeline metadata.
+# MAGIC -- Column definitions match target specifications in the mapping files
+# MAGIC -- (e.g., last_updated_at and _source_file mapped for JSON sources).
 # MAGIC --
 # MAGIC -- File Location: sql/lakehouse/create_bronze_tables.sql
 # MAGIC -- =====================================================================
@@ -48,32 +53,37 @@
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.cancellation
 # MAGIC -- Source System: policy_system
-# MAGIC -- Source File: cancellation_full_<yyyy-MM-dd>.json
+# MAGIC -- Source File: cancellation_*.json
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.cancellation (
+# MAGIC DROP TABLE IF EXISTS bronze.cancellation;
+# MAGIC CREATE TABLE bronze.cancellation (
+# MAGIC     -- Business Columns (Raw JSON values read as STRING)
 # MAGIC     cancellation_id     STRING,
 # MAGIC     policy_id           STRING,
 # MAGIC     cancellation_date   STRING,
 # MAGIC     cancellation_reason STRING,
 # MAGIC     refund_amount       STRING,
 # MAGIC     last_updated        STRING,
-# MAGIC     operation_type      STRING,
-# MAGIC     batch_date          STRING,
 # MAGIC     source_system       STRING,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
+# MAGIC     _operation_type     STRING,
+# MAGIC     _batch_date         DATE,
 # MAGIC     _loaded_at          TIMESTAMP,
 # MAGIC     _source_system      STRING,
-# MAGIC     _source_name        STRING
+# MAGIC     _source_name        STRING,
+# MAGIC     _source_file        STRING
 # MAGIC ) USING DELTA;
 # MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.payment
 # MAGIC -- Source System: payment_system
-# MAGIC -- Source File: payment_full_<yyyy-MM-dd>.json
+# MAGIC -- Source File: payment_*.json
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.payment (
+# MAGIC DROP TABLE IF EXISTS bronze.payment;
+# MAGIC CREATE TABLE bronze.payment (
+# MAGIC     -- Business Columns (Raw JSON values read as STRING)
 # MAGIC     payment_id              STRING,
 # MAGIC     policy_id               STRING,
 # MAGIC     payment_date            STRING,
@@ -81,24 +91,27 @@
 # MAGIC     payment_status          STRING,
 # MAGIC     payment_amount          STRING,
 # MAGIC     transaction_reference   STRING,
-# MAGIC     last_updated            STRING,
-# MAGIC     operation_type          STRING,
-# MAGIC     batch_date              STRING,
+# MAGIC     last_updated_at         TIMESTAMP,
 # MAGIC     source_system           STRING,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
+# MAGIC     _operation_type         STRING,
+# MAGIC     _batch_date             DATE,
 # MAGIC     _loaded_at              TIMESTAMP,
 # MAGIC     _source_system          STRING,
-# MAGIC     _source_name            STRING
+# MAGIC     _source_name            STRING,
+# MAGIC     _source_file            STRING
 # MAGIC ) USING DELTA;
 # MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.policy
 # MAGIC -- Source System: policy_system
-# MAGIC -- Source File: policy_full_<yyyy-MM-dd>.json
+# MAGIC -- Source File: policy_*.json
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.policy (
+# MAGIC DROP TABLE IF EXISTS bronze.policy;
+# MAGIC CREATE TABLE bronze.policy (
+# MAGIC     -- Business Columns (Raw JSON values read as STRING)
 # MAGIC     policy_id           STRING,
 # MAGIC     quotation_id        STRING,
 # MAGIC     customer_id         STRING,
@@ -109,16 +122,17 @@
 # MAGIC     policy_status       STRING,
 # MAGIC     premium_amount      STRING,
 # MAGIC     issued_date         STRING,
-# MAGIC     last_updated        STRING,
-# MAGIC     operation_type      STRING,
-# MAGIC     batch_date          STRING,
+# MAGIC     last_updated_at     TIMESTAMP,
 # MAGIC     source_system       STRING,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
+# MAGIC     _operation_type     STRING,
+# MAGIC     _batch_date         DATE,
 # MAGIC     _loaded_at          TIMESTAMP,
 # MAGIC     _source_system      STRING,
-# MAGIC     _source_name        STRING
+# MAGIC     _source_name        STRING,
+# MAGIC     _source_file        STRING
 # MAGIC ) USING DELTA;
 # MAGIC 
 # MAGIC 
@@ -131,7 +145,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.customers
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.customer (
+# MAGIC DROP TABLE IF EXISTS bronze.customer;
+# MAGIC CREATE TABLE bronze.customer (
+# MAGIC     -- Business Columns
 # MAGIC     customer_id     STRING,
 # MAGIC     full_name       STRING,
 # MAGIC     gender          STRING,
@@ -145,6 +161,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
+# MAGIC     _operation_type STRING,
+# MAGIC     _batch_date     DATE,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
@@ -155,7 +173,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.agents
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.agent (
+# MAGIC DROP TABLE IF EXISTS bronze.agent;
+# MAGIC CREATE TABLE bronze.agent (
+# MAGIC     -- Business Columns
 # MAGIC     agent_id        STRING,
 # MAGIC     agent_name      STRING,
 # MAGIC     region          STRING,
@@ -166,6 +186,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
+# MAGIC     _operation_type STRING,
+# MAGIC     _batch_date     DATE,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
@@ -176,7 +198,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.insurance_providers
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.insurance_provider (
+# MAGIC DROP TABLE IF EXISTS bronze.insurance_provider;
+# MAGIC CREATE TABLE bronze.insurance_provider (
+# MAGIC     -- Business Columns
 # MAGIC     provider_code   STRING,
 # MAGIC     provider_name   STRING,
 # MAGIC     provider_group  STRING,
@@ -186,6 +210,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
+# MAGIC     _operation_type STRING,
+# MAGIC     _batch_date     DATE,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
@@ -196,7 +222,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.vehicle
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.vehicle (
+# MAGIC DROP TABLE IF EXISTS bronze.vehicle;
+# MAGIC CREATE TABLE bronze.vehicle (
+# MAGIC     -- Business Columns
 # MAGIC     vehicle_id        STRING,
 # MAGIC     customer_id       STRING,
 # MAGIC     plate_number      STRING,
@@ -209,6 +237,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id         STRING,
+# MAGIC     _operation_type   STRING,
+# MAGIC     _batch_date       DATE,
 # MAGIC     _loaded_at        TIMESTAMP,
 # MAGIC     _source_system    STRING,
 # MAGIC     _source_name      STRING
@@ -219,7 +249,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.quotation
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.quotation (
+# MAGIC DROP TABLE IF EXISTS bronze.quotation;
+# MAGIC CREATE TABLE bronze.quotation (
+# MAGIC     -- Business Columns
 # MAGIC     quotation_id            STRING,
 # MAGIC     customer_id             STRING,
 # MAGIC     agent_id                STRING,
@@ -234,6 +266,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
+# MAGIC     _operation_type         STRING,
+# MAGIC     _batch_date             DATE,
 # MAGIC     _loaded_at              TIMESTAMP,
 # MAGIC     _source_system          STRING,
 # MAGIC     _source_name            STRING
@@ -244,7 +278,9 @@
 # MAGIC -- Source System: crm_system
 # MAGIC -- Source Table: dbo.quotation_item
 # MAGIC -- ---------------------------------------------------------------------
-# MAGIC CREATE TABLE IF NOT EXISTS bronze.quotation_item (
+# MAGIC DROP TABLE IF EXISTS bronze.quotation_item;
+# MAGIC CREATE TABLE bronze.quotation_item (
+# MAGIC     -- Business Columns
 # MAGIC     quotation_item_id   STRING,
 # MAGIC     quotation_id        STRING,
 # MAGIC     coverage_type       STRING,
@@ -255,6 +291,8 @@
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
+# MAGIC     _operation_type     STRING,
+# MAGIC     _batch_date         DATE,
 # MAGIC     _loaded_at          TIMESTAMP,
 # MAGIC     _source_system      STRING,
 # MAGIC     _source_name        STRING

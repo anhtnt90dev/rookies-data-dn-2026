@@ -117,7 +117,6 @@
 # MAGIC     is_deleted          BOOLEAN, 
 # MAGIC     issued_at           TIMESTAMP,
 # MAGIC     last_updated_at     TIMESTAMP,
-# MAGIC     updated_at          TIMESTAMP,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,

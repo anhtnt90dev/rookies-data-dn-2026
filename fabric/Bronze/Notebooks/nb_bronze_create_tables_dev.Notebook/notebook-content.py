@@ -63,7 +63,7 @@
 # MAGIC     cancellation_date   STRING,
 # MAGIC     cancellation_reason STRING,
 # MAGIC     refund_amount       STRING,
-# MAGIC     last_updated        STRING,
+# MAGIC     last_updated_at     TIMESTAMP,
 # MAGIC     source_system       STRING,
 # MAGIC     
 # MAGIC     -- Technical Metadata Columns

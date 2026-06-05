@@ -36,7 +36,6 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | cancellation_reason | STRING | cancellation_reason | STRING | Direct mapping |
 | refund_amount | STRING | refund_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
-| cancellation_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
 | last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
@@ -60,7 +59,6 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | payment_amount | STRING | payment_amount | DECIMAL(18,2) | Cast to `DECIMAL(18,2)` |
 | transaction_reference | STRING | transaction_reference | STRING | Direct mapping |
 | last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
-| payment_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
 | last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | operation_type | STRING | operation_type | STRING | Direct mapping |
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
@@ -89,7 +87,6 @@ Provide a consistent mapping reference from Bronze tables to Silver tables,data 
 | operation_type | STRING | is_deleted | BOOLEAN | `TRUE` if `operation_type = 'D'`, else `FALSE` |
 | issued_date | STRING | issued_at | TIMESTAMP | Cast to `TIMESTAMP`, rename to `_at` |
 | last_updated_at | TIMESTAMP | last_updated_at | TIMESTAMP | Direct mapping |
-| issued_date | STRING | created_at | TIMESTAMP | Cast to `TIMESTAMP` and rename to `created_at` |
 | last_updated_at | TIMESTAMP | updated_at | TIMESTAMP | Rename to `updated_at` |
 | _batch_id | STRING | _batch_id | STRING | Pass-through |
 | _loaded_at | TIMESTAMP | _loaded_at | TIMESTAMP | Generate |

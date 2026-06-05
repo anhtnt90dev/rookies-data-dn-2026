@@ -41,22 +41,6 @@
     {
       "target": "updated_at",
       "expression": "updated_at"
-    },
-    {
-      "target": "_batch_id",
-      "expression": "_batch_id"
-    },
-    {
-      "target": "_loaded_at",
-      "expression": "_loaded_at"
-    },
-    {
-      "target": "_source_system",
-      "expression": "_source_system"
-    },
-    {
-      "target": "_source_name",
-      "expression": "_source_name"
     }
   ]
 }

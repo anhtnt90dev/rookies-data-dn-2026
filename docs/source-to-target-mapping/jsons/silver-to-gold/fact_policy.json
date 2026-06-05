@@ -71,10 +71,6 @@
       "expression": "provider_code"
     },
     {
-      "target": "_source_system",
-      "expression": "_source_system"
-    },
-    {
       "target": "created_at",
       "expression": "current_timestamp()"
     },
@@ -85,6 +81,10 @@
     {
       "target": "_batch_id",
       "expression": "_batch_id"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
     },
     {
       "target": "pipeline_run_id",

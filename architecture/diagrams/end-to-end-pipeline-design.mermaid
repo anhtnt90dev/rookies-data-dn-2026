@@ -1,74 +1,91 @@
 flowchart TD
     Start([Start Pipeline])
-    AS[Insert audit_session<br/> status = Running; pipeline_id; batch_id]
+
+    %% ── CONTROL CHECK ──────────────────────────────────────
+    NMR_READ[Read cfg.next_run_mode Table<br/>Get mode, failed batch_id & session_id]
+    NMR_CHECK{Mode == 'RECOVERY'?}
+    RECOVER_CONTEXT[Resume Failed Batch:<br/>Use failed batch_id & session_id]
+    NEW_CONTEXT[Proceed with New Batch]
+
+    AS[Insert log.audit_session<br/> status = Running; pipeline_id; batch_id]
 
     %% ── INITIAL ──────────────────────────────────────────
     subgraph INIT["Initial"]
         direction TB
-        A[Read Job_Config Table<br/> Job_ID; Source_System; Load_Type; Schedule; Max_Retry]
-        B[Read Watermark Table<br/> last_run_timestamp per source; NULL -> Full load triggered]
+        A[Read cfg.source_table Table<br/> id; source_system; load_type; load_sequence;]
+        B[Read cfg.watermark<br/> watermark_value per source; NULL -> Full load triggered]
     end
 
     %% ── STATUS SETUP ──────────────────────────────────────
     subgraph STATUS["Status Stage"]
         direction TB
-        C[Insert audit_detail<br/> status = Running; source; batch_id; load_type]
-        D[Insert audit_table_session<br/> one record per active table; bronze/silver/gold = Pending]
+        C[Insert log.audit_detail<br/> status = Running; source;]
+        D[Insert log.audit_table_session<br/> one record per active table; bronze/silver/gold = Pending]
     end
 
     %% ── BRONZE LAYER ──────────────────────────────────────
     subgraph BRONZE[" Bronze Layer"]
         direction TB
-        E[Extract from Source System<br/> FULL -> SELECT *; INCREMENTAL -> WHERE updated_at > watermark]
-        F[Schema Validation<br/> validate column types;  reject invalids -> Pipeline_Error_Record]
+        E["Extract from Source System<br/> FULL -> SELECT *;<br/> INCREMENTAL -> Source-specific logic:<br/> - updated_date (if supported)<br/> - created_date / full refresh + compare (append-only/non-updated sources)<br/> - JSON batch/date files + operation_type "]
+        F[Schema Validation<br/> validate column types;  reject invalids -> log.invalid_record]
         H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
         I{Bronze Load<br/>Success?}
         RB{Retry Bronze?<br/>Condition: retry_count < max_retry}
         RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
-        J[Update audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
-        K[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
-        L[Update Watermark Table<br/> last_run_timestamp = MAX updated_at; last_batch_id = current batch_id]
-        ERR_B1[Update audit_table_session<br/>— Failed]
-        ERR_B2[Update audit_detail<br/> status = Failed; error message]
+        J[Update log.audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
+        K[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        L["Update cfg.watermark<br/> watermark_value =  MAX(source-specific watermark value)"]
+        ERR_B1[Update log.audit_table_session<br/>— Failed]
+        ERR_B2[Update log.audit_detail<br/> status = Failed; error message]
         END_B([End this Bronze table])
     end
 
     %% ── SILVER LAYER ──────────────────────────────────────
     subgraph SILVER["Silver Layer"]
         direction TB
-        M[Insert audit_detail<br/> status = Running]
+        M[Insert log.audit_detail<br/> status = Running]
         G1[Cleansing<br/> mandatory cleaning null]
         G2[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
-        N[Load Silver<br/> initial -> truncate table; read bronze via audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
+        N[Load Silver<br/> initial -> truncate table; read bronze using table_session_id from log.audit_table_session; cleansing and business rules; SCD logic]
         O{Silver Load<br/>Success?}
         RS{Retry Silver?<br/>Condition: retry_count < max_retry}
         RS_WAIT[Schedule Silver Retry<br/> increment retry_count; backoff delay]
-        P[Update audit_table_session<br/> silver_status = Success; silver_end_at = NOW]
-        Q[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
-        ERR_S1[Update audit_table_session<br/>— Failed]
-        ERR_S2[Update audit_detail<br/> status = Failed; error message]
+        P[Update log.audit_table_session<br/> silver_status = Success; silver_end_at = NOW]
+        Q[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_S1[Update log.audit_table_session<br/>— Failed]
+        ERR_S2[Update log.audit_detail<br/> status = Failed; error message]
         END_S([End this Silver table])
     end
 
     %% ── GOLD LAYER ────────────────────────────────────────
     subgraph GOLD["Gold Layer"]
         direction TB
-        R[Insert audit_detail<br/> status = Running]
+        R[Insert log.audit_detail<br/> status = Running]
         S[Load Gold<br/> read silver conformed tables; aggregation and KPI logic; merge into fact/dimension; partition by report_date + region]
         T{Gold Load<br/>Success?}
         RG{Retry Gold?<br/>Condition: retry_count < max_retry}
         RG_WAIT[Schedule Gold Retry<br/> increment retry_count; backoff delay]
-        U[Update audit_table_session<br/> gold_status = Success; gold_end_at = NOW]
-        V[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
-        ERR_G1[Update audit_table_session<br/>— Failed]
-        ERR_G2[Update audit_detail<br/> status = Failed; error message]
+        U[Update log.audit_table_session<br/> gold_status = Success; gold_ended_at = NOW]
+        V[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_G1[Update log.audit_table_session<br/>— Failed]
+        ERR_G2[Update log.audit_detail<br/> status = Failed; error message]
         END_G([End this Gold table])
     end
+
+    %% ── PIPELINE TERMINATION ──────────────────────────────
+    NMR_SUCCESS[Update cfg.next_run_mode Table<br/>mode = 'NEW';]
+    NMR_FAIL[Update cfg.next_run_mode Table<br/>mode = 'RECOVERY'; failed batch_id & session_id]
+    Fail([Pipeline Failed])
 
     End([Pipeline Complete])
 
     %% ── CONNECTIONS ───────────────────────────────────────
-    Start --> AS --> INIT
+    Start --> NMR_READ --> NMR_CHECK
+    NMR_CHECK -- Yes --> RECOVER_CONTEXT
+    NMR_CHECK -- No --> NEW_CONTEXT
+    RECOVER_CONTEXT --> AS
+    NEW_CONTEXT --> AS
+    AS --> INIT
     A --> B
     B --> STATUS
     C --> D
@@ -89,7 +106,13 @@ flowchart TD
     T -- No  --> ERR_G1 --> ERR_G2 --> RG
     RG -- Yes --> RG_WAIT --> R
     RG -- No  --> END_G
-    T -- Yes --> U --> V --> End
+    T -- Yes --> U --> V --> NMR_SUCCESS --> End
+
+    %% ── FAILURE CONNECTIONS ──────────────────────────────
+    END_B --> NMR_FAIL
+    END_S --> NMR_FAIL
+    END_G --> NMR_FAIL
+    NMR_FAIL --> Fail
 
     %% ── STYLES ────────────────────────────────────────────
     classDef startEnd fill:#1B6B3A,stroke:#0d4a28,color:#fff,rx:20
@@ -102,10 +125,10 @@ flowchart TD
     classDef stopNode  fill:#9B2020,stroke:#7a0e0e,color:#fff,rx:20
 
     class Start,End startEnd
-    class A,B,C,D,AS config
+    class A,B,C,D,AS,NMR_READ,RECOVER_CONTEXT,NEW_CONTEXT,NMR_SUCCESS config
     class E,F,H,J,K,L bronze
     class M,G1,G2,N,P,Q silver
     class R,S,U,V gold
-    class I,O,T,RB,RS,RG decision
-    class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2 error
-    class END_B,END_S,END_G stopNode
+    class I,O,T,RB,RS,RG,NMR_CHECK decision
+    class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2,NMR_FAIL error
+    class END_B,END_S,END_G,Fail stopNode

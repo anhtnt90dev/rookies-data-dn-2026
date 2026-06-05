@@ -55,12 +55,8 @@
       "expression": "last_updated_at"
     },
     {
-      "target": "created_at",
-      "expression": "issued_date"
-    },
-    {
       "target": "updated_at",
-      "expression": "current_timestamp()"
+      "expression": "last_updated_at"
     },
     {
       "target": "_batch_id",

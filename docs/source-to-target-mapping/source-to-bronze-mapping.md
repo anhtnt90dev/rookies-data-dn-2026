@@ -63,6 +63,7 @@ flowchart LR
     LAT["_loaded_at"]
     SS["_source_system"]
     SN["_source_name"]
+    SF["_source_file<br/>(file-based sources only)"]
     RAW --> BRZ["Bronze Delta Table"]
     BID --> BRZ
     BD --> BRZ
@@ -70,6 +71,7 @@ flowchart LR
     LAT --> BRZ
     SS --> BRZ
     SN --> BRZ
+    SF --> BRZ
 ```
 
 ## 1. Objective
@@ -84,12 +86,13 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | `_batch_date` | `batch_date` | Mapped from `batch_date` for JSON sources and generated from the pipeline execution date for database sources. |
 | `_loaded_at` | `ingested_at` | Timestamp when the record is loaded into Bronze. |
 | `_source_system` | `source_system` | Source system from the pipeline configuration. |
-| `_source_name` | Source table/entity or source file name/path | Source object defined in the pipeline configuration. |
+| `_source_name` | Source table/entity name | Source object defined in the pipeline configuration (for example, payment, policy, customer).|
+| `_source_file` | Source file path/name | Physical source file path or file name for file-based sources only. |
 | `_operation_type` | `operation_type` | Mapped from `operation_type` for JSON sources and inferred from `updated_date` for database sources (for example, `I` when `updated_date` is null and `U` when `updated_date` is not null). |
 
 > **Note:**
 >
-> - `load_type` is tracked in the configuration and audit tables through `cfg.source_table` and `cfg.audit_table_session`.
+> - `load_type` is tracked in the configuration and audit tables through `cfg.source_table` and `log.audit_table_session`.
 
 ## 3. JSON Source to Bronze Mapping
 
@@ -130,6 +133,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | N/A | N/A | _loaded_at | TIMESTAMP | N/A | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_system | STRING | 50 | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_name | STRING | 100 | N/A | N/A | Pipeline Generated |
+| N/A | N/A | _source_file | STRING | 500 | N/A | N/A | Pipeline Generated |
 
 ### 3.2. Payments
 
@@ -156,6 +160,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | N/A | N/A | _loaded_at | TIMESTAMP | N/A | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_system | STRING | 50 | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_name | STRING | 100 | N/A | N/A | Pipeline Generated |
+| N/A | N/A | _source_file | STRING | 500 | N/A | N/A | Pipeline Generated |
 
 ### 3.3. Policies
 
@@ -185,6 +190,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | N/A | N/A | _loaded_at | TIMESTAMP | N/A | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_system | STRING | 50 | N/A | N/A | Pipeline Generated |
 | N/A | N/A | _source_name | STRING | 100 | N/A | N/A | Pipeline Generated |
+| N/A | N/A | _source_file | STRING | 500 | N/A | N/A | Pipeline Generated |
 
 ## 4. CRM Source to Bronze Mapping
 

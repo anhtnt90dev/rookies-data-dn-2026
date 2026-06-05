@@ -1,0 +1,22 @@
+{
+  "source_table": "silver.quotation",
+  "target_table": "gold.dim_package",
+  "columns": [
+    {
+      "target": "package_key",
+      "expression": null
+    },
+    {
+      "target": "package_code",
+      "expression": "package_code"
+    },
+    {
+      "target": "created_at",
+      "expression": "created_at"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_at"
+    }
+  ]
+}

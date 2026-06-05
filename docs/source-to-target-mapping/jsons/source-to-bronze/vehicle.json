@@ -1,0 +1,58 @@
+{
+  "source_table": "dbo.vehicle",
+  "target_table": "bronze.vehicle",
+  "columns": [
+    {
+      "target": "vehicle_id",
+      "expression": "vehicle_id"
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "plate_number",
+      "expression": "plate_number"
+    },
+    {
+      "target": "vehicle_brand",
+      "expression": "vehicle_brand"
+    },
+    {
+      "target": "vehicle_model",
+      "expression": "vehicle_model"
+    },
+    {
+      "target": "manufacture_year",
+      "expression": "manufacture_year"
+    },
+    {
+      "target": "vehicle_value",
+      "expression": "vehicle_value"
+    },
+    {
+      "target": "created_date",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_date",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

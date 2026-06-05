@@ -1,0 +1,58 @@
+{
+  "source_table": "silver.customer",
+  "target_table": "gold.dim_customer",
+  "columns": [
+    {
+      "target": "customer_key",
+      "expression": null
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "full_name",
+      "expression": "full_name"
+    },
+    {
+      "target": "gender",
+      "expression": "gender"
+    },
+    {
+      "target": "dob",
+      "expression": "dob"
+    },
+    {
+      "target": "phone_number",
+      "expression": "phone_number"
+    },
+    {
+      "target": "email",
+      "expression": "email"
+    },
+    {
+      "target": "city",
+      "expression": "city"
+    },
+    {
+      "target": "district",
+      "expression": "district"
+    },
+    {
+      "target": "effective_from",
+      "expression": "COALESCE(updated_at,created_at)"
+    },
+    {
+      "target": "effective_to",
+      "expression": null
+    },
+    {
+      "target": "is_current",
+      "expression": null
+    },
+    {
+      "target": "created_at",
+      "expression": "created_at"
+    }
+  ]
+}

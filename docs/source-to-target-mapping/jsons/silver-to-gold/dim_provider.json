@@ -1,0 +1,46 @@
+{
+  "source_table": "silver.provider",
+  "target_table": "gold.dim_provider",
+  "columns": [
+    {
+      "target": "provider_key",
+      "expression": null
+    },
+    {
+      "target": "provider_code",
+      "expression": "provider_code"
+    },
+    {
+      "target": "provider_name",
+      "expression": "provider_name"
+    },
+    {
+      "target": "provider_group",
+      "expression": "provider_group"
+    },
+    {
+      "target": "active_flag",
+      "expression": "CAST(is_active AS INT)"
+    },
+    {
+      "target": "effective_from",
+      "expression": "COALESCE(updated_at,created_at)"
+    },
+    {
+      "target": "effective_to",
+      "expression": null
+    },
+    {
+      "target": "is_current",
+      "expression": null
+    },
+    {
+      "target": "created_at",
+      "expression": "created_at"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_at"
+    }
+  ]
+}

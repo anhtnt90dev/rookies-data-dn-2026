@@ -1,0 +1,44 @@
+# Dashboard 02 KPI Measures
+
+| KPI ID | Measure Name | Group | Chart Type | DAX Formula (Gold Model - Star Schema) | Business Meaning | Why It Is Important? | Database Source Table | Calculation Column | Filter / Context |
+|--------|-------------|-------|------------|----------------------------------------|------------------|---------------------|----------------------|-------------------|-----------------|
+| M-01 | Active Policies | KPI Card | KPI Card | `CALCULATE(COUNTROWS(fact_policy), dim_policy_status[policy_status_code]="ACTIVE", USERELATIONSHIP(fact_policy[policy_end_date_key], dim_date[date_key]), dim_date[full_date] >= TODAY())` | Number of policies still active | Portfolio health | fact_policy | - | Date filter + policy_end_date |
+| M-02 | Policies Issued | KPI Card | KPI Card | `CALCULATE(COUNTROWS(fact_policy), dim_date[full_date])` | Number of policies issued in the period | Actual revenue indicator | fact_policy | - | Date filter (issued_date) |
+| M-03 | Cancelled Policies | KPI Card | KPI Card | `CALCULATE(COUNTROWS(fact_cancellation))` | Number of policies cancelled in the period | Churn indicator | fact_cancellation | - | Date filter (cancellation_date) |
+| M-04 | Payment Collection Rate | KPI Card | KPI Card | `DIVIDE(CALCULATE(COUNTROWS(fact_payment), dim_payment_status[payment_status_code] = "PAID"), COUNTROWS(fact_payment), 0) * 100` | Percentage of payment transactions successfully collected | Operational health | fact_payment | - | Date filter (payment_date) |
+| M-05 | Total Written Premium | KPI Card | KPI Card | `CALCULATE(SUM(fact_policy[premium_amount]), dim_policy_status[policy_status_code] IN {"ACTIVE","EXPIRED"})` | Total insurance premium written (VND) | Main revenue indicator | fact_policy | - | Date filter + status |
+| M-06 | Total Collected Premium | KPI Card | KPI Card | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PAID")` | Total insurance premium collected (VND) | Actual cash collected | fact_payment | - | Date filter + status |
+| M-07 | Pending Payments (VND) | KPI Card | KPI Card | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING")` | Total pending payments | Cash flow risk | fact_payment | - | Date filter |
+| M-08 | Failed Payment Rate | KPI Card | KPI Card | `DIVIDE(CALCULATE(COUNTROWS(fact_payment), dim_payment_status[payment_status_code] = "FAILED"), COUNTROWS(fact_payment), 0) * 100` | Percentage of payment transactions that failed | Indicates payment processing issues and potential revenue loss | fact_payment | - | Date filter |
+| M-09 | % Change Active vs Prior Year | KPI Card | KPI Card (delta) | `DIVIDE([Active Policies] - CALCULATE([Active Policies], SAMEPERIODLASTYEAR(dim_date[full_date])), CALCULATE([Active Policies], SAMEPERIODLASTYEAR(dim_date[full_date])), 0) * 100` | YoY % change in active policies | Growth trending | fact_policy | - | Date intelligence |
+| M-10 | Policy Status Distribution | Donut Chart | Donut Chart | `DIVIDE(CALCULATE(COUNTROWS(fact_policy)), CALCULATE(COUNTROWS(fact_policy), ALL(dim_policy_status)), 0)` | Distribution of policy statuses | Portfolio health | fact_policy | - | - |
+| M-11 | Monthly Collected Amount | Line Chart | Line Chart | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PAID")` | Monthly collected premium | Revenue trend | fact_payment | - | Date hierarchy (month) |
+| M-12 | Monthly Pending Amount | Line Chart | Line Chart | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING")` | Monthly pending amount | Detect spikes | fact_payment | - | Date hierarchy |
+| M-13 | Monthly Failed Amount | Line Chart | Line Chart | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="FAILED")` | Monthly failed amount | Operational alert | fact_payment | - | Date hierarchy |
+| M-14 | Monthly Policies Issued | Line Chart | Line Chart | `CALCULATE(COUNTROWS(fact_policy))` | Policies issued by month | Volume trend | fact_policy | - | Date hierarchy (issued_date) |
+| M-15 | Monthly Cancellations | Line Chart | Line Chart | `CALCULATE(COUNTROWS(fact_cancellation))` | Cancellations by month | Churn trend | fact_cancellation | - | Date hierarchy |
+| M-16 | Pending Aging: 0–7 Days | Aging Analysis | Horizontal Bar | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING", fact_payment[aging_days] <= 7)` | Pending ≤ 7 days | Recent aging | fact_payment | aging_days | Pending payments only (0-7 days) |
+| M-17 | Pending Aging: 8–30 Days | Bar Chart | Horizontal Bar | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING", fact_payment[aging_days] >= 8 && fact_payment[aging_days] <= 30)` | Pending 8–30 days | Medium-term | fact_payment | aging_days | Pending payments only |
+| M-18 | Pending Aging: 31–60 Days | Bar Chart | Horizontal Bar | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING", fact_payment[aging_days] >= 31 && fact_payment[aging_days] <= 60)` | Pending 31–60 days | Bad debt risk | fact_payment | aging_days | Pending payments only |
+| M-19 | Pending Aging: 61–90 Days | Bar Chart | Horizontal Bar | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING", fact_payment[aging_days] >= 61 && fact_payment[aging_days] <= 90)` | Pending 61–90 days | High risk | fact_payment | aging_days | Pending payments only |
+| M-20 | Pending Aging: >90 Days | Bar Chart | Horizontal Bar | `CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING", fact_payment[aging_days] > 90)` | Pending >90 days | Very high risk / potential write-off | fact_payment | aging_days | Pending payments only |
+| M-21 | Payment Collection Rate by Provider | Bar Chart | Horizontal Bar | `CALCULATE([Payment Collection Rate])` | Collection rate by provider | Provider performance | fact_payment | - | Group by dim_provider[provider_name] |
+| M-22 | Average Payment Time (Days) | Gauge | Gauge | `AVERAGEX(FILTER(fact_payment, fact_payment[payment_amount] > 0 && RELATED(dim_payment_status[payment_status_code]) = "PAID"), VAR IssuedDate = CALCULATE(MAX(dim_date[full_date]), USERELATIONSHIP(fact_payment[issued_date_key], dim_date[date_key])) VAR PaymentDate = CALCULATE(MAX(dim_date[full_date]), USERELATIONSHIP(fact_payment[payment_date_key], dim_date[date_key])) RETURN DATEDIFF(IssuedDate, PaymentDate, DAY))` | Average number of days between policy issuance and successful payment | Efficiency | fact_payment | - | PAID only |
+| M-23 | Policy Cancellation Rate | KPI Card | KPI Card | `DIVIDE(CALCULATE(COUNTROWS(fact_cancellation)), CALCULATE(COUNTROWS(fact_policy)), 0) * 100` | Percentage of policies cancelled compared to policies issued | Churn level | fact_cancellation + fact_policy | - | Date filter |
+| M-24 | Policies Expiring Soon | KPI Card | KPI Card | `CALCULATE(COUNTROWS(fact_policy), dim_policy_status[policy_status_code]="ACTIVE", USERELATIONSHIP(fact_policy[policy_end_date_key], dim_date[date_key]), dim_date[full_date] <= TODAY() + 30)` | Active policies expiring in ≤30 days | Renewal opportunity | fact_policy | - | 30-day window |
+| M-25 | Refund Amount | KPI Card | KPI Card | `CALCULATE(SUM(fact_cancellation[refund_amount]))` | Total refunded amount | Financial leakage | fact_cancellation | - | - |
+| M-26 | Refund Rate | KPI Card | KPI Card | `DIVIDE([Refund Amount], [Refund Amount] + [Total Collected Premium], 0) * 100` | Percentage of collected premium that was refunded | Leakage ratio | fact_cancellation + fact_payment | - | PAID payments recommended |
+
+**Notes:**
+The `aging_days` column used in KPIs M-16 to M-20 is a **Calculated Column** in the `fact_payment` table, calculated using the following formula in Power BI. This column must use the payment date role via `fact_payment[payment_date_key] -> dim_date[date_key]` to avoid ambiguity when multiple date roles are active.
+
+```dax
+aging_days =
+VAR PaymentDate =
+    CALCULATE(
+        MAX(dim_date[full_date]),
+        USERELATIONSHIP(fact_payment[payment_date_key], dim_date[date_key])
+    )
+RETURN
+    DATEDIFF(PaymentDate, TODAY(), DAY)
+```

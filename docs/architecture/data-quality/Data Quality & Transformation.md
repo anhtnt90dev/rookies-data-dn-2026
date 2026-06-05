@@ -29,7 +29,7 @@ Invalid or non-recoverable records are redirected to the `log.invalid_record` ta
 | `id` | BIGINT | Unique invalid record identifier |
 | `table_session_id` | BIGINT | Related table execution session identifier |
 | `layer` | VARCHAR(20) | Layer where the validation failure occurred |
-| `target_table` | VARCHAR(100) | Target table associated with the failed record. Maps to `source_name` in the `Pipeline_Error` baseline concept. |
+| `target_table` | VARCHAR(100) | Target table associated with the failed record. (Note: `target_table` stores the rejected target table, while the canonical `source_name` is resolved from `log.audit_table_session`.) |
 | `record_key` | VARCHAR(255) | Business key or primary key of the failed record |
 | `raw_data` | TEXT | Original record content. Maps to `raw_payload` in the `Pipeline_Error` baseline concept. |
 | `error_column` | VARCHAR(100) | Column that failed validation |
@@ -37,9 +37,9 @@ Invalid or non-recoverable records are redirected to the `log.invalid_record` ta
 | `created_at` | TIMESTAMP | Record creation timestamp |
 
 > **Baseline field mapping note:**
-> The following `Pipeline_Error` baseline fields are covered by the pipeline execution context via `log.audit_session` and `log.table_session`, not stored redundantly in `log.invalid_record`:
-> - `batch_id` → available via `table_session_id → log.table_session.batch_id`
-> - `source_system` → available via `table_session_id → log.table_session.source_system`
+> The following `Pipeline_Error` baseline fields are covered by the pipeline execution context via `log.audit_session` and `log.audit_table_session`, not stored redundantly in `log.invalid_record`:
+> - `batch_id` → available via `table_session_id → log.audit_table_session.batch_id`
+> - `source_system` → available via `table_session_id → log.audit_table_session.source_system`
 
 ---
 

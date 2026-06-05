@@ -92,7 +92,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 
 > **Note:**
 >
-> - `load_type` is tracked in the configuration and audit tables through `cfg.source_table` and `cfg.audit_table_session`.
+> - `load_type` is tracked in the configuration and audit tables through `cfg.source_table` and `log.audit_table_session`.
 
 ## 3. JSON Source to Bronze Mapping
 

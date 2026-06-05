@@ -4,9 +4,15 @@
 -- Layer: Gold (Star Schema / Dimensional Model)
 -- Platform: Microsoft Fabric Lakehouse (lh_insurance_dev)
 --
+-- References:
+--   - Documentation: docs/source-to-target-mapping/silver-to-gold-mapping.md
+--   - Design Docs: docs/data-modeling/dimensional-design/02-dimensional-table-structures-design.md
+--   - Configurations: docs/source-to-target-mapping/jsons/silver-to-gold/*.json
+--
 -- Purpose:
--- This script creates the Gold schema and all Gold Dimension and Fact tables.
--- The Gold layer houses the business-ready star schema for reporting and analysis.
+-- This script creates the Gold schema, Dimension and Fact tables.
+-- Aligns with star schema specs (SCD Type 1 & 2 dimensions simplified;
+-- fact tables updated with converted_flag and technical soft-delete/lineage).
 --
 -- File Location: sql/lakehouse/create_gold_tables.sql
 -- =====================================================================
@@ -57,15 +63,8 @@ CREATE TABLE gold.dim_customer (
     effective_from  TIMESTAMP,
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
-    is_deleted      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -83,15 +82,8 @@ CREATE TABLE gold.dim_agent (
     effective_from  TIMESTAMP,
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
-    is_deleted      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -104,19 +96,12 @@ CREATE TABLE gold.dim_provider (
     provider_code   STRING,
     provider_name   STRING,
     provider_group  STRING,
-    is_active       BOOLEAN,
+    active_flag     INT,
     effective_from  TIMESTAMP,
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
-    is_deleted      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -128,13 +113,7 @@ CREATE TABLE gold.dim_package (
     package_key     BIGINT,
     package_code    STRING,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -146,13 +125,7 @@ CREATE TABLE gold.dim_coverage (
     coverage_key    BIGINT,
     coverage_type   STRING,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -163,16 +136,9 @@ DROP TABLE IF EXISTS gold.dim_quotation;
 CREATE TABLE gold.dim_quotation (
     quotation_key        BIGINT,
     quotation_id         STRING,
-    quotation_number     STRING,
     quotation_expiry_date DATE,
     created_at           TIMESTAMP,
-    updated_at           TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id            STRING,
-    _loaded_at           TIMESTAMP,
-    _source_system       STRING,
-    _source_name         STRING
+    updated_at           TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -183,22 +149,8 @@ DROP TABLE IF EXISTS gold.dim_policy;
 CREATE TABLE gold.dim_policy (
     policy_key         BIGINT,
     policy_id          STRING,
-    policy_number      STRING,
-    quotation_id       STRING,
-    customer_id        STRING,
-    provider_code      STRING,
-    policy_start_date  DATE,
-    policy_end_date    DATE,
-    premium_amount     DECIMAL(18,2),
-    issued_at          TIMESTAMP,
     created_at         TIMESTAMP,
-    updated_at         TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id          STRING,
-    _loaded_at         TIMESTAMP,
-    _source_system     STRING,
-    _source_name       STRING
+    updated_at         TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -209,18 +161,8 @@ DROP TABLE IF EXISTS gold.dim_quotation_status;
 CREATE TABLE gold.dim_quotation_status (
     quotation_status_key  BIGINT,
     quotation_status_code STRING,
-    quotation_status_name STRING,
-    is_open               BOOLEAN,
-    is_accepted           BOOLEAN,
-    is_converted          BOOLEAN,
     created_at            TIMESTAMP,
-    updated_at            TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id             STRING,
-    _loaded_at            TIMESTAMP,
-    _source_system        STRING,
-    _source_name          STRING
+    updated_at            TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -231,18 +173,8 @@ DROP TABLE IF EXISTS gold.dim_policy_status;
 CREATE TABLE gold.dim_policy_status (
     policy_status_key   BIGINT,
     policy_status_code  STRING,
-    policy_status_name  STRING,
-    status_group        STRING,
-    is_active_policy    BOOLEAN,
-    is_terminal_status  BOOLEAN,
     created_at          TIMESTAMP,
-    updated_at          TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id           STRING,
-    _loaded_at          TIMESTAMP,
-    _source_system      STRING,
-    _source_name        STRING
+    updated_at          TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -253,18 +185,8 @@ DROP TABLE IF EXISTS gold.dim_payment_status;
 CREATE TABLE gold.dim_payment_status (
     payment_status_key    BIGINT,
     payment_status_code   STRING,
-    payment_status_name   STRING,
-    status_group          STRING,
-    is_successful_payment BOOLEAN,
-    is_refund_status      BOOLEAN,
     created_at            TIMESTAMP,
-    updated_at            TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id             STRING,
-    _loaded_at            TIMESTAMP,
-    _source_system        STRING,
-    _source_name          STRING
+    updated_at            TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -275,16 +197,8 @@ DROP TABLE IF EXISTS gold.dim_payment_method;
 CREATE TABLE gold.dim_payment_method (
     payment_method_key   BIGINT,
     payment_method_code  STRING,
-    payment_method_name  STRING,
-    payment_method_group STRING,
     created_at           TIMESTAMP,
-    updated_at           TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id            STRING,
-    _loaded_at           TIMESTAMP,
-    _source_system       STRING,
-    _source_name         STRING
+    updated_at           TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -296,13 +210,7 @@ CREATE TABLE gold.dim_cancellation_reason (
     cancellation_reason_key BIGINT,
     cancellation_reason     STRING,
     created_at              TIMESTAMP,
-    updated_at              TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id               STRING,
-    _loaded_at              TIMESTAMP,
-    _source_system          STRING,
-    _source_name            STRING
+    updated_at              TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -322,15 +230,8 @@ CREATE TABLE gold.dim_vehicle (
     effective_from    TIMESTAMP,
     effective_to      TIMESTAMP,
     is_current        BOOLEAN,
-    is_deleted        BOOLEAN,
     created_at        TIMESTAMP,
-    updated_at        TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id         STRING,
-    _loaded_at        TIMESTAMP,
-    _source_system    STRING,
-    _source_name      STRING
+    updated_at        TIMESTAMP
 ) USING DELTA;
 
 
@@ -351,6 +252,7 @@ CREATE TABLE gold.fact_quotation (
     provider_code             STRING,
     
     -- Dimension Foreign Keys
+    quotation_key             BIGINT,
     customer_key              BIGINT,
     agent_key                 BIGINT,
     provider_key              BIGINT,
@@ -362,14 +264,17 @@ CREATE TABLE gold.fact_quotation (
     
     -- Measures
     premium_amount            DECIMAL(18,2),
+    converted_flag            BOOLEAN,
     
     -- Metadata / Audit columns
     created_at                TIMESTAMP,
     updated_at                TIMESTAMP,
     _batch_id                 STRING,
-    _loaded_at                TIMESTAMP,
     _source_system            STRING,
-    _source_name              STRING
+    pipeline_run_id           STRING,
+    is_deleted                BOOLEAN,
+    deleted_at                TIMESTAMP,
+    delete_batch_id           STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -401,9 +306,11 @@ CREATE TABLE gold.fact_quotation_item (
     created_at                TIMESTAMP,
     updated_at                TIMESTAMP,
     _batch_id                 STRING,
-    _loaded_at                TIMESTAMP,
     _source_system            STRING,
-    _source_name              STRING
+    pipeline_run_id           STRING,
+    is_deleted                BOOLEAN,
+    deleted_at                TIMESTAMP,
+    delete_batch_id           STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -433,15 +340,17 @@ CREATE TABLE gold.fact_policy (
     vehicle_key               BIGINT, -- Resolved via customer_id context
     
     -- Measures
-    issued_premium_amount     DECIMAL(18,2),
+    premium_amount            DECIMAL(18,2),
     
     -- Metadata / Audit columns
     created_at                TIMESTAMP,
     updated_at                TIMESTAMP,
     _batch_id                 STRING,
-    _loaded_at                TIMESTAMP,
     _source_system            STRING,
-    _source_name              STRING
+    pipeline_run_id           STRING,
+    is_deleted                BOOLEAN,
+    deleted_at                TIMESTAMP,
+    delete_batch_id           STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -460,6 +369,7 @@ CREATE TABLE gold.fact_payment (
     payment_status_key        BIGINT,
     payment_method_key        BIGINT,
     payment_date_key          INT,
+    issued_date_key           INT,
     customer_key              BIGINT,
     provider_key              BIGINT,
     vehicle_key               BIGINT, -- Resolved via customer_id context
@@ -471,9 +381,11 @@ CREATE TABLE gold.fact_payment (
     created_at                TIMESTAMP,
     updated_at                TIMESTAMP,
     _batch_id                 STRING,
-    _loaded_at                TIMESTAMP,
     _source_system            STRING,
-    _source_name              STRING
+    pipeline_run_id           STRING,
+    is_deleted                BOOLEAN,
+    deleted_at                TIMESTAMP,
+    delete_batch_id           STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -501,7 +413,9 @@ CREATE TABLE gold.fact_cancellation (
     created_at                TIMESTAMP,
     updated_at                TIMESTAMP,
     _batch_id                 STRING,
-    _loaded_at                TIMESTAMP,
     _source_system            STRING,
-    _source_name              STRING
+    pipeline_run_id           STRING,
+    is_deleted                BOOLEAN,
+    deleted_at                TIMESTAMP,
+    delete_batch_id           STRING
 ) USING DELTA;

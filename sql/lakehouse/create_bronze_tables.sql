@@ -4,10 +4,15 @@
 -- Layer: Bronze (Delta Tables)
 -- Platform: Microsoft Fabric Lakehouse (lh_insurance_dev)
 --
+-- References:
+--   - Documentation: docs/source-to-target-mapping/source-to-bronze-mapping.md
+--   - Configurations: docs/source-to-target-mapping/jsons/source-to-bronze/*.json
+--   - Naming Conventions: docs/standards/naming_convention.md
+--
 -- Purpose:
 -- This script creates the Bronze schema and all Bronze Delta Lake tables.
--- The Bronze layer stores raw data from source systems with minimal
--- transformation, preserving history and including pipeline metadata.
+-- Column definitions match target specifications in the mapping files
+-- (e.g., last_updated_at and _source_file mapped for JSON sources).
 --
 -- File Location: sql/lakehouse/create_bronze_tables.sql
 -- =====================================================================
@@ -34,7 +39,7 @@ CREATE TABLE bronze.cancellation (
     cancellation_date   STRING,
     cancellation_reason STRING,
     refund_amount       STRING,
-    last_updated        STRING,
+    last_updated_at     TIMESTAMP,
     source_system       STRING,
     
     -- Technical Metadata Columns
@@ -43,7 +48,8 @@ CREATE TABLE bronze.cancellation (
     _batch_date         DATE,
     _loaded_at          TIMESTAMP,
     _source_system      STRING,
-    _source_name        STRING
+    _source_name        STRING,
+    _source_file        STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -61,7 +67,7 @@ CREATE TABLE bronze.payment (
     payment_status          STRING,
     payment_amount          STRING,
     transaction_reference   STRING,
-    last_updated            STRING,
+    last_updated_at         TIMESTAMP,
     source_system           STRING,
     
     -- Technical Metadata Columns
@@ -70,7 +76,8 @@ CREATE TABLE bronze.payment (
     _batch_date             DATE,
     _loaded_at              TIMESTAMP,
     _source_system          STRING,
-    _source_name            STRING
+    _source_name            STRING,
+    _source_file            STRING
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -91,7 +98,7 @@ CREATE TABLE bronze.policy (
     policy_status       STRING,
     premium_amount      STRING,
     issued_date         STRING,
-    last_updated        STRING,
+    last_updated_at     TIMESTAMP,
     source_system       STRING,
     
     -- Technical Metadata Columns
@@ -100,7 +107,8 @@ CREATE TABLE bronze.policy (
     _batch_date         DATE,
     _loaded_at          TIMESTAMP,
     _source_system      STRING,
-    _source_name        STRING
+    _source_name        STRING,
+    _source_file        STRING
 ) USING DELTA;
 
 

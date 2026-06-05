@@ -34,7 +34,7 @@ flowchart TD
         RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
         J[Update audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
         K[Update audit_detail<br/> status = Success; inserted/updated/deleted rows]
-        L[Update Watermark Table<br/> watermark_value = MAX updated_date; last_batch_id = current batch_id]
+        L["Update Watermark Table<br/> watermark_value =  MAX(source-specific watermark value)"]
         ERR_B1[Update audit_table_session<br/>— Failed]
         ERR_B2[Update audit_detail<br/> status = Failed; error message]
         END_B([End this Bronze table])

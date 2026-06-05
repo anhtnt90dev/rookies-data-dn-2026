@@ -1,0 +1,46 @@
+{
+  "source_table": "dbo.insurance_providers",
+  "target_table": "bronze.insurance_provider",
+  "columns": [
+    {
+      "target": "provider_code",
+      "expression": "provider_code"
+    },
+    {
+      "target": "provider_name",
+      "expression": "provider_name"
+    },
+    {
+      "target": "provider_group",
+      "expression": "provider_group"
+    },
+    {
+      "target": "active_flag",
+      "expression": "active_flag"
+    },
+    {
+      "target": "created_date",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_date",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

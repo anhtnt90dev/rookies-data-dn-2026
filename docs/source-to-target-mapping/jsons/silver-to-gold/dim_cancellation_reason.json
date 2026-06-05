@@ -1,0 +1,22 @@
+{
+  "source_table": "silver.cancellation",
+  "target_table": "gold.dim_cancellation_reason",
+  "columns": [
+    {
+      "target": "cancellation_reason_key",
+      "expression": null
+    },
+    {
+      "target": "cancellation_reason",
+      "expression": "cancellation_reason"
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_at"
+    }
+  ]
+}

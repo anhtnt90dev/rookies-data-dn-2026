@@ -1,0 +1,66 @@
+{
+  "source_table": "bronze.quotation",
+  "target_table": "silver.quotation",
+  "columns": [
+    {
+      "target": "quotation_id",
+      "expression": "quotation_id"
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "agent_id",
+      "expression": "agent_id"
+    },
+    {
+      "target": "provider_code",
+      "expression": "provider_code"
+    },
+    {
+      "target": "quotation_at",
+      "expression": "quotation_date"
+    },
+    {
+      "target": "quotation_status",
+      "expression": "quotation_status"
+    },
+    {
+      "target": "package_code",
+      "expression": "package_code"
+    },
+    {
+      "target": "premium_amount",
+      "expression": "premium_amount"
+    },
+    {
+      "target": "quotation_expiry_at",
+      "expression": "quotation_expiry_date"
+    },
+    {
+      "target": "created_at",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "_loaded_at"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

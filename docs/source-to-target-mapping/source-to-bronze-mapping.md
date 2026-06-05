@@ -98,7 +98,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 
 > **Note:**
 >
-> - Initial ingestion uses *_full_.json files as full-load extracts. Subsequent loads are incremental extracts identified by batch_date, operation_type, and last_updated.
+> - Initial ingestion uses *_full_.json files as full-load extracts. Subsequent loads are incremental extracts identified by batch_date, operation_type, and last_updated_at.
 >
 > - Bronze stores raw JSON records using append-only ingestion. CDC handling based on operation_type will be implemented in the Silver layer.
 >
@@ -152,7 +152,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | payment_status | STRING | payment_status | STRING | 50 | N/A | N/A | Direct Mapping |
 | payment_amount | STRING | payment_amount | STRING | 30 | N/A | N/A | Direct Mapping |
 | transaction_reference | STRING | transaction_reference | STRING | 100 | N/A | N/A | Direct Mapping |
-| last_updated | STRING | last_updated | STRING | 23 | N/A | N/A | Direct Mapping |
+| last_updated | STRING | last_updated_at | TIMESTAMP | 23 | N/A | N/A | Direct Mapping |
 | source_system | STRING | source_system | STRING | 50 | N/A | N/A | Direct Mapping |
 | N/A | N/A | _batch_id | STRING | 50 | N/A | N/A | Pipeline Generated |
 | operation_type | STRING | _operation_type | STRING | 1 | N/A | N/A | Direct Mapping (JSON Sources) |
@@ -182,7 +182,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | policy_status | STRING | policy_status | STRING | 50 | N/A | N/A | Direct Mapping |
 | premium_amount | STRING | premium_amount | STRING | 30 | N/A | N/A | Direct Mapping |
 | issued_date | STRING | issued_date | STRING | 23 | N/A | N/A | Direct Mapping |
-| last_updated | STRING | last_updated | STRING | 23 | N/A | N/A | Direct Mapping |
+| last_updated | STRING | last_updated_at | TIMESTAMP | 23 | N/A | N/A | Direct Mapping |
 | source_system | STRING | source_system | STRING | 50 | N/A | N/A | Direct Mapping |
 | N/A | N/A | _batch_id | STRING | 50 | N/A | N/A | Pipeline Generated |
 | operation_type | STRING | _operation_type | STRING | 1 | N/A | N/A | Direct Mapping (JSON Sources) |

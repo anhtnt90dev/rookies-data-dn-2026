@@ -1,0 +1,22 @@
+{
+  "source_table": "silver.payment",
+  "target_table": "gold.dim_payment_method",
+  "columns": [
+    {
+      "target": "payment_method_key",
+      "expression": null
+    },
+    {
+      "target": "payment_method_code",
+      "expression": "payment_method"
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_at"
+    }
+  ]
+}

@@ -434,7 +434,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | Silver Column | Silver Type | Gold Column | Gold Type | Transform Rule |
 | --- | --- | --- | --- | --- |
 | `policy_id` | STRING | `policy_key` | BIGINT | Lookup `dim_policy` by `policy_id`. |
-| `payment_date` | TIMESTAMP | `payment_date_key` | INT | `CAST(FORMAT(payment_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`. |
+| `payment_at` | TIMESTAMP | `payment_date_key` | INT | `CAST(FORMAT(payment_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`. |
 | _(via join to policy)_ | TIMESTAMP | `issued_date_key` | INT | `CAST(FORMAT(policy.issued_at, 'yyyyMMdd') AS INT)`; lookup `dim_date` via join to `policy`. |
 | _(via join to policy)_ | STRING | `customer_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
 | _(via join to policy)_ | STRING | `provider_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |

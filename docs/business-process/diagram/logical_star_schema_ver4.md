@@ -313,6 +313,7 @@ erDiagram
     dim_date ||--o{ fact_policy : "policy_start_date"
     dim_date ||--o{ fact_policy : "policy_end_date"
     dim_date ||--o{ fact_payment : "payment_date"
+    dim_date ||--o{ fact_payment : "issued_date"
     dim_date ||--o{ fact_cancellation : "cancellation_date"
 
     dim_customer ||--o{ fact_quotation : "quotation.customer_id"

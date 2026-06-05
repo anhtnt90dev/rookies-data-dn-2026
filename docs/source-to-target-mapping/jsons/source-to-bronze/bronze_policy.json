@@ -73,6 +73,10 @@
     {
       "target": "_source_name",
       "expression": null
+    },
+    {
+      "target": "_source_file",
+      "expression": null
     }
   ]
 }

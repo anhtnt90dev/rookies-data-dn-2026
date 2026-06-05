@@ -435,12 +435,12 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | --- | --- | --- | --- | --- |
 | `policy_id` | STRING | `policy_key` | BIGINT | Lookup `dim_policy` by `policy_id`. |
 | `payment_date` | TIMESTAMP | `payment_date_key` | INT | `CAST(FORMAT(payment_at, 'yyyyMMdd') AS INT)`; lookup `dim_date`. |
-| _(via join to policy)_ | TIMESTAMP | `issued_date_key` | INT | `CAST(FORMAT(policy.issued_at, 'yyyyMMdd') AS INT)`; lookup `dim_date` via join to `policy`. |
-| _(via join to policy)_ | STRING | `customer_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
-| _(via join to policy)_ | STRING | `provider_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
+|`payment.policy_id → policy_info.policy_id → policy_info.issued_date → dim_date.date_key` | TIMESTAMP | `issued_date_key` | INT | `CAST(FORMAT(policy.issued_at, 'yyyyMMdd') AS INT)`; lookup `dim_date` via join to `policy`. |
+| `payment.policy_id → policy_info.customer_id → dim_customer.customer_key` | STRING | `customer_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_customer` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
+| `payment.policy_id → policy_info.provider_code → dim_provider.provider_key` | STRING | `provider_key` | BIGINT | Join `payment.policy_id -> policy.policy_id`, lookup `dim_provider` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`. |
 | `payment_status` | STRING | `payment_status_key` | BIGINT | Lookup `dim_payment_status` by `payment_status_code`. |
 | `payment_method` | STRING | `payment_method_key` | BIGINT | Standardize -> lookup `dim_payment_method` by `payment_method_code`. |
-| _(via join to policy)_ | STRING | `vehicle_key` | BIGINT | Lookup `dim_vehicle` via policy/customer context (join policy on `policy_id` and vehicle on `customer_id` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`). Default `-1` if not found. |
+| `payment.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key` | STRING | `vehicle_key` | BIGINT | Lookup `dim_vehicle` via policy/customer context (join policy on `policy_id` and vehicle on `customer_id` WHERE `payment_at` BETWEEN `effective_from` AND `effective_to`). Default `-1` if not found. |
 | `payment_amount` | DECIMAL(18,2) | `payment_amount` | DECIMAL(18,2) | `COALESCE(payment_amount, 0)`. |
 | `payment_id` | STRING | `payment_id` | STRING | Direct mapping. Degenerate dimension. |
 | `policy_id` | STRING | `policy_id` | STRING | Direct mapping. Degenerate dimension. |

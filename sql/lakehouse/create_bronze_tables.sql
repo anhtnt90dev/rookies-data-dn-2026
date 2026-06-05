@@ -39,7 +39,7 @@ CREATE TABLE bronze.cancellation (
     cancellation_date   STRING,
     cancellation_reason STRING,
     refund_amount       STRING,
-    last_updated        STRING,
+    last_updated_at     TIMESTAMP,
     source_system       STRING,
     
     -- Technical Metadata Columns

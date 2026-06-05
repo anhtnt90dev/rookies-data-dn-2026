@@ -55,7 +55,7 @@
                       "location": {
                         "type": "LakehouseLocation",
                         "folderPath": {
-                          "value": "@concat(\n  'landing/',\n  pipeline().parameters.p_source_system,\n  '/',\n  item(),\n  '/',\n  pipeline().parameters.p_load_type,\n  '/',\n  formatDateTime(utcNow(), 'yyyy-MM-dd'),\n  '/'\n)",
+                          "value": "@concat(\n  'landing/',\n  pipeline().parameters.p_source_system,\n  '/',\n  item(),\n  '/',\n  pipeline().parameters.p_load_type,\n  '/',\n  if(\n    empty(pipeline().parameters.p_batch_date),\n    formatDateTime(utcNow(), 'yyyy-MM-dd'),\n    pipeline().parameters.p_batch_date\n  ),\n  '/'\n)",
                           "type": "Expression"
                         }
                       },

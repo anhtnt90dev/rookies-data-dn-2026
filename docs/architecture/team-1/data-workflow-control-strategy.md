@@ -7,7 +7,7 @@
 | `Job_Config` | `cfg.source_table` | Stores source configuration and table-level ingestion metadata |
 | `Watermark` | `cfg.watermark` | Stores Source-to-Bronze ingestion checkpoints |
 | `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status |
-| `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail` | Stores table/layer execution status, processing metrics, reconciliation details, and execution-level failures (`error_code`, `error_message`) |
+| `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail`, `log.audit_file_session` | `log.audit_table_session` stores table/layer execution status, `log.audit_detail` stores processing metrics and reconciliation details, and `log.audit_file_session` stores file-level ingestion status for file-based sources |
 | `Pipeline_Error` | `log.invalid_record` | Stores invalid records, rejected records, and data-quality validation failures |
 | N/A | `log.retry_log` | Stores retry history and retry attempt details |
 | N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context |
@@ -165,6 +165,7 @@ Audit and logging tables store pipeline execution status, processing metrics, re
 erDiagram
     log.audit_session ||--o{ log.audit_table_session : contains
     log.audit_table_session ||--o{ log.audit_detail : has
+    log.audit_table_session ||--o{ log.audit_file_session : has
     log.audit_table_session ||--o{ log.retry_log : has
     log.audit_table_session ||--o{ log.invalid_record : has
 
@@ -215,6 +216,24 @@ erDiagram
         int rejected_row
         varchar layer
         text error_message
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    log.audit_file_session {
+        bigint id PK
+        bigint session_id FK
+        bigint table_session_id FK
+        bigint source_table_id FK
+        varchar source_file
+        varchar file_status
+        int file_row_count
+        int processed_row_count
+        int rejected_row_count
+        varchar error_code
+        text error_message
+        timestamp started_at
+        timestamp completed_at
         timestamp created_at
         timestamp updated_at
     }
@@ -307,7 +326,36 @@ erDiagram
 | `created_at` | timestamp | Record creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
 
-### 2.4. `log.retry_log`
+### 2.4. `log.audit_file_session`
+
+**Purpose:** Stores file-level ingestion status for file-based sources to support incremental loading, recovery, reprocessing, and source file traceability.
+
+| Column | Data Type | Description |
+|---|---|---|
+| `id` | bigint | Unique file execution session identifier |
+| `session_id` | bigint | Related audit session identifier |
+| `table_session_id` | bigint | Related table execution session identifier |
+| `source_table_id` | bigint | Related source table configuration identifier |
+| `source_file` | varchar(500) | Physical source file name or path being processed |
+| `file_status` | varchar(20) | File processing status, such as RUNNING, SUCCESS, or FAILED |
+| `file_row_count` | int | Total number of records found in the source file |
+| `processed_row_count` | int | Number of records successfully processed |
+| `rejected_row_count` | int | Number of rejected or invalid records |
+| `error_code` | varchar(100) | Standardized error code for file-level processing failures |
+| `error_message` | text | Detailed error message for troubleshooting and operational support |
+| `started_at` | timestamp | File processing start timestamp |
+| `completed_at` | timestamp | File processing completion timestamp |
+| `created_at` | timestamp | Record creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
+
+> **Note:**
+>
+> - This table is only required for file-based ingestion sources (for example, JSON, CSV, or Parquet files).
+> - It supports incremental loading by tracking which source files have been processed successfully.
+> - It supports recovery and reprocessing scenarios by identifying failed or partially processed files.
+> - It works together with `_source_file` in Bronze metadata to provide end-to-end source file lineage and traceability.
+
+### 2.5. `log.retry_log`
 
 **Purpose:** Stores retry execution history for failed processing attempts.
 
@@ -323,7 +371,7 @@ erDiagram
 | `ended_at` | timestamp | Retry completion timestamp |
 | `created_at` | timestamp | Record creation timestamp |
 
-### 2.5. `log.invalid_record`
+### 2.6. `log.invalid_record`
 
 **Purpose:** Stores records that fail validation or transformation rules during processing.
 
@@ -396,6 +444,18 @@ If all retry attempts fail, the related table/layer is marked as `FAILED` in `lo
 > - `_batch_id` is derived from `log.audit_session.batch_id` and is propagated to Bronze, Silver, and Gold records.
 > - `log.audit_session.id` represents the execution session identifier and is independent of `_batch_id`.
 
+### File-based Source Recovery
+
+For file-based ingestion, Source-to-Bronze recovery is performed at the file level through `log.audit_file_session`.
+
+Files with `file_status = SUCCESS` are skipped.
+
+Files with `file_status = FAILED` or files not found in `log.audit_file_session` are reprocessed.
+
+Direct database sources do not require file-level recovery. Source-to-Bronze incremental extraction for database sources relies on `cfg.watermark`.
+
+### Pipeline Recovery
+
 Recovery is used to resume processing after a failed execution once the underlying issue has been resolved.
 
 A recovery run creates a new `session_id` and reuses the same `batch_id`.
@@ -416,10 +476,10 @@ A new batch must not be started until the failed batch has been successfully rec
 
 | batch_id | session_id | run_mode | Bronze | Silver | Gold | Notes |
 |---:|---:|---|---|---|---|---|
-| 5002 | 1001 | NEW | FAILED | NOT_RUN | NOT_RUN | Bronze failed. Recovery required. |
-| 5002 | 1002 | RECOVERY | SUCCESS | FAILED | NOT_RUN | Bronze completed successfully. Silver failed. |
-| 5002 | 1003 | RECOVERY | SKIPPED | SUCCESS | FAILED | Recovery resumes from Silver. Gold failed. |
-| 5002 | 1004 | RECOVERY | SKIPPED | SKIPPED | SUCCESS | Recovery resumes from Gold. Batch completed successfully. |
+| 5002 | 1001 | NEW | FAILED | NOT_RUN | NOT_RUN | File-based ingestion failed (one or more source files failed). |
+| 5002 | 1002 | RECOVERY | SUCCESS | FAILED | NOT_RUN | Failed files were reprocessed successfully. Silver processing failed. |
+| 5002 | 1003 | RECOVERY | SKIPPED | SUCCESS | FAILED | Recovery resumes from Silver. |
+| 5002 | 1004 | RECOVERY | SKIPPED | SKIPPED | SUCCESS | Recovery resumes from Gold. |
 
 ---
 
@@ -427,3 +487,4 @@ A new batch must not be started until the failed batch has been successfully rec
 
 > - This document presents the proposed design and processing strategy based on the current understanding of requirements and assumptions. The design has not yet been implemented and may be refined during the implementation phase.
 > - ID columns are defined as bigint for logical design purposes. The actual ID generation strategy may be finalized during implementation based on Fabric Lakehouse capabilities.
+> - Current solution assumes daily batch processing.

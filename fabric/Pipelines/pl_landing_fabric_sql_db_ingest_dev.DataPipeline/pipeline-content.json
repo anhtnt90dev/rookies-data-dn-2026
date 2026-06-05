@@ -14,7 +14,10 @@
               "typeProperties": {
                 "source": {
                   "type": "FabricSqlDatabaseSource",
-                  "sqlReaderQuery": "@concat('SELECT * FROM ', pipeline().parameters.p_schema_name, '.', item())",
+                  "sqlReaderQuery": {
+                    "value": "@concat('SELECT * FROM ', pipeline().parameters.p_schema_name, '.', item())",
+                    "type": "Expression"
+                  },
                   "partitionOption": "None",
                   "queryTimeout": "02:00:00",
                   "datasetSettings": {
@@ -44,14 +47,17 @@
                     "enableVertiParquet": true
                   },
                   "storeSettings": {
-                    "type": "LakehouseWriteSettings"
+                    "type": "AzureBlobStorageWriteSettings"
                   },
                   "datasetSettings": {
                     "type": "Parquet",
                     "typeProperties": {
                       "location": {
                         "type": "LakehouseLocation",
-                        "folderPath": "@concat(   'landing/',   pipeline().parameters.p_source_system,   '/',   item(),   '/',   pipeline().parameters.p_load_type,   '/',   pipeline().parameters.p_batch_date,   '/' )"
+                        "folderPath": {
+                          "value": "@concat(\n  'landing/',\n  pipeline().parameters.p_source_system,\n  '/',\n  item(),\n  '/',\n  pipeline().parameters.p_load_type,\n  '/',\n  formatDateTime(utcNow(), 'yyyy-MM-dd'),\n  '/'\n)",
+                          "type": "Expression"
+                        }
                       },
                       "compressionCodec": "snappy"
                     },
@@ -83,8 +89,8 @@
               },
               "policy": {
                 "timeout": "0.12:00:00",
-                "retry": 0,
-                "retryIntervalInSeconds": 30,
+                "retry": 2,
+                "retryIntervalInSeconds": 60,
                 "secureInput": false,
                 "secureOutput": false
               },
@@ -111,8 +117,7 @@
         "defaultValue": "full"
       },
       "p_batch_date": {
-        "type": "string",
-        "defaultValue": "2026-06-05"
+        "type": "string"
       }
     }
   }

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SQLDatabase",
+    "displayName": "insurance_crm_db"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "67f50932-d7ae-8938-4204-efc1e59d4622"
+  }
+}

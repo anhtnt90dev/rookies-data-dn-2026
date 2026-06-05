@@ -4,9 +4,15 @@
 -- Layer: Silver (Delta Tables)
 -- Platform: Microsoft Fabric Lakehouse (lh_insurance_dev)
 --
+-- References:
+--   - Documentation: docs/source-to-target-mapping/bronze-to-silver-mapping.md
+--   - Configurations: docs/source-to-target-mapping/jsons/bronze-to-silver/*.json
+--   - Naming Conventions: docs/standards/naming_convention.md
+--
 -- Purpose:
 -- This script creates the Silver schema and all Silver Delta Lake tables.
--- The Silver layer stores cleansed, typed, and standardized data.
+-- Standardizes naming (e.g., last_updated_at and updated_at added to tables),
+-- performs basic cleansing, and prepares data for Gold layer lookup.
 --
 -- File Location: sql/lakehouse/create_silver_tables.sql
 -- =====================================================================
@@ -31,7 +37,8 @@ CREATE TABLE silver.cancellation (
     cancellation_at     TIMESTAMP,
     cancellation_reason STRING,
     refund_amount       DECIMAL(18,2),
-    last_updated        TIMESTAMP,
+    last_updated_at     TIMESTAMP,
+    updated_at          TIMESTAMP,
     operation_type      STRING,
     is_deleted          BOOLEAN,
     
@@ -55,7 +62,8 @@ CREATE TABLE silver.payment (
     payment_status          STRING,
     payment_amount          DECIMAL(18,2),
     transaction_reference   STRING,
-    last_updated            TIMESTAMP,
+    last_updated_at         TIMESTAMP,
+    updated_at              TIMESTAMP,
     operation_type          STRING,
     is_deleted              BOOLEAN, 
     
@@ -85,6 +93,7 @@ CREATE TABLE silver.policy (
     is_deleted          BOOLEAN, 
     issued_at           TIMESTAMP,
     last_updated_at     TIMESTAMP,
+    updated_at          TIMESTAMP,
     
     -- Technical Metadata Columns
     _batch_id           STRING,

@@ -1,0 +1,58 @@
+{
+  "source_table": "bronze.cancellation",
+  "target_table": "silver.cancellation",
+  "columns": [
+    {
+      "target": "cancellation_id",
+      "expression": "cancellation_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "cancellation_at",
+      "expression": "cancellation_date"
+    },
+    {
+      "target": "cancellation_reason",
+      "expression": "cancellation_reason"
+    },
+    {
+      "target": "refund_amount",
+      "expression": "refund_amount"
+    },
+    {
+      "target": "last_updated_at",
+      "expression": "last_updated_at"
+    },
+    {
+      "target": "updated_at",
+      "expression": "last_updated_at"
+    },
+    {
+      "target": "operation_type",
+      "expression": "operation_type"
+    },
+    {
+      "target": "is_deleted",
+      "expression": "operation_type"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "_loaded_at"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

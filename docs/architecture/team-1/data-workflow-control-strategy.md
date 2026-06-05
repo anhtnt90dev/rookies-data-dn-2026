@@ -168,6 +168,8 @@ erDiagram
     log.audit_table_session ||--o{ log.audit_file_session : has
     log.audit_table_session ||--o{ log.retry_log : has
     log.audit_table_session ||--o{ log.invalid_record : has
+    log.audit_file_session ||--o{ log.retry_log : has
+    log.audit_file_session ||--o{ log.invalid_record : has
 
     log.audit_session {
         bigint id PK
@@ -225,6 +227,7 @@ erDiagram
         bigint session_id FK
         bigint table_session_id FK
         bigint source_table_id FK
+        bigint batch_id
         varchar source_file
         varchar file_status
         int file_row_count
@@ -232,6 +235,8 @@ erDiagram
         int rejected_row_count
         varchar error_code
         text error_message
+        int retry_count
+        timestamp last_retry_at
         timestamp started_at
         timestamp completed_at
         timestamp created_at
@@ -241,6 +246,7 @@ erDiagram
     log.retry_log {
         bigint id PK
         bigint table_session_id FK
+        bigint file_session_id FK
         varchar layer
         varchar status
         varchar error_code
@@ -253,6 +259,7 @@ erDiagram
     log.invalid_record {
         bigint id PK
         bigint table_session_id FK
+        bigint file_session_id FK
         varchar layer
         varchar target_table
         varchar record_key
@@ -335,6 +342,7 @@ erDiagram
 | `id` | bigint | Unique file execution session identifier |
 | `session_id` | bigint | Related audit session identifier |
 | `table_session_id` | bigint | Related table execution session identifier |
+| `batch_id` | bigint | Logical batch identifier inherited from `log.audit_session.batch_id` |
 | `source_table_id` | bigint | Related source table configuration identifier |
 | `source_file` | varchar(500) | Physical source file name or path being processed |
 | `file_status` | varchar(20) | File processing status, such as RUNNING, SUCCESS, or FAILED |
@@ -343,6 +351,8 @@ erDiagram
 | `rejected_row_count` | int | Number of rejected or invalid records |
 | `error_code` | varchar(100) | Standardized error code for file-level processing failures |
 | `error_message` | text | Detailed error message for troubleshooting and operational support |
+| `retry_count` | int | Number of retry attempts |
+| `last_retry_at` | timestamp | Timestamp of the latest retry attempt |
 | `started_at` | timestamp | File processing start timestamp |
 | `completed_at` | timestamp | File processing completion timestamp |
 | `created_at` | timestamp | Record creation timestamp |
@@ -354,6 +364,8 @@ erDiagram
 > - It supports incremental loading by tracking which source files have been processed successfully.
 > - It supports recovery and reprocessing scenarios by identifying failed or partially processed files.
 > - It works together with `_source_file` in Bronze metadata to provide end-to-end source file lineage and traceability.
+> - The file tracking uniqueness key is (`batch_id`, `source_table_id`, `source_file`).
+> - `batch_id`, `session_id`, and `source_table_id` are denormalized from parent audit records for query convenience and must always match the corresponding values in the parent `log.audit_table_session` and `log.audit_session` records.
 
 ### 2.5. `log.retry_log`
 
@@ -363,8 +375,9 @@ erDiagram
 |---|---|---|
 | `id` | bigint | Unique retry log identifier |
 | `table_session_id` | bigint | Related table execution session identifier |
+| `file_session_id` | bigint | Related file execution session identifier for file-based processing; null for non-file sources |
 | `layer` | varchar(20) | Layer where retry occurred |
-| `status` | varchar(20) | Retry execution status |
+| `status` | varchar(20) | Retry execution status (RUNNING, SUCCESS, FAILED) |
 | `error_code` | varchar(100) | Error code returned by the failed operation |
 | `error_message` | text | Error details captured during retry |
 | `started_at` | timestamp | Retry start timestamp |
@@ -379,6 +392,7 @@ erDiagram
 |---|---|---|
 | `id` | bigint | Unique invalid record identifier |
 | `table_session_id` | bigint | Related table execution session identifier |
+| `file_session_id` | bigint | Related file execution session identifier for file-based processing; null for non-file sources |
 | `layer` | varchar(20) | Layer where the validation failure occurred |
 | `target_table` | varchar(100) | Target table associated with the failed record |
 | `record_key` | varchar(255) | Business key or primary key of the failed record |
@@ -448,6 +462,12 @@ If all retry attempts fail, the related table/layer is marked as `FAILED` in `lo
 
 For file-based ingestion, Source-to-Bronze recovery is performed at the file level through `log.audit_file_session`.
 
+Each file is uniquely tracked by (`batch_id`, `source_table_id`, `source_file`).
+
+When the same file is reprocessed during recovery for the same batch, the existing `log.audit_file_session` row is updated instead of inserting a new row.
+
+Before a file is marked as `FAILED` due to a system or transient error, the pipeline retries the operation up to the configured retry limit. Data errors are not retried and are recorded in `log.invalid_record`.
+
 Files with `file_status = SUCCESS` are skipped.
 
 Files with `file_status = FAILED` or files not found in `log.audit_file_session` are reprocessed.
@@ -466,7 +486,11 @@ All recovery executions associated with the same failed batch must reuse the sam
 
 The pipeline may be rerun from the beginning, but completed layers are skipped based on audit status so recovery resumes from the first failed layer.
 
-A layer is considered successful only when all required tables within that layer are successfully processed.
+For file-based ingestion, a table is considered successful only when all required files associated with the table have completed with `SUCCESS` status.
+
+A layer is considered successful only when all required tables within that layer have completed with `SUCCESS` status.
+
+Records stored in `log.invalid_record` do not automatically trigger recovery processing and are retained for audit and troubleshooting purposes.
 
 After a batch is successfully completed, `cfg.next_run_mode` is updated to `NEW`.
 

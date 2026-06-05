@@ -33,8 +33,8 @@ All fact tables share the following standard Gold lineage, batch control, and au
 
 | Column            | Type      | Description                                                            |
 | :---------------- | :-------- | :--------------------------------------------------------------------- |
-| `source_system`   | STRING    | Source system name (e.g., `insurance_crm_db`).                         |
-| `batch_id`        | STRING    | Identifier of the data platform processing batch that loaded this row. |
+| `_source_system`   | STRING    | Source system name (e.g., `insurance_crm_db`).                         |
+| `_batch_id`        | STRING    | Identifier of the data platform processing batch that loaded this row. |
 | `pipeline_run_id` | STRING    | Specific execution ID of the pipeline run for lineage tracking.        |
 | `is_deleted`      | TINYINT   | Indicator for soft deletes (`0` = Active, `1` = Deleted in source).    |
 | `deleted_at`      | TIMESTAMP | Timestamp when the row was flagged as deleted.                         |

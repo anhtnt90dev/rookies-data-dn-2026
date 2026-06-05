@@ -93,7 +93,6 @@ CREATE TABLE silver.policy (
     is_deleted          BOOLEAN, 
     issued_at           TIMESTAMP,
     last_updated_at     TIMESTAMP,
-    updated_at          TIMESTAMP,
     
     -- Technical Metadata Columns
     _batch_id           STRING,

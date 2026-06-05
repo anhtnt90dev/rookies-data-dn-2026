@@ -5,36 +5,31 @@
 # META {
 # META   "kernel_info": {
 # META     "name": "synapse_pyspark"
+# META   },
+# META   "dependencies": {
+# META     "lakehouse": {
+# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
+# META       "default_lakehouse_name": "lh_insurance_dev",
+# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
+# META       "known_lakehouses": [
+# META         {
+# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+# META         }
+# META       ]
+# META     }
 # META   }
 # META }
 
-# MARKDOWN ********************
+# CELL ********************
 
-# ---
-# ##  PARAMETERS
-# Parameters injected by Fabric Pipeline. Edit defaults for local development only.
+import json
 
-# PARAMETERS CELL ********************
+json_path = "/lakehouse/default/Files/config/mappings/bronze-silver/silver_agent.json"
 
-# ---------------------------------------------------------------------------
-# FABRIC NOTEBOOK PARAMETERS
-# These values are overridden at runtime by the Fabric Pipeline activity.
-# ---------------------------------------------------------------------------
+with open(json_path, "r") as f:
+    config = json.load(f)
 
-# Source configuration record identifier (maps to cfg.source_tables.id)
-source_config_id: int = 1
-
-# Batch identifier for this pipeline run
-batch_id: int = 0
-
-# Pipeline session identifier for audit tracing
-session_id: str = ""
-
-# Environment tag: 'dev' | 'staging' | 'prod'
-run_env: str = "dev"
-
-# Override load type at runtime: 'full' | 'incremental' | '' (use cfg value)
-force_load_type: str = ""
+print(json.dumps(config, indent=2))
 
 # METADATA ********************
 
@@ -46,7 +41,81 @@ force_load_type: str = ""
 # MARKDOWN ********************
 
 # ---
-# ## Cell 2 — IMPORTS & SETUP
+# ##  PARAMETERS
+# Parameters injected by Fabric Pipeline. Edit defaults for local development only.
+
+# CELL ********************
+
+import json
+
+p_config_load_table_dump = {
+    "id": 1,
+    "source_system": "CRM",
+    "source_type": "database",
+    "source_name": "agent",
+    "source_location": "crm_db",
+    "source_format": "table",
+    "delimiter": None,  
+    "load_type": "incremental",
+    "primary_key": "agent_id",
+    "source_to_bronze_mapping_path": "/config/mappings/agent_source_to_bronze.json",
+    "bronze_to_silver_mapping_path": "/lakehouse/default/Files/config/mapping/bronze-silver/silver_agent.json",
+    "silver_transform_name": "transform_agent",
+    "watermark_column": "updated_at",
+    "bronze_table_name": "bronze.agent",
+    "silver_table_name": "silver.agent",
+    "load_sequence": 1,
+    "is_active": True,
+    "created_at": "2026-06-04T18:41:00",
+    "updated_at": "2026-06-04T18:41:00"
+}
+
+# Convert dictionary to JSON string
+p_config_load_table = json.dumps(p_config_load_table_dump)
+
+print(p_config_load_table)
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# PARAMETERS CELL ********************
+
+# ---------------------------------------------------------------------------
+# FABRIC NOTEBOOK PARAMETERS
+# These values are overridden at runtime by the Fabric Pipeline activity.
+# ---------------------------------------------------------------------------
+
+config_load_table = json.loads(p_config_load_table)
+
+# Batch identifier for this pipeline run
+batch_id: int = 0
+
+# Pipeline session identifier for audit tracing
+session_id: str = ""
+
+# Environment tag: 'dev' | 'staging' | 'prod'
+run_env: str = "dev"
+
+# Override load type at runtime: 'full' | 'incremental' | '' (use cfg value)
+force_load_type: str = "incremental"
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ---
+# ## IMPORTS & SETUP
 
 # CELL ********************
 
@@ -72,7 +141,7 @@ from delta.tables import DeltaTable
 # Config / metadata tables
 SOURCE_CONFIG_TABLE: str = "cfg.source_tables"
 NEXT_RUN_MODE_TABLE: str = "cfg.next_run_mode"
-AUDIT_TABLE_SESSION: str = "audit.audit_table_session"
+AUDIT_TABLE_SESSION: str = "log.audit_table_session"
 
 # Audit helper notebook (imported via %run or notebookutils)
 AUDIT_LOGGING_HELPER_NOTEBOOK: str = "nb_audit_logging_helper_dev"
@@ -134,7 +203,7 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # MARKDOWN ********************
 
 # ---
-# ## Cell 3 — UTILITY FUNCTIONS
+# ##  UTILITY FUNCTIONS
 # Reusable functions used throughout the pipeline steps.
 
 # CELL ********************
@@ -142,47 +211,6 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # ===========================================================================
 # SECTION 3A — CONFIG & MAPPING UTILITIES
 # ===========================================================================
-
-def read_source_config(config_id: int) -> dict:
-    """
-    Read a single source configuration row from cfg.source_tables.
-
-    Parameters
-    ----------
-    config_id : int
-        The primary key (id) of the source configuration record.
-
-    Returns
-    -------
-    dict
-        A dictionary containing all columns of the matched configuration row.
-
-    Raises
-    ------
-    ValueError
-        If no active configuration row is found for the given id.
-    """
-    config_df = (
-        spark.table(SOURCE_CONFIG_TABLE)
-        .filter((F.col("id") == config_id) & (F.col("is_active") == True))  # noqa: E712
-        .limit(1)
-    )
-
-    if config_df.count() == 0:
-        raise ValueError(
-            f"[CONFIG] No active configuration found in '{SOURCE_CONFIG_TABLE}' "
-            f"for id={config_id}. Pipeline cannot continue."
-        )
-
-    config_row: dict = config_df.first().asDict()
-    print(
-        f"[CONFIG] Loaded config | source={config_row.get('source_name')} "
-        f"| bronze={config_row.get('bronze_table_name')} "
-        f"| silver={config_row.get('silver_table_name')} "
-        f"| load_type={config_row.get('load_type')}"
-    )
-    return config_row
-
 
 def load_mapping_json(mapping_path: str) -> dict:
     """
@@ -1060,12 +1088,12 @@ def write_silver_merge(
 # MARKDOWN ********************
 
 # ---
-# ## Cell 4 — STEP 1: Read Config & Determine Run Mode
+# ##  Read Config & Determine Run Mode
 
 # CELL ********************
 
 # ---------------------------------------------------------------------------
-# STEP 1 — Read source configuration and resolve run mode
+# Read source configuration and resolve run mode
 # ---------------------------------------------------------------------------
 
 print("=" * 70)
@@ -1073,7 +1101,7 @@ print(f"STEP 1 | Reading config for source_config_id={source_config_id}")
 print("=" * 70)
 
 # Read the configuration row for this pipeline invocation
-config_row: dict = read_source_config(source_config_id)
+config_row: dict = config_load_table
 
 # Resolve load type: notebook parameter overrides config table value
 resolved_load_type: str = (
@@ -1144,6 +1172,8 @@ rejected_row_count: int = 0
 pipeline_status: str = STATUS_FAILED
 error_message: str | None = None
 table_session_id: str | None = None
+WATERMARK_TABLE:str = "cfg.watermark"
+COLUMN_WATERMARK_VALUE:str = "watermark_value"
 
 # ---------------------------------------------------------------------------
 # Audit: start table layer session
@@ -1189,12 +1219,12 @@ try:
     if resolved_load_type == LOAD_TYPE_INCREMENTAL and WATERMARK_COLUMN:
         try:
             watermark_row = (
-                spark.table(NEXT_RUN_MODE_TABLE)
-                .select("last_watermark_value")
+                spark.table(WATERMARK_TABLE)
+                .select(COLUMN_WATERMARK_VALUE)
                 .limit(1)
                 .first()
             )
-            last_watermark_value = watermark_row["last_watermark_value"] if watermark_row else None
+            last_watermark_value = watermark_row[COLUMN_WATERMARK_VALUE] if watermark_row else None
         except Exception as watermark_error:
             print(f"[STEP 3] Warning — Could not read watermark: {watermark_error}. Reading all rows.")
 

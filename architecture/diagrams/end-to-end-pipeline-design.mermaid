@@ -13,7 +13,7 @@ flowchart TD
     subgraph INIT["Initial"]
         direction TB
         A[Read cfg.source_table Table<br/> id; source_system; load_type; load_sequence;]
-        B[Read Watermark Table<br/> watermark_value per source; NULL -> Full load triggered]
+        B[Read cfg.watermark<br/> watermark_value per source; NULL -> Full load triggered]
     end
 
     %% ── STATUS SETUP ──────────────────────────────────────
@@ -34,7 +34,7 @@ flowchart TD
         RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
         J[Update log.audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
         K[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
-        L["Update Watermark Table<br/> watermark_value =  MAX(source-specific watermark value)"]
+        L["Update cfg.watermark<br/> watermark_value =  MAX(source-specific watermark value)"]
         ERR_B1[Update log.audit_table_session<br/>— Failed]
         ERR_B2[Update log.audit_detail<br/> status = Failed; error message]
         END_B([End this Bronze table])
@@ -46,7 +46,7 @@ flowchart TD
         M[Insert log.audit_detail<br/> status = Running]
         G1[Cleansing<br/> mandatory cleaning null]
         G2[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
-        N[Load Silver<br/> initial -> truncate table; read bronze via log.audit_table_session_id; cleansing and business rules; SCD logic; partition by ingestion_date + source]
+        N[Load Silver<br/> initial -> truncate table; read bronze using table_session_id from log.audit_table_session; cleansing and business rules; SCD logic]
         O{Silver Load<br/>Success?}
         RS{Retry Silver?<br/>Condition: retry_count < max_retry}
         RS_WAIT[Schedule Silver Retry<br/> increment retry_count; backoff delay]

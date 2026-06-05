@@ -104,7 +104,7 @@ All fact tables share the following audit and metadata columns.
 | payment_id            | STRING        | Degenerate Dimension    | Source payment identifier retained for traceability.                     |
 | policy_id             | STRING        | Degenerate Dimension    | Source policy identifier retained for traceability and grain validation. |
 | payment_date_key      | INT           | FK → dim_date           | Payment date.                                                            |
-| issued_date_key       | INT           | FK → dim_date           | Policy issued date. Materialized from `fact_policy.issued_date_key` via `payment.policy_id → policy_info.policy_id` during Gold ETL. Used to calculate M-22 Average Payment Time. |
+| issued_date_key       | INT           | FK → dim_date           | Policy issued date key. Materialized during Gold ETL from policy_info.issued_date using payment.policy_id -> policy_info.policy_id, then mapped to dim_date.date_key. Used to calculate M-22 Average Payment Time without a fact-to-fact relationship in Power BI. |
 | customer_key          | BIGINT        | FK → dim_customer       | Reference to the customer making the payment.                            |
 | provider_key          | BIGINT        | FK → dim_provider       | Reference to the insurance provider receiving payment.                   |
 | payment_status_key    | BIGINT        | FK → dim_payment_status | Reference to the payment status.                                         |
@@ -127,7 +127,7 @@ Dimension keys are resolved during Gold ETL processing using the policy relation
   `payment.policy_id → policy_info.customer_id → vehicle.customer_id → dim_vehicle.vehicle_key`
 
 * `issued_date_key`:
-  `payment.policy_id → policy_info.policy_id → fact_policy.issued_date_key`
+  `payment.policy_id → policy_info.policy_id → policy_info.issued_date → dim_date.date_key`
   Materialized during Gold ETL to support M-22 Average Payment Time without a fact-to-fact relationship in Power BI.
 
 ---

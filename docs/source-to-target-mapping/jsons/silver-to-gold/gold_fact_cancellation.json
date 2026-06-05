@@ -3,20 +3,8 @@
   "target_table": "gold.fact_cancellation",
   "columns": [
     {
-      "target": "cancellation_id",
-      "expression": "cancellation_id"
-    },
-    {
-      "target": "policy_id",
-      "expression": "policy_id"
-    },
-    {
       "target": "policy_key",
       "expression": "policy_id"
-    },
-    {
-      "target": "cancellation_reason_key",
-      "expression": "cancellation_reason"
     },
     {
       "target": "cancellation_date_key",
@@ -31,8 +19,28 @@
       "expression": null
     },
     {
+      "target": "cancellation_reason_key",
+      "expression": "cancellation_reason"
+    },
+    {
+      "target": "vehicle_key",
+      "expression": null
+    },
+    {
       "target": "refund_amount",
       "expression": "refund_amount"
+    },
+    {
+      "target": "cancellation_id",
+      "expression": "cancellation_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
     },
     {
       "target": "created_at",
@@ -47,16 +55,20 @@
       "expression": "_batch_id"
     },
     {
-      "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "target": "pipeline_run_id",
+      "expression": "pipeline_run_id"
     },
     {
-      "target": "_source_system",
-      "expression": "_source_system"
+      "target": "is_deleted",
+      "expression": "is_deleted"
     },
     {
-      "target": "_source_name",
-      "expression": "_source_name"
+      "target": "deleted_at",
+      "expression": "deleted_at"
+    },
+    {
+      "target": "delete_batch_id",
+      "expression": "delete_batch_id"
     }
   ]
 }

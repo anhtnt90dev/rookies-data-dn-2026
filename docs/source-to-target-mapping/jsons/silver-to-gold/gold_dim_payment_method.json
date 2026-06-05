@@ -29,10 +29,6 @@
     {
       "target": "_source_system",
       "expression": "_source_system"
-    },
-    {
-      "target": "_source_name",
-      "expression": "_source_name"
     }
   ]
 }

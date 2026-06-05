@@ -3,8 +3,16 @@
   "target_table": "gold.fact_quotation",
   "columns": [
     {
-      "target": "quotation_id",
+      "target": "quotation_key",
       "expression": "quotation_id"
+    },
+    {
+      "target": "quotation_date_key",
+      "expression": "quotation_at"
+    },
+    {
+      "target": "quotation_expiry_date_key",
+      "expression": "quotation_expiry_at"
     },
     {
       "target": "customer_key",
@@ -27,12 +35,16 @@
       "expression": "quotation_status"
     },
     {
-      "target": "quotation_date_key",
-      "expression": "quotation_at"
+      "target": "vehicle_key",
+      "expression": "customer_id"
     },
     {
-      "target": "quotation_expiry_date_key",
-      "expression": "quotation_expiry_at"
+      "target": "premium_amount",
+      "expression": "premium_amount"
+    },
+    {
+      "target": "quotation_id",
+      "expression": "quotation_id"
     },
     {
       "target": "customer_id",
@@ -47,8 +59,8 @@
       "expression": "provider_code"
     },
     {
-      "target": "premium_amount",
-      "expression": "premium_amount"
+      "target": "_source_system",
+      "expression": "_source_system"
     },
     {
       "target": "created_at",
@@ -63,16 +75,24 @@
       "expression": "_batch_id"
     },
     {
-      "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "target": "pipeline_run_id",
+      "expression": "pipeline_run_id"
     },
     {
-      "target": "_source_system",
-      "expression": "_source_system"
+      "target": "is_deleted",
+      "expression": "is_deleted"
     },
     {
-      "target": "_source_name",
-      "expression": "_source_name"
+      "target": "deleted_at",
+      "expression": "deleted_at"
+    },
+    {
+      "target": "delete_batch_id",
+      "expression": "delete_batch_id"
+    },
+    {
+      "target": "converted_flag",
+      "expression": "converted_flag"
     }
   ]
 }

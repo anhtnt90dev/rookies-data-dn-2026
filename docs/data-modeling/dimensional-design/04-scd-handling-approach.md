@@ -157,13 +157,13 @@ Recommended Sprint 1 simplification: track all customer descriptive changes as T
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | CRM insert               | Use `created_date` if available, otherwise Gold load timestamp.                                                                      |
 | CRM update               | Use `updated_date` if available, otherwise Gold load timestamp.                                                                      |
-| JSON insert/update event | Use `last_updated` if available, otherwise `batch_date` or Gold load timestamp.                                                      |
+| JSON insert/update event | Use `last_updated_at` if available, otherwise `batch_date` or Gold load timestamp.                                                      |
 | Initial full load        | Use source created date if available; otherwise use a default such as `1900-01-01` or the load timestamp depending on team standard. |
 
 Recommended for this project:
 
 ```text
-effective_from = COALESCE(source.updated_date, source.created_date, source.last_updated, gold_load_timestamp)
+effective_from = COALESCE(source.updated_date, source.created_date, source.last_updated_at, gold_load_timestamp)
 effective_to   = '9999-12-31'
 is_current     = true
 ```

@@ -123,17 +123,41 @@ lh_insurance_dev/Files/
 lh_insurance_dev/Tables/
 ├── bronze/
 │   ├── customer
+│   ├── agent
+│   ├── insurance_provider
+│   ├── vehicle
 │   ├── quotation
-│   └── payment
+│   ├── quotation_item
+│   ├── policy
+│   ├── payment
+│   └── cancellation
 ├── silver/
 │   ├── customer
+│   ├── agent
+│   ├── provider
+│   ├── vehicle
 │   ├── quotation
-│   └── payment
+│   ├── quotation_item
+│   ├── policy
+│   ├── payment
+│   └── cancellation
 ├── gold/
 │   ├── dim_customer
+│   ├── dim_agent
+│   ├── dim_provider
+│   ├── dim_vehicle
 │   ├── dim_date
+│   ├── dim_quotation
 │   ├── dim_policy
+│   ├── dim_package
+│   ├── dim_coverage
+│   ├── dim_quotation_status
+│   ├── dim_policy_status
+│   ├── dim_payment_status
+│   ├── dim_payment_method
+│   ├── dim_cancellation_reason
 │   ├── fact_quotation
+│   ├── fact_quotation_item
 │   ├── fact_policy
 │   ├── fact_payment
 │   └── fact_cancellation
@@ -144,8 +168,8 @@ lh_insurance_dev/Tables/
 │   ├── invalid_record
 │   └── retry_log
 └── cfg/
-    ├── watermark
     ├── source_table
+    ├── watermark
     ├── next_run_mode
     ├── dim_fact_table
     └── source_dim_fact

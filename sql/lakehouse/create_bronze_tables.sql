@@ -39,7 +39,7 @@ CREATE TABLE bronze.cancellation (
     cancellation_date   STRING,
     cancellation_reason STRING,
     refund_amount       STRING,
-    last_updated_at     STRING,
+    last_updated        STRING,
     source_system       STRING,
     
     -- Technical Metadata Columns
@@ -67,7 +67,7 @@ CREATE TABLE bronze.payment (
     payment_status          STRING,
     payment_amount          STRING,
     transaction_reference   STRING,
-    last_updated_at         STRING,
+    last_updated_at         TIMESTAMP,
     source_system           STRING,
     
     -- Technical Metadata Columns
@@ -98,7 +98,7 @@ CREATE TABLE bronze.policy (
     policy_status       STRING,
     premium_amount      STRING,
     issued_date         STRING,
-    last_updated_at     STRING,
+    last_updated_at     TIMESTAMP,
     source_system       STRING,
     
     -- Technical Metadata Columns

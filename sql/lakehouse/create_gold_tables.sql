@@ -64,13 +64,7 @@ CREATE TABLE gold.dim_customer (
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -89,13 +83,7 @@ CREATE TABLE gold.dim_agent (
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -108,18 +96,12 @@ CREATE TABLE gold.dim_provider (
     provider_code   STRING,
     provider_name   STRING,
     provider_group  STRING,
-    is_active       BOOLEAN,
+    active_flag     INT,
     effective_from  TIMESTAMP,
     effective_to    TIMESTAMP,
     is_current      BOOLEAN,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -131,13 +113,7 @@ CREATE TABLE gold.dim_package (
     package_key     BIGINT,
     package_code    STRING,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -149,13 +125,7 @@ CREATE TABLE gold.dim_coverage (
     coverage_key    BIGINT,
     coverage_type   STRING,
     created_at      TIMESTAMP,
-    updated_at      TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id       STRING,
-    _loaded_at      TIMESTAMP,
-    _source_system  STRING,
-    _source_name    STRING
+    updated_at      TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -168,13 +138,7 @@ CREATE TABLE gold.dim_quotation (
     quotation_id         STRING,
     quotation_expiry_date DATE,
     created_at           TIMESTAMP,
-    updated_at           TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id            STRING,
-    _loaded_at           TIMESTAMP,
-    _source_system       STRING,
-    _source_name         STRING
+    updated_at           TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -186,13 +150,7 @@ CREATE TABLE gold.dim_policy (
     policy_key         BIGINT,
     policy_id          STRING,
     created_at         TIMESTAMP,
-    updated_at         TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id          STRING,
-    _loaded_at         TIMESTAMP,
-    _source_system     STRING,
-    _source_name       STRING
+    updated_at         TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -204,13 +162,7 @@ CREATE TABLE gold.dim_quotation_status (
     quotation_status_key  BIGINT,
     quotation_status_code STRING,
     created_at            TIMESTAMP,
-    updated_at            TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id             STRING,
-    _loaded_at            TIMESTAMP,
-    _source_system        STRING,
-    _source_name          STRING
+    updated_at            TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -222,13 +174,7 @@ CREATE TABLE gold.dim_policy_status (
     policy_status_key   BIGINT,
     policy_status_code  STRING,
     created_at          TIMESTAMP,
-    updated_at          TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id           STRING,
-    _loaded_at          TIMESTAMP,
-    _source_system      STRING,
-    _source_name        STRING
+    updated_at          TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -240,13 +186,7 @@ CREATE TABLE gold.dim_payment_status (
     payment_status_key    BIGINT,
     payment_status_code   STRING,
     created_at            TIMESTAMP,
-    updated_at            TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id             STRING,
-    _loaded_at            TIMESTAMP,
-    _source_system        STRING,
-    _source_name          STRING
+    updated_at            TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -258,13 +198,7 @@ CREATE TABLE gold.dim_payment_method (
     payment_method_key   BIGINT,
     payment_method_code  STRING,
     created_at           TIMESTAMP,
-    updated_at           TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id            STRING,
-    _loaded_at           TIMESTAMP,
-    _source_system       STRING,
-    _source_name         STRING
+    updated_at           TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -276,13 +210,7 @@ CREATE TABLE gold.dim_cancellation_reason (
     cancellation_reason_key BIGINT,
     cancellation_reason     STRING,
     created_at              TIMESTAMP,
-    updated_at              TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id               STRING,
-    _loaded_at              TIMESTAMP,
-    _source_system          STRING,
-    _source_name            STRING
+    updated_at              TIMESTAMP
 ) USING DELTA;
 
 -- ---------------------------------------------------------------------
@@ -303,13 +231,7 @@ CREATE TABLE gold.dim_vehicle (
     effective_to      TIMESTAMP,
     is_current        BOOLEAN,
     created_at        TIMESTAMP,
-    updated_at        TIMESTAMP,
-    
-    -- Technical Metadata Columns
-    _batch_id         STRING,
-    _loaded_at        TIMESTAMP,
-    _source_system    STRING,
-    _source_name      STRING
+    updated_at        TIMESTAMP
 ) USING DELTA;
 
 
@@ -330,6 +252,7 @@ CREATE TABLE gold.fact_quotation (
     provider_code             STRING,
     
     -- Dimension Foreign Keys
+    quotation_key             BIGINT,
     customer_key              BIGINT,
     agent_key                 BIGINT,
     provider_key              BIGINT,
@@ -446,6 +369,7 @@ CREATE TABLE gold.fact_payment (
     payment_status_key        BIGINT,
     payment_method_key        BIGINT,
     payment_date_key          INT,
+    issued_date_key           INT,
     customer_key              BIGINT,
     provider_key              BIGINT,
     vehicle_key               BIGINT, -- Resolved via customer_id context

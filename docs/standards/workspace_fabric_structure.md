@@ -165,6 +165,7 @@ lh_insurance_dev/Tables/
 │   ├── audit_session
 │   ├── audit_table_session
 │   ├── audit_detail
+│   ├── audit_file_session
 │   ├── invalid_record
 │   └── retry_log
 └── cfg/
@@ -184,7 +185,7 @@ To ensure consistency across architecture designs and physical implementations, 
 | `Job_Config` | `cfg.source_table` | Stores source configurations, data formats, paths, keys, and table-level ingestion metadata. |
 | `Watermark` | `cfg.watermark` | Stores the latest processed watermark value used for incremental extraction from Source to Bronze. |
 | `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status, pipeline metadata, and run metrics. |
-| `Pipeline_Log` | `log.audit_table_session`<br>`log.audit_detail` | `log.audit_table_session` tracks table-level layer execution status (Bronze, Silver, Gold).<br>`log.audit_detail` tracks layer-level metrics (source/inserted/updated/deleted/rejected row counts). |
+| `Pipeline_Log` | `log.audit_table_session`<br>`log.audit_detail`<br>`log.audit_file_session` | `log.audit_table_session` tracks table-level layer execution status (Bronze, Silver, Gold).<br>`log.audit_detail` tracks layer-level metrics (source/inserted/updated/deleted/rejected row counts).<br>`log.audit_file_session` stores file-level ingestion status for file-based sources. |
 | `Pipeline_Error` | `log.invalid_record` | Stores records that fail validation, schema compliance, or transformation rules. |
 | N/A | `log.retry_log` | Stores retry attempt details and transient execution errors. |
 | N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context. |

@@ -60,7 +60,8 @@
     },
     {
       "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "expression": "current_timestamp()",
+      "expression_type": "system"
     },
     {
       "target": "_source_system",

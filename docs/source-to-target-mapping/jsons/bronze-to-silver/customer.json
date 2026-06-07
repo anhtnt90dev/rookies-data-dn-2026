@@ -4,7 +4,20 @@
   "columns": [
     {
       "target": "customer_id",
-      "expression": "customer_id"
+      "expression": "customer_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "customer_id",
+              "type": "string",
+              "reason_error": "primary key is mull"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "full_name",
@@ -48,7 +61,8 @@
     },
     {
       "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "expression": "current_timestamp()",
+      "expression_type": "system"
     },
     {
       "target": "_source_system",

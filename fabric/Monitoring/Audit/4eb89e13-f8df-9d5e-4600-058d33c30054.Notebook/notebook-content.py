@@ -177,6 +177,28 @@ def get_next_attempt_no(audit_detail_table: str, table_session_id: str, layer: s
     )
     return int(result) + 1
 
+
+def get_next_retry_attempt_no(
+    retry_log_table: str,
+    table_session_id: str,
+    layer: str,
+    file_session_id: str = None,
+) -> int:
+    retry_log_table = validate_table_name(retry_log_table)
+    layer = require_layer(layer)
+    result_df = (
+        spark.table(retry_log_table)
+        .where((F.col("table_session_id") == F.lit(table_session_id)) & (F.col("layer") == F.lit(layer)))
+    )
+
+    if file_session_id:
+        result_df = result_df.where(F.col("file_session_id") == F.lit(file_session_id))
+    else:
+        result_df = result_df.where(F.col("file_session_id").isNull())
+
+    result = result_df.agg(F.coalesce(F.max("attempt_no"), F.lit(0)).alias("max_attempt_no")).collect()[0]["max_attempt_no"]
+    return int(result) + 1
+
 def get_file_session_id(
     batch_id: int,
     source_table_id: int,
@@ -423,7 +445,7 @@ def log_retry_attempt(
     layer = require_layer(layer)
     status = require_status(status, [AuditStatus.RUNNING, AuditStatus.SUCCESS, AuditStatus.FAILED])
 
-    attempt_no = get_next_attempt_no(AUDIT_DETAIL_TABLE, str(table_session_id), layer)
+    attempt_no = get_next_retry_attempt_no(retry_log_table, str(table_session_id), layer, file_session_id)
 
     row = Row(
         id=new_audit_id(),

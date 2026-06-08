@@ -70,6 +70,8 @@ customer_bronze_df = (
     .withColumn("_source_file", F.lit("Files/landing/crm_system/customer/test_customer_file.json"))
 )
 
+customer_bronze_df.write.format("delta").mode("overwrite").saveAsTable(bronze_table)
+
 # METADATA ********************
 
 # META {

@@ -4,11 +4,48 @@
   "columns": [
     {
       "target": "quotation_item_id",
-      "expression": "quotation_item_id"
+      "expression": "quotation_item_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "quotation_item_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_id",
-      "expression": "quotation_id"
+      "expression": "quotation_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "quotation_id",
+              "type": "string",
+              "reason_error": "quotation_id does not exist in silver.quotation"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_foreign_key",
+          "params": [
+            {
+              "key": "quotation_id",
+              "reference_table": "silver.quotation",
+              "reference_column": "quotation_id",
+              "reason_error": "quotation_id does not exist in silver.quotation"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "coverage_type",

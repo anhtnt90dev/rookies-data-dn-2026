@@ -4,11 +4,48 @@
   "columns": [
     {
       "target": "payment_id",
-      "expression": "payment_id"
+      "expression": "payment_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "payment_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "policy_id",
-      "expression": "policy_id"
+      "expression": "policy_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "policy_id",
+              "type": "string",
+              "reason_error": "policy_id is null"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_foreign_key",
+          "params": [
+            {
+              "key": "policy_id",
+              "reference_table": "silver.policy",
+              "reference_column": "policy_id",
+              "reason_error": "policy_id does not exist in silver.policy"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "payment_at",

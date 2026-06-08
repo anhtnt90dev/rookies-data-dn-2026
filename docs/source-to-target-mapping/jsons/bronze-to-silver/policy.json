@@ -4,19 +4,74 @@
   "columns": [
     {
       "target": "policy_id",
-      "expression": "policy_id"
+      "expression": "policy_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "policy_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_id",
-      "expression": "quotation_id"
+      "expression": "quotation_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_foreign_key",
+          "params": [
+            {
+              "key": "quotation_id",
+              "reference_table": "silver.quotation",
+              "reference_column": "quotation_id",
+              "reason_error": "quotation_id does not exist in silver.quotation"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "customer_id",
-      "expression": "customer_id"
+      "expression": "customer_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_foreign_key",
+          "params": [
+            {
+              "key": "customer_id",
+              "reference_table": "silver.customer",
+              "reference_column": "customer_id",
+              "reason_error": "customer_id does not exist in silver.customer"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "provider_code",
-      "expression": "provider_code"
+      "expression": "provider_code",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_foreign_key",
+          "params": [
+            {
+              "key": "provider_code",
+              "reference_table": "silver.provider",
+              "reference_column": "provider_code",
+              "reason_error": "provider_code does not exist in silver.provider"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "policy_number",

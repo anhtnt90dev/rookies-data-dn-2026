@@ -4,7 +4,20 @@
   "columns": [
     {
       "target": "provider_code",
-      "expression": "provider_code"
+      "expression": "provider_code",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "provider_code",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "provider_name",

@@ -37,7 +37,20 @@
     },
     {
       "target": "email",
-      "expression": "email"
+      "expression": "email",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_regex",
+          "params": [
+            {
+              "key": "email",
+              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+              "reason_error": "email format is invalid"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "city",

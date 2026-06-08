@@ -4,23 +4,108 @@
   "columns": [
     {
       "target": "agent_id",
-      "expression": "agent_id"
+      "expression": "agent_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "agent_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "agent_name",
-      "expression": "agent_name"
+      "expression": "agent_name",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_",
+          "params": [
+            {
+              "key": "agent_name",
+              "type": "string",
+              "reason_error": "agent_name is null"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_max_length",
+          "params": [
+            {
+              "key": "agent_name",
+              "max_length": 200,
+              "reason_error": "agent_name exceeds max length of 200"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "region",
-      "expression": "region"
+      "expression": "region",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "region",
+              "type": "string",
+              "reason_error": "region is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "branch",
-      "expression": "branch"
+      "expression": "branch",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "branch",
+              "type": "string",
+              "reason_error": "branch is null"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_max_length",
+          "params": [
+            {
+              "key": "branch",
+              "max_length": 100,
+              "reason_error": "branch exceeds max length of 100"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "manager_name",
-      "expression": "manager_name"
+      "expression": "manager_name",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_max_length",
+          "params": [
+            {
+              "key": "manager_name",
+              "max_length": 200,
+              "reason_error": "manager_name exceeds max length of 200"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "created_at",

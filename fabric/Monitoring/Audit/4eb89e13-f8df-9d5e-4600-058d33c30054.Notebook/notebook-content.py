@@ -76,12 +76,21 @@ class ErrorType(str, Enum):
     CONFIG = "CONFIG"
     UNKNOWN = "UNKNOWN"
 
+class FileStatus(str, Enum):
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
+
 
 VALID_TABLE_NAME_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)?$")
 
 AUDIT_SESSION_TABLE = "log.audit_session"
 AUDIT_TABLE_SESSION_TABLE = "log.audit_table_session"
 AUDIT_DETAIL_TABLE = "log.audit_detail"
+AUDIT_FILE_SESSION_TABLE = "log.audit_file_session"
+RETRY_LOG_TABLE = "log.retry_log"
+INVALID_RECORD_TABLE = "log.invalid_record"
 
 
 # METADATA ********************
@@ -168,6 +177,388 @@ def get_next_attempt_no(audit_detail_table: str, table_session_id: str, layer: s
     )
     return int(result) + 1
 
+
+def get_next_retry_attempt_no(
+    retry_log_table: str,
+    table_session_id: str,
+    layer: str,
+    file_session_id: str = None,
+) -> int:
+    retry_log_table = validate_table_name(retry_log_table)
+    layer = require_layer(layer)
+    result_df = (
+        spark.table(retry_log_table)
+        .where((F.col("table_session_id") == F.lit(table_session_id)) & (F.col("layer") == F.lit(layer)))
+    )
+
+    if file_session_id:
+        result_df = result_df.where(F.col("file_session_id") == F.lit(file_session_id))
+    else:
+        result_df = result_df.where(F.col("file_session_id").isNull())
+
+    result = result_df.agg(F.coalesce(F.max("attempt_no"), F.lit(0)).alias("max_attempt_no")).collect()[0]["max_attempt_no"]
+    return int(result) + 1
+
+def get_file_session_id(
+    batch_id: int,
+    source_table_id: int,
+    source_file: str,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+):
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+
+    rows = (
+        spark.table(audit_file_session_table)
+        .where(
+            (F.col("batch_id") == F.lit(int(batch_id)))
+            & (F.col("source_table_id") == F.lit(int(source_table_id)))
+            & (F.col("source_file") == F.lit(source_file))
+        )
+        .select("id")
+        .limit(2)
+        .collect()
+    )
+
+    if len(rows) == 0:
+        return None
+    if len(rows) > 1:
+        raise Exception(
+            f"Multiple file sessions found for batch_id={batch_id}, "
+            f"source_table_id={source_table_id}, source_file={source_file}"
+        )
+    return str(rows[0]["id"])
+
+
+def should_process_file(
+    batch_id: int,
+    source_table_id: int,
+    source_file: str,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+) -> bool:
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+
+    existing_file = (
+        spark.table(audit_file_session_table)
+        .where(
+            (F.col("batch_id") == F.lit(int(batch_id)))
+            & (F.col("source_table_id") == F.lit(int(source_table_id)))
+            & (F.col("source_file") == F.lit(source_file))
+        )
+        .select("file_status")
+        .limit(1)
+        .collect()
+    )
+
+    if not existing_file:
+        return True
+
+    return existing_file[0]["file_status"] != AuditStatus.SUCCESS.value
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def start_file_session(
+    session_id: str,
+    table_session_id: str,
+    source_table_id: int,
+    batch_id: int,
+    source_file: str,
+    file_row_count: int = None,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+) -> str:
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+
+    schema = StructType([
+        StructField("id", StringType(), False),
+        StructField("session_id", StringType(), False),
+        StructField("table_session_id", StringType(), False),
+        StructField("source_table_id", LongType(), False),
+        StructField("batch_id", LongType(), False),
+        StructField("source_file", StringType(), False),
+        StructField("file_row_count", IntegerType(), True),
+    ])
+
+    source_view = create_temp_view_from_rows([
+        Row(
+            id=new_audit_id(),
+            session_id=str(session_id),
+            table_session_id=str(table_session_id),
+            source_table_id=int(source_table_id),
+            batch_id=int(batch_id),
+            source_file=source_file,
+            file_row_count=file_row_count,
+        )
+    ], schema, "audit_file_session")
+
+    spark.sql(f"""
+        MERGE INTO {audit_file_session_table} AS target
+        USING (
+            SELECT
+                id,
+                session_id,
+                table_session_id,
+                source_table_id,
+                batch_id,
+                source_file,
+                '{AuditStatus.RUNNING.value}' AS file_status,
+                file_row_count,
+                CAST(NULL AS INT) AS processed_row_count,
+                CAST(NULL AS INT) AS rejected_row_count,
+                CAST(NULL AS STRING) AS error_code,
+                CAST(NULL AS STRING) AS error_message,
+                CAST(NULL AS STRING) AS error_type,
+                CAST(NULL AS BOOLEAN) AS is_retryable,
+                0 AS retry_count,
+                CAST(NULL AS TIMESTAMP) AS last_retry_at,
+                current_timestamp() AS started_at,
+                CAST(NULL AS TIMESTAMP) AS completed_at,
+                CAST(NULL AS BIGINT) AS duration_ms,
+                current_timestamp() AS created_at,
+                current_timestamp() AS updated_at
+            FROM {source_view}
+        ) AS source
+        ON target.batch_id = source.batch_id
+           AND target.source_table_id = source.source_table_id
+           AND target.source_file = source.source_file
+        WHEN MATCHED THEN UPDATE SET
+            target.session_id = source.session_id,
+            target.table_session_id = source.table_session_id,
+            target.file_status = source.file_status,
+            target.file_row_count = source.file_row_count,
+            target.error_code = NULL,
+            target.error_message = NULL,
+            target.error_type = NULL,
+            target.is_retryable = NULL,
+            target.started_at = source.started_at,
+            target.completed_at = NULL,
+            target.duration_ms = NULL,
+            target.updated_at = source.updated_at
+        WHEN NOT MATCHED THEN INSERT *
+    """)
+
+    file_session_id = get_file_session_id(batch_id, source_table_id, source_file, audit_file_session_table)
+    print(f"Started file session: file_session_id={file_session_id}, source_file={source_file}")
+    return file_session_id
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def finish_file_session(
+    file_session_id: str,
+    status: str,
+    processed_row_count: int = None,
+    rejected_row_count: int = None,
+    error_code: str = None,
+    error_message: str = None,
+    error_type: str = None,
+    is_retryable: bool = None,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+):
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+    status = require_status(status, [AuditStatus.SUCCESS, AuditStatus.FAILED, AuditStatus.SKIPPED])
+
+    schema = StructType([
+        StructField("id", StringType(), False),
+        StructField("file_status", StringType(), False),
+        StructField("processed_row_count", IntegerType(), True),
+        StructField("rejected_row_count", IntegerType(), True),
+        StructField("error_code", StringType(), True),
+        StructField("error_message", StringType(), True),
+        StructField("error_type", StringType(), True),
+        StructField("is_retryable", BooleanType(), True),
+    ])
+
+    source_view = create_temp_view_from_rows([
+        Row(
+            id=str(file_session_id),
+            file_status=status,
+            processed_row_count=processed_row_count,
+            rejected_row_count=rejected_row_count,
+            error_code=error_code,
+            error_message=error_message,
+            error_type=enum_value(error_type) if error_type is not None else None,
+            is_retryable=is_retryable,
+        )
+    ], schema, "finish_file_session")
+
+    spark.sql(f"""
+        MERGE INTO {audit_file_session_table} AS target
+        USING (
+            SELECT *, current_timestamp() AS completed_at
+            FROM {source_view}
+        ) AS source
+        ON target.id = source.id
+        WHEN MATCHED THEN UPDATE SET
+            target.file_status = source.file_status,
+            target.processed_row_count = source.processed_row_count,
+            target.rejected_row_count = source.rejected_row_count,
+            target.error_code = source.error_code,
+            target.error_message = source.error_message,
+            target.error_type = source.error_type,
+            target.is_retryable = source.is_retryable,
+            target.completed_at = source.completed_at,
+            target.duration_ms = CAST(
+                (unix_timestamp(source.completed_at) - unix_timestamp(target.started_at)) * 1000 AS BIGINT
+            ),
+            target.updated_at = source.completed_at
+    """)
+
+    print(f"Finished file session: file_session_id={file_session_id}, status={status}")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def log_retry_attempt(
+    table_session_id: str,
+    layer: str,
+    status: str,
+    file_session_id: str = None,
+    error_code: str = None,
+    error_message: str = None,
+    error_type: str = None,
+    is_retryable: bool = True,
+    retry_log_table: str = RETRY_LOG_TABLE,
+    audit_table_session_table: str = AUDIT_TABLE_SESSION_TABLE,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+):
+    retry_log_table = validate_table_name(retry_log_table)
+    audit_table_session_table = validate_table_name(audit_table_session_table)
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+    layer = require_layer(layer)
+    status = require_status(status, [AuditStatus.RUNNING, AuditStatus.SUCCESS, AuditStatus.FAILED])
+
+    attempt_no = get_next_retry_attempt_no(retry_log_table, str(table_session_id), layer, file_session_id)
+
+    row = Row(
+        id=new_audit_id(),
+        table_session_id=str(table_session_id),
+        file_session_id=str(file_session_id) if file_session_id else None,
+        attempt_no=attempt_no,
+        layer=layer,
+        status=status,
+        error_code=error_code,
+        error_message=error_message,
+        error_type=enum_value(error_type) if error_type is not None else None,
+        is_retryable=is_retryable,
+    )
+
+    schema = StructType([
+        StructField("id", StringType(), False),
+        StructField("table_session_id", StringType(), False),
+        StructField("file_session_id", StringType(), True),
+        StructField("attempt_no", IntegerType(), True),
+        StructField("layer", StringType(), True),
+        StructField("status", StringType(), True),
+        StructField("error_code", StringType(), True),
+        StructField("error_message", StringType(), True),
+        StructField("error_type", StringType(), True),
+        StructField("is_retryable", BooleanType(), True),
+    ])
+
+    retry_df = (
+        spark.createDataFrame([row], schema)
+        .withColumn("started_at", F.current_timestamp())
+        .withColumn("ended_at", F.current_timestamp())
+        .withColumn("duration_ms", F.lit(None).cast("bigint"))
+        .withColumn("created_at", F.current_timestamp())
+    )
+
+    retry_df.write.format("delta").mode("append").saveAsTable(retry_log_table)
+
+    spark.sql(f"""
+        UPDATE {audit_table_session_table}
+        SET retry_count = COALESCE(retry_count, 0) + 1,
+            last_retry_at = current_timestamp(),
+            updated_at = current_timestamp()
+        WHERE id = '{str(table_session_id)}'
+    """)
+
+    if file_session_id:
+        spark.sql(f"""
+            UPDATE {audit_file_session_table}
+            SET retry_count = COALESCE(retry_count, 0) + 1,
+                last_retry_at = current_timestamp(),
+                updated_at = current_timestamp()
+            WHERE id = '{str(file_session_id)}'
+        """)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def log_invalid_record(
+    table_session_id: str,
+    layer: str,
+    target_table: str,
+    record_key: str,
+    raw_data: str,
+    error_reason: str,
+    file_session_id: str = None,
+    error_column: str = None,
+    error_type: str = ErrorType.DATA,
+    is_retryable: bool = False,
+    invalid_record_table: str = INVALID_RECORD_TABLE,
+):
+    invalid_record_table = validate_table_name(invalid_record_table)
+    layer = require_layer(layer)
+
+    schema = StructType([
+        StructField("id", StringType(), False),
+        StructField("table_session_id", StringType(), False),
+        StructField("file_session_id", StringType(), True),
+        StructField("layer", StringType(), False),
+        StructField("target_table", StringType(), True),
+        StructField("record_key", StringType(), True),
+        StructField("raw_data", StringType(), True),
+        StructField("error_column", StringType(), True),
+        StructField("error_reason", StringType(), True),
+        StructField("error_type", StringType(), True),
+        StructField("is_retryable", BooleanType(), True),
+    ])
+
+    invalid_df = (
+        spark.createDataFrame([
+            Row(
+                id=new_audit_id(),
+                table_session_id=str(table_session_id),
+                file_session_id=str(file_session_id) if file_session_id else None,
+                layer=layer,
+                target_table=target_table,
+                record_key=record_key,
+                raw_data=raw_data,
+                error_column=error_column,
+                error_reason=error_reason,
+                error_type=enum_value(error_type),
+                is_retryable=is_retryable,
+            )
+        ], schema)
+        .withColumn("created_at", F.current_timestamp())
+    )
+
+    invalid_df.write.format("delta").mode("append").saveAsTable(invalid_record_table)
 
 # METADATA ********************
 

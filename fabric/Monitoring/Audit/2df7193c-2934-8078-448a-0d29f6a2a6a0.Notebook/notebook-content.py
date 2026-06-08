@@ -67,10 +67,10 @@ customer_bronze_df = (
     .withColumn("_loaded_at", F.current_timestamp())
     .withColumn("_source_system", F.lit("CRM"))
     .withColumn("_source_name", F.lit("customer"))
+    .withColumn("_source_file", F.lit("Files/landing/crm_system/customer/test_customer_file.json"))
 )
 
 customer_bronze_df.write.format("delta").mode("overwrite").saveAsTable(bronze_table)
-
 
 # METADATA ********************
 

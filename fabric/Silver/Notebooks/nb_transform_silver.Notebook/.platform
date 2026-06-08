@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Notebook",
-    "displayName": "nb_transform",
-    "description": "New notebook"
+    "displayName": "nb_transform_silver",
+    "description": "Dynamic Transform Data From Bronze To Silver"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "232b52a1-7995-b7c7-402c-545d5212a98c"
+    "logicalId": "9462e5b9-9e8b-9126-47a2-e4a943650751"
   }
 }

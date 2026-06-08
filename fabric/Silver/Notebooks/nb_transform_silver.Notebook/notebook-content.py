@@ -22,14 +22,49 @@
 
 # CELL ********************
 
+# ---------------------------------------------------------------------------
+# IMPORTS & CONSTANTS
+# ---------------------------------------------------------------------------
 import json
+import os
+import hashlib
+import traceback
+from datetime import datetime, timezone
+from typing import Any
 
-json_path = "/lakehouse/default/Files/config/mappings/bronze-silver/silver_agent.json"
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import StringType
+from pyspark.sql.utils import AnalysisException
+from delta.tables import DeltaTable
 
-with open(json_path, "r") as f:
-    config = json.load(f)
+# METADATA ********************
 
-print(json.dumps(config, indent=2))
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+%run nb_audit_logging_helper_dev
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# import os
+
+# print(os.path.exists("/lakehouse/default/Files"))
+# print(os.path.exists("/lakehouse/default/Files/config"))
+# print(os.path.exists("/lakehouse/default/Files/config/mapping"))
+# print(os.path.exists("/lakehouse/default/Files/config/mapping/bronze-to-silver"))
+# print(os.path.exists("/lakehouse/default/Files/config/mapping/bronze-to-silver/customer.json"))
 
 # METADATA ********************
 
@@ -46,34 +81,32 @@ print(json.dumps(config, indent=2))
 
 # CELL ********************
 
-import json
+# p_config_load_table_dump = {
+#     "id": 1,
+#     "source_system": "CRM",
+#     "source_type": "database",
+#     "source_name": "agent",
+#     "source_location": "crm_db",
+#     "source_format": "table",
+#     "delimiter": None,  
+#     "load_type": "incremental",
+#     "primary_key": "agent_id",
+#     "source_to_bronze_mapping_path": "/config/mappings/agent_source_to_bronze.json",
+#     "bronze_to_silver_mapping_path": "/lakehouse/default/Files/config/mapping/bronze-silver/silver_agent.json",
+#     "silver_transform_name": "transform_agent",
+#     "watermark_column": "updated_at",
+#     "bronze_table_name": "bronze.agent",
+#     "silver_table_name": "silver.agent",
+#     "load_sequence": 1,
+#     "is_active": True,
+#     "created_at": "2026-06-04T18:41:00",
+#     "updated_at": "2026-06-04T18:41:00"
+# }
 
-p_config_load_table_dump = {
-    "id": 1,
-    "source_system": "CRM",
-    "source_type": "database",
-    "source_name": "agent",
-    "source_location": "crm_db",
-    "source_format": "table",
-    "delimiter": None,  
-    "load_type": "incremental",
-    "primary_key": "agent_id",
-    "source_to_bronze_mapping_path": "/config/mappings/agent_source_to_bronze.json",
-    "bronze_to_silver_mapping_path": "/lakehouse/default/Files/config/mapping/bronze-silver/silver_agent.json",
-    "silver_transform_name": "transform_agent",
-    "watermark_column": "updated_at",
-    "bronze_table_name": "bronze.agent",
-    "silver_table_name": "silver.agent",
-    "load_sequence": 1,
-    "is_active": True,
-    "created_at": "2026-06-04T18:41:00",
-    "updated_at": "2026-06-04T18:41:00"
-}
+# p_config_load_table = json.dumps(p_config_load_table_dump)
 
-# Convert dictionary to JSON string
-p_config_load_table = json.dumps(p_config_load_table_dump)
 
-print(p_config_load_table)
+
 
 
 # METADATA ********************
@@ -90,10 +123,10 @@ print(p_config_load_table)
 # These values are overridden at runtime by the Fabric Pipeline activity.
 # ---------------------------------------------------------------------------
 
-config_load_table = json.loads(p_config_load_table)
+
 
 # Batch identifier for this pipeline run
-batch_id: int = 0
+batch_id: int = 1
 
 # Pipeline session identifier for audit tracing
 session_id: str = ""
@@ -119,20 +152,7 @@ force_load_type: str = "incremental"
 
 # CELL ********************
 
-# ---------------------------------------------------------------------------
-# IMPORTS & CONSTANTS
-# ---------------------------------------------------------------------------
-import json
-import hashlib
-import traceback
-from datetime import datetime, timezone
-from typing import Any
 
-from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.types import StringType
-from pyspark.sql.utils import AnalysisException
-from delta.tables import DeltaTable
 
 # ---------------------------------------------------------------------------
 # CONSTANTS
@@ -200,6 +220,33 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # META   "language_group": "synapse_pyspark"
 # META }
 
+# CELL ********************
+
+# DUMP
+# p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# str_config_load_table = p_config_load_table
+
+print(p_config_load_table)
+
+config_load_table = json.loads(p_config_load_table)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
 # MARKDOWN ********************
 
 # ---
@@ -236,20 +283,23 @@ def load_mapping_json(mapping_path: str) -> dict:
     """
     required_keys = {"source_table", "target_table", "columns"}
 
+    # Always prefix with lakehouse/default
+    prefixed_path = os.path.join("/lakehouse/default", mapping_path)
+
     try:
-        with open(mapping_path, "r", encoding="utf-8") as mapping_file:
+        with open(prefixed_path, "r", encoding="utf-8") as mapping_file:
             mapping: dict = json.load(mapping_file)
     except FileNotFoundError:
-        raise ValueError(f"[MAPPING] Mapping file not found: '{mapping_path}'")
+        raise ValueError(f"[MAPPING] Mapping file not found: '{prefixed_path}'")
     except json.JSONDecodeError as json_error:
         raise ValueError(
-            f"[MAPPING] Mapping file is malformed JSON: '{mapping_path}' — {json_error}"
+            f"[MAPPING] Mapping file is malformed JSON: '{prefixed_path}' — {json_error}"
         )
 
     missing_keys = required_keys - mapping.keys()
     if missing_keys:
         raise ValueError(
-            f"[MAPPING] Mapping file '{mapping_path}' is missing required keys: {missing_keys}"
+            f"[MAPPING] Mapping file '{prefixed_path}' is missing required keys: {missing_keys}"
         )
 
     print(
@@ -493,9 +543,9 @@ def apply_column_transformations(
                 )
 
     # Append system metadata column
-    select_expressions.append(
-        F.current_timestamp().alias(INGESTION_TIMESTAMP_COLUMN)
-    )
+    # select_expressions.append(
+    #     F.current_timestamp().alias(INGESTION_TIMESTAMP_COLUMN)
+    # )
 
     mapped_silver_df: DataFrame = bronze_df.select(*select_expressions)
 
@@ -663,209 +713,280 @@ def deduplicate_against_silver(
 
 # CELL ********************
 
-# ===========================================================================
-# SECTION 3E — DATA QUALITY VALIDATION ENGINE
-# ===========================================================================
+
+DQ_FAILURE_REASON_COLUMN: str = "__dq_failure_reason"
 
 # ---------------------------------------------------------------------------
-# Common (generic) validators
+# Validator helpers
+# Each accepts (df, column_name, **params) and returns a Column expression
+# that evaluates to True for FAILING rows.
 # ---------------------------------------------------------------------------
 
-def _validate_is_not_null(column_name: str) -> F.Column:
-    """Return a boolean Column that is True when the column value IS NULL."""
+
+def _validate_is_not_null(df: DataFrame, column_name: str, **_) -> F.Column:
+    """True when column IS NULL (violation)."""
     return F.col(column_name).isNull()
 
 
-def _validate_is_not_empty(column_name: str) -> F.Column:
-    """Return True when a string column is NULL or an empty string."""
-    return F.col(column_name).isNull() | (F.trim(F.col(column_name)) == "")
+def _validate_is_unique(df: DataFrame, column_name: str, **_) -> F.Column:
+    """True when column value appears more than once in df (duplicate = violation)."""
+    count_col = f"__cnt_{column_name}"
+    counts = df.groupBy(column_name).agg(F.count("*").alias(count_col))
+    dup_values = [
+        row[column_name]
+        for row in counts.filter(F.col(count_col) > 1).select(column_name).collect()
+    ]
+    if not dup_values:
+        return F.lit(False)
+    return F.col(column_name).isin(dup_values)
 
 
-def _validate_not_in_set(column_name: str, allowed_values: list) -> F.Column:
-    """Return True when the column value is NOT in the allowed value set."""
-    return ~F.col(column_name).isin(allowed_values)
+def _validate_max_length(df: DataFrame, column_name: str, max_length: int, **_) -> F.Column:
+    """True when string length exceeds max_length (violation)."""
+    return F.length(F.col(column_name).cast(StringType())) > F.lit(int(max_length))
 
 
-def _validate_is_negative(column_name: str) -> F.Column:
-    """Return True when a numeric column holds a negative value."""
-    return F.col(column_name) < 0
+def _validate_regex(df: DataFrame, column_name: str, pattern: str, **_) -> F.Column:
+    """True when value does NOT match the regex pattern (violation)."""
+    return (
+        F.col(column_name).isNull()
+        | ~F.col(column_name).cast(StringType()).rlike(pattern)
+    )
 
 
-# ---------------------------------------------------------------------------
-# Business (domain-specific) validators
-# ---------------------------------------------------------------------------
+def _validate_accepted_values(df: DataFrame, column_name: str, values: list, **_) -> F.Column:
+    """True when value is NOT in the accepted values list (violation)."""
+    return ~F.col(column_name).isin(values)
 
-def _validate_foreign_key_missing(
+
+def _validate_data_type(df: DataFrame, column_name: str, type: str, **_) -> F.Column:
+    """
+    True when the value cannot be cast to the expected type (violation).
+    Supports: int, long, double, float, boolean, date, timestamp, string.
+    """
+    type_map = {
+        "int":       "int",
+        "integer":   "int",
+        "long":      "long",
+        "bigint":    "long",
+        "double":    "double",
+        "float":     "float",
+        "boolean":   "boolean",
+        "date":      "date",
+        "timestamp": "timestamp",
+        "string":    None,  # strings are always valid — no cast needed
+    }
+    spark_type = type_map.get(type.lower())
+    if spark_type is None:
+        return F.lit(False)
+    return F.col(column_name).cast(spark_type).isNull() & F.col(column_name).isNotNull()
+
+
+def _validate_foreign_key(
+    df: DataFrame,
     column_name: str,
     reference_table: str,
     reference_column: str,
+    **_,
 ) -> F.Column:
     """
-    Return True when a key value in column_name does not exist in the
-    reference_table.reference_column (i.e. referential integrity violation).
-
-    Parameters
-    ----------
-    column_name : str
-        Column in the current DataFrame to check.
-    reference_table : str
-        Fully qualified reference table, e.g. 'silver.agent'.
-    reference_column : str
-        Column in the reference table containing valid key values.
-
-    Returns
-    -------
-    pyspark.sql.Column
-        Boolean column — True means key is MISSING (failing).
-        Returns a literal False column if the reference table cannot be read.
+    True when the value does NOT exist in reference_table.reference_column (violation).
+    Gracefully skips the check if the reference table cannot be read.
     """
     try:
-        ref_df: DataFrame = spark.table(reference_table).select(
-            F.col(reference_column).alias("__ref_key")
-        ).distinct()
-        # Broadcast small reference tables for performance
-        valid_keys = set(
-            row["__ref_key"] for row in ref_df.collect()
+        ref_df: DataFrame = (
+            spark.table(reference_table)  # noqa: F821 — spark injected by Fabric
+            .select(F.col(reference_column).alias("__ref_key"))
+            .distinct()
         )
+        valid_keys = {row["__ref_key"] for row in ref_df.collect()}
         return ~F.col(column_name).isin(list(valid_keys))
     except AnalysisException as analysis_error:
         print(
             f"[DQ] Warning — Could not read reference table '{reference_table}': "
             f"{analysis_error}. Skipping FK check for '{column_name}'."
         )
-        return F.lit(False)  # Don't fail rows if reference table is unavailable
+        return F.lit(False)
 
 
-def _validate_date_order(
-    start_column: str,
-    end_column: str,
-) -> F.Column:
-    """
-    Return True when start_date >= end_date (i.e. start must be BEFORE end).
+# METADATA ********************
 
-    Parameters
-    ----------
-    start_column : str
-        Column holding the start date/timestamp.
-    end_column : str
-        Column holding the end date/timestamp.
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
 
-    Returns
-    -------
-    pyspark.sql.Column
-        True when start_column >= end_column (violates the rule).
-    """
-    return (
-        F.col(start_column).isNotNull()
-        & F.col(end_column).isNotNull()
-        & (F.col(start_column) >= F.col(end_column))
-    )
-
+# CELL ********************
 
 # ---------------------------------------------------------------------------
-# DQ Rule dispatcher
+# Validator registry — maps name_func string → callable
+# Add a new entry here to register additional validators without touching
+# any other pipeline code.
 # ---------------------------------------------------------------------------
 
-# Registry mapping rule type strings to validator factory functions.
-# To add a new rule type, register it here — no other code needs to change.
-_DQ_RULE_REGISTRY: dict[str, callable] = {
-    "not_null": lambda rule: _validate_is_not_null(rule["column"]),
-    "not_empty": lambda rule: _validate_is_not_empty(rule["column"]),
-    "in_set": lambda rule: _validate_not_in_set(rule["column"], rule["values"]),
-    "non_negative": lambda rule: _validate_is_negative(rule["column"]),
-    "foreign_key": lambda rule: _validate_foreign_key_missing(
-        rule["column"], rule["reference_table"], rule["reference_column"]
-    ),
-    "date_order": lambda rule: _validate_date_order(
-        rule["start_column"], rule["end_column"]
-    ),
+VALIDATORS: dict[str, callable] = {
+    "_validate_is_not_null": _validate_is_not_null,
+    "_validate_is_unique": _validate_is_unique,
+    "_validate_max_length": _validate_max_length,
+    "_validate_regex": _validate_regex,
+    "_validate_accepted_values": _validate_accepted_values,
+    "_validate_data_type": _validate_data_type,
+    "_validate_foreign_key": _validate_foreign_key,
 }
 
 
 def run_dq_validation(
     input_df: DataFrame,
-    dq_rules: list[dict],
+    column_mappings: list[dict],
+    source_table: str,
     quarantine_table_name: str,
 ) -> tuple[DataFrame, DataFrame, int]:
     """
-    Apply all DQ rules to the mapped DataFrame.
+    Apply all DQ rules declared in the column-mapping JSON to *input_df*.
 
-    For each rule, a Boolean failure condition column is computed and rows
-    that violate ANY rule are separated into df_rejected with a descriptive
-    '__dq_failure_reason' column.
-
-    DQ Rule structure examples
-    --------------------------
-    Common rules:
-        {"column": "agent_id",   "rule": "not_null"}
-        {"column": "status",     "rule": "in_set", "values": ["active", "inactive"]}
-        {"column": "premium",    "rule": "non_negative"}
-
-    Business rules:
-        {"column": "agent_id",   "rule": "foreign_key",
-         "reference_table": "silver.agent", "reference_column": "agent_id"}
-        {"rule": "date_order", "start_column": "policy_start_date", "end_column": "policy_end_date"}
+    Iterates over every column entry in *column_mappings*, reads its
+    ``validates`` list, and dispatches each rule to the matching function in
+    ``VALIDATORS``.  Rows that violate at least one rule are tagged with a
+    pipe-delimited failure-reason string in ``__dq_failure_reason`` and
+    separated into *df_rejected*; clean rows are returned as *df_valid*.
 
     Parameters
     ----------
     input_df : DataFrame
-        Mapped Silver DataFrame (output of apply_column_transformations).
-    dq_rules : list[dict]
-        List of rule definitions.
+        The mapped Silver DataFrame (output of apply_column_transformations).
+    column_mappings : list[dict]
+        The ``columns`` list from the Bronze-to-Silver mapping JSON.
+    source_table : str
+        Source table name used in log messages (e.g. ``"bronze.customer"``).
     quarantine_table_name : str
-        Fully qualified quarantine table where rejected rows will be written.
+        Target quarantine table for rejected rows.
 
     Returns
     -------
     tuple[DataFrame, DataFrame, int]
-        (df_valid, df_rejected, rejected_row_count)
+        ``(df_valid, df_rejected, rejected_row_count)``
 
     Raises
     ------
     ValueError
-        If an unknown rule type is encountered.
+        If a ``name_func`` value is not registered in ``VALIDATORS``.
+
+    Notes
+    -----
+    Mapping JSON rule structure::
+
+        {
+            "target": "columns mapping",
+            "validates": [
+                {
+                    "name_func": "name function validate",
+                    "params": [
+                        {
+                            "key": "name param",
+                            "type": "Type Of Param",
+                            "reason_error": "Error Throw When Error"
+                        }
+                    ]
+                }
+            ]
+        }
+
+    ``params[0].key``          → column_name passed to the validator.
+    ``params[0].reason_error`` → human-readable failure message.
+    All remaining keys in ``params[0]`` are forwarded as keyword arguments
+    (e.g. ``max_length``, ``pattern``, ``values``, ``reference_table``).
     """
-    if not dq_rules:
-        print("[DQ] No DQ rules configured. Skipping validation.")
-        return input_df, spark.createDataFrame([], input_df.schema), 0
 
-    # Build per-rule failure condition columns and track reasons
-    failure_condition_columns: list[F.Column] = []
-    rule_reason_columns: list[F.Column] = []
+    failure_conditions: list[F.Column] = []
+    reason_when_clauses: list[F.Column] = []
 
-    for dq_rule in dq_rules:
-        rule_type: str = dq_rule.get("rule", "")
+    # ------------------------------------------------------------------
+    # Iterate columns → validates → params  (mirrors stage-validate skeleton)
+    # ------------------------------------------------------------------
 
-        if rule_type not in _DQ_RULE_REGISTRY:
-            raise ValueError(
-                f"[DQ] Unknown rule type '{rule_type}'. "
-                f"Supported types: {list(_DQ_RULE_REGISTRY.keys())}"
-            )
+    for column_cfg in column_mappings:
+        target_column: str = column_cfg.get("target", "")
+        validates: list[dict] = column_cfg.get("validates", [])
 
-        failure_condition: F.Column = _DQ_RULE_REGISTRY[rule_type](dq_rule)
-        failure_condition_columns.append(failure_condition)
+        if not validates:
+            continue
 
-        # Build human-readable reason string for this rule
-        column_ref: str = dq_rule.get("column", dq_rule.get("start_column", "unknown"))
-        rule_reason_columns.append(
-            F.when(failure_condition, F.lit(f"{rule_type}:{column_ref}"))
-        )
+        for validate in validates:
 
-    # Combine all failure reasons into a single pipe-delimited string
-    combined_failure_reason: F.Column = F.concat_ws(
-        "|",
-        *[F.coalesce(reason, F.lit("")) for reason in rule_reason_columns],
+            func_name: str = validate.get("name_func", "")
+
+            if func_name not in VALIDATORS:
+                raise ValueError(
+                    f"[DQ] Unknown validator '{func_name}' on column '{target_column}' "
+                    f"(source='{source_table}'). "
+                    f"Registered validators: {sorted(VALIDATORS.keys())}"
+                )
+
+            validator_func = VALIDATORS[func_name]
+
+            # params is a list with one param-object per the mapping spec
+            param_list: list[dict] = validate.get("params", [])
+
+            for param in param_list:
+                # "key" → column_name; fall back to "target" if absent
+                column_name: str = param.get("key", target_column)
+                reason_error: str = param.get(
+                    "reason_error", f"{func_name}:{column_name}"
+                )
+
+                # Forward all remaining param keys as kwargs to the validator
+                validator_kwargs = {
+                    key: value
+                    for key, value in param.items()
+                    if key not in {"key", "reason_error"}
+                }
+
+                # Evaluate the failure-condition Column expression
+                failure_col: F.Column = validator_func(
+                    input_df, column_name, **validator_kwargs
+                )
+
+                # Emit reason_error only when this specific rule fires
+                reason_when_clauses.append(
+                    F.when(failure_col, F.lit(reason_error))
+                )
+
+                print(
+                    f"[DQ] Registered rule | column='{column_name}' "
+                    f"| func='{func_name}' | reason='{reason_error}'"
+                )
+
+    # ------------------------------------------------------------------
+    # Short-circuit: no rules configured
+    # ------------------------------------------------------------------
+    if not failure_conditions:
+        print(f"[DQ] No validation rules configured for '{source_table}'. Skipping.")
+        return input_df, spark.createDataFrame([], input_df.schema), 0  # noqa: F821
+
+    # ------------------------------------------------------------------
+    # Combine all failure conditions (any rule failing = row rejected)
+    # ------------------------------------------------------------------
+    is_any_rule_failing: F.Column = F.lit(False)
+    for condition in failure_conditions:
+        is_any_rule_failing = is_any_rule_failing | condition
+    
+
+    # ------------------------------------------------------------------
+    # Build combined failure-reason string (pipe-separated active reasons)
+    # ------------------------------------------------------------------
+
+    combined_reason: F.Column = F.concat_ws(
+        " | ",
+        *[F.coalesce(clause, F.lit("")) for clause in reason_when_clauses],
     )
 
-    # Any rule failing marks the row as rejected
-    is_any_rule_failing: F.Column = F.lit(False)
-    for condition in failure_condition_columns:
-        is_any_rule_failing = is_any_rule_failing | condition
+    # ------------------------------------------------------------------
+    # Tag each row; split into valid / rejected
+    # ------------------------------------------------------------------
 
-    # Tag input with failure reason (empty string = row passed)
     tagged_df: DataFrame = input_df.withColumn(
         DQ_FAILURE_REASON_COLUMN,
-        F.when(is_any_rule_failing, combined_failure_reason).otherwise(F.lit(None)),
+        F.when(is_any_rule_failing, combined_reason).otherwise(F.lit(None)),
     )
 
     df_valid: DataFrame = tagged_df.filter(
@@ -876,34 +997,35 @@ def run_dq_validation(
         F.col(DQ_FAILURE_REASON_COLUMN).isNotNull()
     )
 
+    # ------------------------------------------------------------------
+    # Count & log
+    # ------------------------------------------------------------------
     rejected_row_count: int = df_rejected.count()
     valid_row_count: int = df_valid.count()
 
+
+
     print(
-        f"[DQ] Validation results: "
+        f"[DQ] Validation complete for '{source_table}': "
         f"valid={valid_row_count:,} | rejected={rejected_row_count:,}"
     )
 
-    # Write rejected rows to quarantine table
-    if rejected_row_count > 0:
-        _write_to_quarantine(df_rejected, quarantine_table_name)
+    # ------------------------------------------------------------------
+    # Persist rejected rows to the quarantine table
+    # ------------------------------------------------------------------
+
+    #TODO: Insert into log.invalid_record
+    # if rejected_row_count > 0:
+    #     _write_to_quarantine(df_rejected, quarantine_table_name)
 
     return df_valid, df_rejected, rejected_row_count
 
 
 def _write_to_quarantine(rejected_df: DataFrame, quarantine_table_name: str) -> None:
     """
-    Write rejected rows to the quarantine Delta table.
-
-    Adds a '__quarantined_at' timestamp before writing.
-    Uses append mode so quarantine data accumulates over time.
-
-    Parameters
-    ----------
-    rejected_df : DataFrame
-        Rejected rows with '__dq_failure_reason' column.
-    quarantine_table_name : str
-        Target quarantine table name (e.g. 'silver_quarantine.agent').
+    Append rejected rows (with ``__dq_failure_reason``) to the quarantine
+    Delta table.  Adds ``__quarantined_at`` timestamp before writing.
+    Write failures are caught and logged without blocking the main pipeline.
     """
     quarantine_df: DataFrame = rejected_df.withColumn(
         "__quarantined_at", F.current_timestamp()
@@ -921,7 +1043,6 @@ def _write_to_quarantine(rejected_df: DataFrame, quarantine_table_name: str) -> 
             f"to quarantine table '{quarantine_table_name}'."
         )
     except Exception as quarantine_error:
-        # Quarantine write failure must NOT block the main pipeline
         print(
             f"[DQ] Warning — Failed to write to quarantine table "
             f"'{quarantine_table_name}': {quarantine_error}"
@@ -1096,9 +1217,7 @@ def write_silver_merge(
 # Read source configuration and resolve run mode
 # ---------------------------------------------------------------------------
 
-print("=" * 70)
-print(f"STEP 1 | Reading config for source_config_id={source_config_id}")
-print("=" * 70)
+
 
 # Read the configuration row for this pipeline invocation
 config_row: dict = config_load_table
@@ -1107,7 +1226,7 @@ config_row: dict = config_load_table
 resolved_load_type: str = (
     force_load_type.lower()
     if force_load_type
-    else config_row.get("load_type", LOAD_TYPE_FULL).lower()
+    else config_row.get("load_type", LOAD_TYPE_INCREMENTAL).lower()
 )
 
 print(f"[STEP 1] Resolved load_type={resolved_load_type}")
@@ -1153,12 +1272,6 @@ print(
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# MARKDOWN ********************
-
-# ---
-# ## Cell 5 — MAIN PIPELINE (Steps 2–7)
-# All steps run inside a try/except/finally to guarantee audit logging.
-
 # CELL ********************
 
 # ---------------------------------------------------------------------------
@@ -1172,25 +1285,85 @@ rejected_row_count: int = 0
 pipeline_status: str = STATUS_FAILED
 error_message: str | None = None
 table_session_id: str | None = None
+source_table_id = config_load_table["id"]
+source_table = config_load_table["bronze_table_name"]
 WATERMARK_TABLE:str = "cfg.watermark"
 COLUMN_WATERMARK_VALUE:str = "watermark_value"
 
-# ---------------------------------------------------------------------------
-# Audit: start table layer session
-# ---------------------------------------------------------------------------
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# DUMP START SESSION PIPELINE LOG
+try:
+    session_id_dump = start_pipeline_session(
+        pipeline_name="TEST_SILVER_LAYER",
+        pipeline_run_id="PL_01",
+        batch_id=batch_id,
+        run_mode=current_run_mode,
+    )
+
+    print(f"[AUDIT] Started table layer session")
+except Exception as audit_start_error:
+    print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+print(session_id_dump)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# # Audit: start table layer session
+
+# CELL ********************
+
 try:
     table_session_id = start_table_layer(
-        session_id=session_id,
-        source_table_id=source_config_id,
+        session_id=session_id_dump,
+        source_table_id=source_table_id,
         source_table_name=BRONZE_TABLE_NAME,
         layer=LAYER_SILVER,
         batch_id=batch_id,
-        target_table_name=SILVER_TABLE_NAME,
         load_type=resolved_load_type.upper(),
     )
     print(f"[AUDIT] Started table layer session | table_session_id={table_session_id}")
 except Exception as audit_start_error:
     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# MARKDOWN ********************
+
+# ---
+# ## MAIN PIPELINE 
+# All steps run inside a try/except/finally to guarantee audit logging.
+
+# CELL ********************
 
 # ---------------------------------------------------------------------------
 # MAIN PIPELINE EXECUTION
@@ -1301,7 +1474,8 @@ try:
 
     df_valid, df_rejected, rejected_row_count = run_dq_validation(
         input_df=mapped_silver_df_final,
-        dq_rules=dq_rules,
+        column_mappings=column_mappings,
+        source_table=source_table,
         quarantine_table_name=QUARANTINE_TABLE_NAME,
     )
 
@@ -1416,7 +1590,7 @@ finally:
 # MARKDOWN ********************
 
 # ---
-# ## Cell 6 — SUMMARY LOG
+# ## SUMMARY LOG
 
 # CELL ********************
 

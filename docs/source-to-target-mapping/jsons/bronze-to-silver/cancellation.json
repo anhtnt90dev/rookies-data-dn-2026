@@ -104,7 +104,7 @@
           "params": [
             {
               "key": "last_updated_at",
-              "reason_error": "created_last_updated_atdate key is empty"
+              "reason_error": "last_updated_at key is empty"
             }
           ]
         },

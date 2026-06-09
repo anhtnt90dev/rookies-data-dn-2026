@@ -707,6 +707,14 @@ def _validate_is_not_null(df: DataFrame, column_name: str, **_) -> F.Column:
     """True when column IS NULL (violation)."""
     return F.col(column_name).isNull()
 
+def _validate_is_not_empty(df: DataFrame, column_name: str, **_) -> F.Column:
+    """
+    True when column is NULL, empty string, or whitespace only (violation).
+    """
+    return (
+        F.col(column_name).isNull()
+        | (F.trim(F.col(column_name)) == "")
+    )
 
 def _validate_is_unique(df: DataFrame, column_name: str, **_) -> F.Column:
     """True when column value appears more than once in df (duplicate = violation)."""
@@ -733,6 +741,91 @@ def _validate_regex(df: DataFrame, column_name: str, pattern: str, **_) -> F.Col
         | ~F.col(column_name).cast(StringType()).rlike(pattern)
     )
 
+def _validate_date_iso8601(df: DataFrame, column_name: str, **_) -> F.Column:
+    """
+    True when value is NOT a valid ISO 8601 date/timestamp (violation).
+
+    Valid examples:
+      2025-06-08
+      2025-06-08T14:30:45Z
+      2025-06-08T14:30:45.123Z
+      2025-06-08T14:30:45+07:00
+      2025-06-08T14:30:45.123+07:00
+    """
+
+    value = F.col(column_name)
+
+    parsed_date = F.to_date(value, "yyyy-MM-dd")
+
+    parsed_timestamp = F.coalesce(
+        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ssX"),
+        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSX")
+    )
+
+    return (
+        value.isNotNull()
+        & parsed_date.isNull()
+        & parsed_timestamp.isNull()
+    )
+
+def _validate_is_numeric(
+    df: DataFrame,
+    column_name: str,
+    **_,
+) -> F.Column:
+    """
+    True when value is NOT numeric (violation).
+    """
+    value = F.trim(F.col(column_name).cast("string"))
+
+    return (
+        value.isNotNull()
+        & (value != "")
+        & value.cast("double").isNull()
+    )
+
+def _validate_min_value(
+    df: DataFrame,
+    column_name: str,
+    min_value: float,
+    inclusive: bool = True,
+    **_,
+) -> F.Column:
+    """
+    True when value violates minimum value rule.
+    """
+    if inclusive:
+        return (
+            F.col(column_name).isNotNull()
+            & (F.col(column_name) < F.lit(min_value))
+        )
+
+    return (
+        F.col(column_name).isNotNull()
+        & (F.col(column_name) <= F.lit(min_value))
+    )
+
+def _validate_less_than(
+    df: DataFrame,
+    left_column: str,
+    right_column: str,
+    **_,
+) -> F.Column:
+    """
+    True when left_column >= right_column (violation).
+
+    Valid:
+        left_column < right_column
+
+    Invalid:
+        left_column == right_column
+        left_column > right_column
+    """
+    return (
+        F.col(left_column).isNotNull()
+        & F.col(right_column).isNotNull()
+        & (F.col(left_column) >= F.col(right_column))
+    )
 
 def _validate_accepted_values(df: DataFrame, column_name: str, values: list, **_) -> F.Column:
     """True when value is NOT in the accepted values list (violation)."""
@@ -897,9 +990,14 @@ def log_invalid_batch_records(
 
 VALIDATORS: dict[str, callable] = {
     "_validate_is_not_null": _validate_is_not_null,
+    "_validate_is_not_empty": _validate_is_not_empty,
     "_validate_is_unique": _validate_is_unique,
     "_validate_max_length": _validate_max_length,
     "_validate_regex": _validate_regex,
+    "_validate_date_iso8601": _validate_date_iso8601,
+    "_validate_less_than": _validate_less_than,
+    "_validate_is_numeric": _validate_is_numeric,
+    "_validate_min_value": _validate_min_value,
     "_validate_accepted_values": _validate_accepted_values,
     "_validate_data_type": _validate_data_type,
     "_validate_foreign_key": _validate_foreign_key,
@@ -971,6 +1069,8 @@ def run_dq_validation(
     failure_conditions: list[F.Column] = []
     reason_when_clauses: list[F.Column] = []
     KEY_NAME_FUNCTION = "name_func"
+    
+    available_columns = set(input_df.columns)
 
     # ------------------------------------------------------------------
     # Iterate columns → validates → params  (mirrors stage-validate skeleton)

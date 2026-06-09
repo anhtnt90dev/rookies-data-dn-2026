@@ -90,8 +90,8 @@
           "name_func": "_validate_less_than",
           "params": [
             {
-              "left_column": "policy_start_date",
-              "right_column": "policy_end_date",
+              "key": "policy_start_date",
+              "compare_column": "policy_end_date",
               "reason_error": "policy_start_date must be less than policy_end_date"
             }
           ]

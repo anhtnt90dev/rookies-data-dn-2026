@@ -83,8 +83,8 @@
           "name_func": "_validate_less_than",
           "params": [
             {
-              "left_column": "quotation_at",
-              "right_column": "quotation_expiry_at",
+              "key": "quotation_at",
+              "compare_column": "quotation_expiry_at",
               "reason_error": "quotation_at must be less than quotation_expiry_at"
             }
           ]

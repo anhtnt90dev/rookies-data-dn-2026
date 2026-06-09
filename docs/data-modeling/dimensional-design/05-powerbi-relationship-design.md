@@ -250,7 +250,6 @@ CALCULATE(
     'dim_payment_status'[payment_status_code] = "PAID"
 )
 ```
-```
 
 ---
 

@@ -21,19 +21,67 @@
     },
     {
       "target": "full_name",
-      "expression": "full_name"
+      "expression": "full_name",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "full_name",
+              "type": "string",
+              "reason_error": "full_name is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "gender",
-      "expression": "gender"
+      "expression": "gender",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "gender",
+              "type": "string",
+              "reason_error": "gender is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "dob",
-      "expression": "dob"
+      "expression": "dob",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "dob",
+              "type": "string",
+              "reason_error": "dob is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "phone_number",
-      "expression": "phone_number"
+      "expression": "phone_number",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "phone_number",
+              "type": "string",
+              "reason_error": "phone_number is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "email",
@@ -54,7 +102,19 @@
     },
     {
       "target": "city",
-      "expression": "city"
+      "expression": "city",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "city",
+              "type": "string",
+              "reason_error": "city is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "district",
@@ -62,7 +122,18 @@
     },
     {
       "target": "created_at",
-      "expression": "created_date"
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_at",
+              "reason_error": "created_at invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "updated_at",

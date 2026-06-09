@@ -210,54 +210,46 @@ CALCULATE(
 ```
 
 ### 5.2 Active Policies Count
-Calculates the number of active policies during a selected calendar window by comparing the date range with the inactive start and end date relationships.
+Calculates the number of active policies during a selected calendar window by comparing the date range with the inactive start and end date relationships using row-level lookup on `dim_date`.
 
 ```dax
 Active Policies = 
-CALCULATE(
-    COUNTROWS('fact_policy'),
-    FILTER(
-        'fact_policy',
-        // Policy has started on or before the end of the selected period
-        CALCULATE(
-            MAX('dim_date'[full_date]), 
-            USERELATIONSHIP('dim_date'[date_key], 'fact_policy'[policy_start_date_key])
-        ) <= MAX('dim_date'[full_date]) &&
-        // Policy has not expired before the start of the selected period
-        CALCULATE(
-            MIN('dim_date'[full_date]), 
-            USERELATIONSHIP('dim_date'[date_key], 'fact_policy'[policy_end_date_key])
-        ) >= MIN('dim_date'[full_date])
-    ),
-    'dim_policy_status'[policy_status_code] = "ACTIVE"
-)
+VAR MaxSelectedDate = MAX('dim_date'[full_date])
+VAR MinSelectedDate = MIN('dim_date'[full_date])
+RETURN
+    CALCULATE(
+        COUNTROWS('fact_policy'),
+        FILTER(
+            'fact_policy',
+            // Policy has started on or before the end of the selected period
+            LOOKUPVALUE('dim_date'[full_date], 'dim_date'[date_key], 'fact_policy'[policy_start_date_key]) <= MaxSelectedDate &&
+            // Policy has not expired before the start of the selected period
+            LOOKUPVALUE('dim_date'[full_date], 'dim_date'[date_key], 'fact_policy'[policy_end_date_key]) >= MinSelectedDate
+        ),
+        'dim_policy_status'[policy_status_code] = "ACTIVE"
+    )
 ```
 
 ### 5.3 Average Payment Lag (M-22 KPI)
-Calculates the average number of days between the date a policy is issued and when a payment is processed. Since `fact_payment` includes `issued_date_key` (materialized from the policy context in Gold ETL), we can use the inactive relationship to retrieve the corresponding policy issue date.
+Calculates the average number of days between the date a policy is issued and when a payment is processed. Since `fact_payment` includes `issued_date_key` (materialized from the policy context in Gold ETL), we use `LOOKUPVALUE` to retrieve the corresponding dates from `dim_date` at the row level, and apply the status filter via an outer `CALCULATE`.
 
 ```dax
 Average Payment Lag Days = 
-AVERAGEX(
-    FILTER('fact_payment', 'dim_payment_status'[payment_status_code] = "PAID"),
-    VAR PaymentDate = 'fact_payment'[payment_date_key]
-    VAR IssuedDate = 
-        CALCULATE(
-            SELECTEDVALUE('dim_date'[date_key]),
-            USERELATIONSHIP('dim_date'[date_key], 'fact_payment'[issued_date_key])
-        )
-    RETURN
-        IF(
-            NOT(ISBLANK(IssuedDate)) && NOT(ISBLANK(PaymentDate)),
-            // Parse YYYYMMDD to calculate date difference
-            DATEDIFF(
-                DATE(LEFT(IssuedDate, 4), MID(IssuedDate, 5, 2), RIGHT(IssuedDate, 2)),
-                DATE(LEFT(PaymentDate, 4), MID(PaymentDate, 5, 2), RIGHT(PaymentDate, 2)),
-                DAY
-            ),
-            BLANK()
-        )
+CALCULATE(
+    AVERAGEX(
+        'fact_payment',
+        VAR PaymentDate = LOOKUPVALUE('dim_date'[full_date], 'dim_date'[date_key], 'fact_payment'[payment_date_key])
+        VAR IssuedDate = LOOKUPVALUE('dim_date'[full_date], 'dim_date'[date_key], 'fact_payment'[issued_date_key])
+        RETURN
+            IF(
+                NOT(ISBLANK(IssuedDate)) && NOT(ISBLANK(PaymentDate)),
+                DATEDIFF(IssuedDate, PaymentDate, DAY),
+                BLANK()
+            )
+    ),
+    'dim_payment_status'[payment_status_code] = "PAID"
 )
+```
 ```
 
 ---

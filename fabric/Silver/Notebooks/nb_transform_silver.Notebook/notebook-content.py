@@ -22,6 +22,21 @@
 
 # CELL ********************
 
+# # DUMP FOR TEST
+# p_batch_id = 1
+# p_config_load_table = "{\"id\":3,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"insurance_providers\",\"source_location\":\"dbo.insurance_providers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"provider_code\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/insurance_provider.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/insurance_provider.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.insurance_provider\",\"silver_table_name\":\"silver.provider\",\"load_sequence\":3,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
+# p_session_id="3a967666-924c-4c08-904d-7b734f4880cc"
+# p_pipeline_run_id="PL_01"
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 # ---------------------------------------------------------------------------
 # IMPORTS & CONSTANTS
 # ---------------------------------------------------------------------------
@@ -62,50 +77,12 @@ from delta.tables import DeltaTable
 # ##  PARAMETERS
 # Parameters injected by Fabric Pipeline. Edit defaults for local development only.
 
-# CELL ********************
-
-# p_config_load_table_dump = {
-#     "id": 1,
-#     "source_system": "CRM",
-#     "source_type": "database",
-#     "source_name": "agent",
-#     "source_location": "crm_db",
-#     "source_format": "table",
-#     "delimiter": None,  
-#     "load_type": "incremental",
-#     "primary_key": "agent_id",
-#     "source_to_bronze_mapping_path": "/config/mappings/agent_source_to_bronze.json",
-#     "bronze_to_silver_mapping_path": "/lakehouse/default/Files/config/mapping/bronze-silver/silver_agent.json",
-#     "silver_transform_name": "transform_agent",
-#     "watermark_column": "updated_at",
-#     "bronze_table_name": "bronze.agent",
-#     "silver_table_name": "silver.agent",
-#     "load_sequence": 1,
-#     "is_active": True,
-#     "created_at": "2026-06-04T18:41:00",
-#     "updated_at": "2026-06-04T18:41:00"
-# }
-
-# p_config_load_table = json.dumps(p_config_load_table_dump)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
 # PARAMETERS CELL ********************
 
 # ---------------------------------------------------------------------------
 # FABRIC NOTEBOOK PARAMETERS
 # These values are overridden at runtime by the Fabric Pipeline activity.
 # ---------------------------------------------------------------------------
-
-
-
-# Batch identifier for this pipeline run
-batch_id: int = 1
 
 # Pipeline session identifier for audit tracing
 session_id: str = ""
@@ -176,10 +153,10 @@ LOAD_TYPE_INCREMENTAL: str = "incremental"
 # On Microsoft Fabric, 'spark' is pre-injected. The line below is a fallback
 # for local unit testing.
 # ---------------------------------------------------------------------------
-try:
-    spark  # noqa: F821  — already available in Fabric runtime
-except NameError:
-    spark = SparkSession.builder.appName("nb_ingest_bronze_silver_dev").getOrCreate()
+# try:
+#     spark  # noqa: F821  — already available in Fabric runtime
+# except NameError:
+#     spark = SparkSession.builder.appName("nb_ingest_bronze_silver_dev").getOrCreate()
 
 # ---------------------------------------------------------------------------
 # IMPORT AUDIT LOGGING HELPER
@@ -191,19 +168,6 @@ except NameError:
 # ---------------------------------------------------------------------------
 # %run /nb_audit_logging_helper_dev
 
-print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_id={batch_id}")
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-# DUMP
-p_config_load_table = "{\"id\":7,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"policy\",\"source_location\":\"Files/landing/policy_system/policy\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"policy_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/policy.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/policy.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.policy\",\"silver_table_name\":\"silver.policy\",\"load_sequence\":7,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
 
 
 # METADATA ********************
@@ -220,6 +184,18 @@ p_config_load_table = "{\"id\":7,\"source_system\":\"policy_system\",\"source_ty
 print(p_config_load_table)
 
 config_load_table = json.loads(p_config_load_table)
+batch_id = p_batch_id
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_id={batch_id}")
 
 # METADATA ********************
 
@@ -1483,8 +1459,7 @@ COLUMN_WATERMARK_VALUE:str = "watermark_value"
 # except Exception as audit_start_error:
 #     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
 
-# p_session_id="3a967666-924c-4c08-904d-7b734f4880cc"
-# p_pipeline_run_id="PL_01"
+
 
 session_id = p_session_id
 pipeline_run_id = p_pipeline_run_id
@@ -1516,7 +1491,7 @@ print(p_session_id)
 
 try:
     table_session_id = start_table_layer(
-        session_id=session_id_dump,
+        session_id=session_id,
         source_table_id=source_table_id,
         source_table_name=BRONZE_TABLE_NAME,
         layer=LAYER_SILVER,

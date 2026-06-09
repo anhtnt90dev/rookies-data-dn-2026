@@ -109,7 +109,7 @@
     },
     {
       "target": "is_deleted",
-      "expression": "operation_type"
+      "expression": "CASE WHEN _operation_type = 'D' THEN TRUE ELSE FALSE END"
     },
     {
       "target": "_batch_id",

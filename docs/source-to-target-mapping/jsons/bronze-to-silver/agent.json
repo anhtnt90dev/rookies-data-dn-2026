@@ -89,7 +89,27 @@
     },
     {
       "target": "created_at",
-      "expression": "created_date"
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "created_date",
+              "reason_error": "created_date key is empty"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_date",
+              "reason_error": "created_date key invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "updated_at",

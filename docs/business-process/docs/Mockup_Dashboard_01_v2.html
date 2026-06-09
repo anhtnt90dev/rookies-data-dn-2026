@@ -1,7 +1,8 @@
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.wrap{width:100%;aspect-ratio:16/9;background:#f3f2f1;display:flex;flex-direction:column;font-family:var(--font-sans);min-height:500px}
+body{font-family:var(--font-sans)}
+.wrap{width:100%;aspect-ratio:16/9;background:#f3f2f1;display:flex;flex-direction:column;min-height:500px}
 .hdr{background:#1f3864;color:#fff;padding:7px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .hdr-title{font-size:15px;font-weight:600}
 .hdr-sub{font-size:11px;opacity:.65;margin-top:1px}
@@ -11,14 +12,14 @@
 .ntab.on{color:#fff;border-bottom:3px solid #f2c811;background:rgba(255,255,255,.09)}
 .ntab:hover:not(.on){color:#fff;background:rgba(255,255,255,.05)}
 
-/* FILTER BAR */
-.fbar{background:#fff;padding:5px 14px;display:flex;gap:6px;align-items:center;border-bottom:1px solid #ddd;flex-shrink:0;flex-wrap:wrap}
-.fgroup{display:flex;align-items:center;gap:5px;border-right:1px solid #e8e8e8;padding-right:10px;margin-right:4px}
-.fgroup:last-child{border-right:none}
-.fcap{font-size:10px;color:#999;white-space:nowrap}
-.fchip{padding:2px 9px;border-radius:10px;font-size:10px;border:1px solid #1f3864;color:#1f3864;cursor:pointer;white-space:nowrap}
-.fchip.on{background:#1f3864;color:#fff}
-.fchip:hover:not(.on){background:#e8ecf5}
+/* FILTER BAR — DROPDOWN STYLE */
+.fbar{background:#fff;padding:5px 14px;display:flex;gap:10px;align-items:center;border-bottom:1px solid #ddd;flex-shrink:0}
+.fsel-wrap{display:flex;align-items:center;gap:5px}
+.fsel-lbl{font-size:10px;color:#888;white-space:nowrap;font-weight:500}
+.fsel{font-size:11px;padding:3px 22px 3px 8px;border:1px solid #c8d4e8;border-radius:4px;color:#1f3864;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%231f3864'/%3E%3C/svg%3E") no-repeat right 7px center;appearance:none;-webkit-appearance:none;cursor:pointer;font-weight:500}
+.fsel:focus{outline:none;border-color:#1f3864}
+.fbar-sep{width:1px;height:20px;background:#e8e8e8;margin:0 2px}
+.fbar-info{margin-left:auto;font-size:10px;color:#aaa}
 
 .body{flex:1;overflow:hidden;padding:10px;display:flex;flex-direction:column;gap:8px}
 .page{display:none;flex-direction:column;gap:8px;height:100%}
@@ -27,8 +28,7 @@
 .krow-4{grid-template-columns:repeat(4,1fr)}
 .krow-3{grid-template-columns:repeat(3,1fr)}
 .kcard{background:#fff;border-radius:4px;padding:11px 14px;border-left:4px solid #1f3864;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;justify-content:space-between}
-.klbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.kid{font-size:9px;color:#bbb;font-weight:400}
+.klbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
 .kval{font-size:26px;font-weight:700;color:#1f3864;line-height:1}
 .kval-sm{font-size:18px;font-weight:700;color:#1f3864;line-height:1}
 .ksub{font-size:10px;margin-top:5px}
@@ -41,55 +41,46 @@
 .bb{background:#dce6f1;color:#1f3864}
 .crow{display:grid;gap:8px;flex:1;min-height:0}
 .crow-2{grid-template-columns:1fr 1fr}
-.crow-21{grid-template-columns:2fr 1fr}
-.crow-12{grid-template-columns:1fr 2fr}
 .crow-211{grid-template-columns:2fr 1fr 1fr}
-.crow-3{grid-template-columns:1fr 1fr 1fr}
 .ccard{background:#fff;border-radius:4px;padding:11px 13px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;flex-direction:column;min-height:0}
-.ctitle{font-size:11px;font-weight:700;color:#1f3864;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ctitle{font-size:11px;font-weight:700;color:#1f3864;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;flex-shrink:0}
 .cid{font-size:9px;color:#bbb;font-weight:400;margin-left:auto}
 .chw{position:relative;flex:1;min-height:0}
-.funnel-list{display:flex;flex-direction:column;gap:4px;flex:1;justify-content:space-evenly}
+.funnel-list{display:flex;flex-direction:column;gap:3px;flex:1;justify-content:space-evenly}
 .fstep{display:flex;align-items:center;gap:8px}
-.flabel{font-size:11px;font-weight:600;color:#333;width:80px;flex-shrink:0}
+.flabel{font-size:11px;font-weight:600;color:#333;width:78px;flex-shrink:0}
 .ftrack{flex:1;height:28px;background:#e9ecef;border-radius:3px;overflow:hidden}
 .fbar2{height:100%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
 .fbarlbl{font-size:11px;font-weight:700;color:#fff}
 .fpct{font-size:11px;font-weight:700;width:52px;text-align:right}
-.fdrop{font-size:9px;color:#c00000;padding-left:88px}
-.alert-box{padding:5px 10px;border-radius:3px;font-size:10px;display:flex;align-items:flex-start;gap:5px;flex-shrink:0;margin-top:6px}
+.fdrop{font-size:9px;color:#c00000;padding-left:86px}
+.alert-box{padding:5px 10px;border-radius:3px;font-size:10px;display:flex;align-items:flex-start;gap:5px;flex-shrink:0;margin-top:5px}
 .alert-warn{background:#fce4d6;color:#843c0c}
-.alert-ok{background:#e2efda;color:#375623}
 .alert-info{background:#dce6f1;color:#1f3864}
 .legend-row{display:flex;gap:12px;margin-top:5px;flex-shrink:0;flex-wrap:wrap}
 .li{display:flex;align-items:center;gap:5px;font-size:10px;color:#555}
 .ldot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .lsq{width:10px;height:4px;flex-shrink:0}
 .lsq-dash{width:10px;height:0;border-top:2px dashed #c09000;flex-shrink:0}
-.tbl{width:100%;font-size:10px;border-collapse:collapse}
-.tbl th{background:#f3f2f1;padding:5px 7px;text-align:left;color:#555;font-size:9px;text-transform:uppercase;font-weight:700}
-.tbl td{padding:5px 7px;border-bottom:1px solid #f0f0f0;color:#333}
-.tbl tr:hover td{background:#f9f9f9}
 .legrow{display:flex;flex-direction:column;gap:3px;margin-top:6px}
 
-/* SVG MAP */
-.map-container{flex:1;display:flex;flex-direction:column;min-height:0}
-.map-svg-wrap{flex:1;position:relative;min-height:0;display:flex;align-items:center;justify-content:center}
-.map-legend{display:flex;gap:8px;flex-shrink:0;margin-top:4px;justify-content:center;flex-wrap:wrap}
-.map-legend-item{display:flex;align-items:center;gap:4px;font-size:9px;color:#555}
-.map-swatch{width:14px;height:10px;border-radius:2px}
+/* MAP — POWER BI STYLE */
+.map-outer{flex:1;min-height:0;display:flex;flex-direction:column}
+.map-svg-wrap{flex:1;min-height:0;position:relative;overflow:hidden}
+.map-svg-wrap svg{width:100%;height:100%}
+.map-tip{position:absolute;background:rgba(31,56,100,.92);color:#fff;padding:5px 9px;border-radius:4px;font-size:10px;pointer-events:none;white-space:nowrap;display:none;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.map-legend{display:flex;align-items:center;gap:6px;margin-top:5px;flex-shrink:0;justify-content:flex-end}
+.map-legend-lbl{font-size:9px;color:#888}
+.map-grad{width:80px;height:10px;border-radius:3px;background:linear-gradient(to right,#c6e0f5,#1f3864)}
 </style>
 
 <div class="wrap">
   <div class="hdr">
     <div>
       <div class="hdr-title">Insurance Analytics Platform — Dashboard 01</div>
-      <div class="hdr-sub">Quotation Conversion & Sales Analytics · v3.0 · FY 2024 · Real Data</div>
+      <div class="hdr-sub">Quotation Conversion & Sales Analytics · v4.0 · All Years · 2,000 Quotations</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <span style="font-size:10px;opacity:.7">Data: 2023–2025</span>
-      <span class="hdr-badge">MOCKUP v3</span>
-    </div>
+    <span class="hdr-badge">MOCKUP v4</span>
   </div>
 
   <div class="nav">
@@ -99,90 +90,104 @@
     <div class="ntab" onclick="goTab('n3')">Geography & Ops</div>
   </div>
 
-  <!-- GLOBAL FILTER BAR -->
+  <!-- DROPDOWN FILTER BAR -->
   <div class="fbar">
-    <div class="fgroup">
-      <span class="fcap">Year:</span>
-      <span class="fchip" onclick="setFilter(this,'year','2023')">2023</span>
-      <span class="fchip on" onclick="setFilter(this,'year','2024')">2024</span>
-      <span class="fchip" onclick="setFilter(this,'year','2025')">2025</span>
-      <span class="fchip" onclick="setFilter(this,'year','all')">All</span>
+    <div class="fsel-wrap">
+      <span class="fsel-lbl">Year</span>
+      <select class="fsel" id="f-year" onchange="applyFilter()">
+        <option value="all">All Years</option>
+        <option value="2023">2023</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+      </select>
     </div>
-    <div class="fgroup">
-      <span class="fcap">Quarter:</span>
-      <span class="fchip on" onclick="setFilter(this,'q','all')">All</span>
-      <span class="fchip" onclick="setFilter(this,'q','Q1')">Q1</span>
-      <span class="fchip" onclick="setFilter(this,'q','Q2')">Q2</span>
-      <span class="fchip" onclick="setFilter(this,'q','Q3')">Q3</span>
-      <span class="fchip" onclick="setFilter(this,'q','Q4')">Q4</span>
+    <div class="fbar-sep"></div>
+    <div class="fsel-wrap">
+      <span class="fsel-lbl">Quarter</span>
+      <select class="fsel" id="f-quarter" onchange="applyFilter()">
+        <option value="all">All Quarters</option>
+        <option value="Q1">Q1 (Jan–Mar)</option>
+        <option value="Q2">Q2 (Apr–Jun)</option>
+        <option value="Q3">Q3 (Jul–Sep)</option>
+        <option value="Q4">Q4 (Oct–Dec)</option>
+      </select>
     </div>
-    <div class="fgroup">
-      <span class="fcap">Provider:</span>
-      <span class="fchip on" onclick="setFilter(this,'prov','all')">All</span>
-      <span class="fchip" onclick="setFilter(this,'prov','Bảo Việt')">Bảo Việt</span>
-      <span class="fchip" onclick="setFilter(this,'prov','PTI')">PTI</span>
-      <span class="fchip" onclick="setFilter(this,'prov','PVI')">PVI</span>
-      <span class="fchip" onclick="setFilter(this,'prov','Bảo Minh')">Bảo Minh</span>
-      <span class="fchip" onclick="setFilter(this,'prov','PJICO')">PJICO</span>
+    <div class="fbar-sep"></div>
+    <div class="fsel-wrap">
+      <span class="fsel-lbl">Provider</span>
+      <select class="fsel" id="f-provider" onchange="applyFilter()">
+        <option value="all">All Providers</option>
+        <option>Bảo Việt</option>
+        <option>PTI</option>
+        <option>PVI</option>
+        <option>Bảo Minh</option>
+        <option>PJICO</option>
+      </select>
     </div>
-    <div class="fgroup">
-      <span class="fcap">City:</span>
-      <span class="fchip on" onclick="setFilter(this,'city','all')">All</span>
-      <span class="fchip" onclick="setFilter(this,'city','Hà Nội')">Hà Nội</span>
-      <span class="fchip" onclick="setFilter(this,'city','TP HCM')">TP HCM</span>
-      <span class="fchip" onclick="setFilter(this,'city','Đà Nẵng')">Đà Nẵng</span>
-      <span class="fchip" onclick="setFilter(this,'city','Nha Trang')">Nha Trang</span>
+    <div class="fbar-sep"></div>
+    <div class="fsel-wrap">
+      <span class="fsel-lbl">City</span>
+      <select class="fsel" id="f-city" onchange="applyFilter()">
+        <option value="all">All Cities</option>
+        <option>Hà Nội</option>
+        <option>TP HCM</option>
+        <option>Đà Nẵng</option>
+        <option>Nha Trang</option>
+        <option>Hải Phòng</option>
+        <option>Cần Thơ</option>
+        <option>Huế</option>
+      </select>
     </div>
-    <span style="margin-left:auto;font-size:10px;color:#aaa">Showing: FY 2024</span>
+    <span class="fbar-info" id="fbar-info">Showing: All data · 2,000 quotations</span>
   </div>
 
   <div class="body">
 
-    <!-- ===== OVERVIEW ===== -->
+    <!-- OVERVIEW -->
     <div id="pg-ov" class="page on">
       <div class="krow krow-4">
         <div class="kcard" style="border-left-color:#1f3864">
           <div class="klbl">M-01 · Total Quotations</div>
-          <div class="kval">653</div>
-          <div class="ksub"><span class="dn">−5.4% YoY (vs 690 in 2023)</span></div>
+          <div class="kval" id="kv-q">2,000</div>
+          <div class="ksub" id="ks-q"><span class="dn">2024: −5.4% YoY vs 2023</span></div>
         </div>
         <div class="kcard" style="border-left-color:#2e75b6">
           <div class="klbl">M-02 · Accepted Quotations</div>
-          <div class="kval">395</div>
-          <div class="ksub"><span class="badge bb">60.5% Acceptance Rate</span></div>
+          <div class="kval" id="kv-a">1,230</div>
+          <div class="ksub"><span class="badge bb" id="ks-a">61.5% Acceptance Rate</span></div>
         </div>
         <div class="kcard" style="border-left-color:#0070c0">
           <div class="klbl">M-03 · Policies Issued</div>
-          <div class="kval">399</div>
-          <div class="ksub"><span class="badge bb">M-10 · 61.1% Issued Rate</span></div>
+          <div class="kval" id="kv-p">1,230</div>
+          <div class="ksub"><span class="badge bb" id="ks-p">M-10 · 61.5% Issued Rate</span></div>
         </div>
         <div class="kcard" style="border-left-color:#c07b00">
           <div class="klbl">M-04 · Conversion Rate</div>
-          <div class="kval" style="color:#c07b00">61.1%</div>
-          <div class="ksub"><span class="dn">M-25 · −3.0 pts MoM (Nov→Dec)</span></div>
+          <div class="kval" style="color:#c07b00" id="kv-cr">61.5%</div>
+          <div class="ksub"><span class="dn">M-25 · 2024: −0.8 pts YoY</span></div>
         </div>
       </div>
 
       <div class="krow krow-4">
         <div class="kcard" style="border-left-color:#843c0c">
           <div class="klbl">M-05 · Total Written Premium</div>
-          <div class="kval-sm">1.665B VND</div>
-          <div class="ksub"><span class="dn">−4.4% YoY (vs 1.742B in 2023)</span></div>
+          <div class="kval-sm" id="kv-wp">5.059B VND</div>
+          <div class="ksub"><span class="dn">2024: −4.4% YoY vs 2023</span></div>
         </div>
         <div class="kcard" style="border-left-color:#107c41">
           <div class="klbl">M-11 · Policies In Force</div>
-          <div class="kval-sm">582</div>
-          <div class="ksub"><span class="badge bb">Active policies (all-time)</span></div>
+          <div class="kval-sm" id="kv-if">582</div>
+          <div class="ksub"><span class="badge bb">Active policies (ACTIVE status)</span></div>
         </div>
         <div class="kcard" style="border-left-color:#0070c0">
           <div class="klbl">M-07 · Avg Written Premium / Policy</div>
-          <div class="kval-sm">4.17M VND</div>
-          <div class="ksub"><span class="neu">Per issued policy in 2024</span></div>
+          <div class="kval-sm" id="kv-ap">4.11M VND</div>
+          <div class="ksub"><span class="neu">Per issued policy — all time</span></div>
         </div>
         <div class="kcard" style="border-left-color:#1f3864">
           <div class="klbl">M-08 · Active Customers</div>
-          <div class="kval-sm">582</div>
-          <div class="ksub"><span class="badge bb">Customers with active policies</span></div>
+          <div class="kval-sm" id="kv-ac">441</div>
+          <div class="ksub"><span class="badge bb">Unique customers w/ active policy</span></div>
         </div>
       </div>
 
@@ -192,67 +197,67 @@
           <div class="funnel-list">
             <div class="fstep">
               <div class="flabel">Quotations</div>
-              <div class="ftrack"><div class="fbar2" style="width:100%;background:#1f3864"><span class="fbarlbl">653</span></div></div>
+              <div class="ftrack"><div class="fbar2" style="width:100%;background:#1f3864"><span class="fbarlbl">2,000</span></div></div>
               <div class="fpct" style="color:#1f3864">100%</div>
             </div>
-            <div class="fdrop">▼ −258 not accepted (Rejected 31 · Expired 123 · Pending 104)</div>
+            <div class="fdrop">▼ −770 not accepted (Rejected 102 · Expired 373 · Pending 295)</div>
             <div class="fstep">
               <div class="flabel">Accepted</div>
-              <div class="ftrack"><div class="fbar2" style="width:60.5%;background:#2e75b6"><span class="fbarlbl">395</span></div></div>
-              <div class="fpct" style="color:#2e75b6"><span class="badge bg">60.5%</span></div>
+              <div class="ftrack"><div class="fbar2" style="width:61.5%;background:#2e75b6"><span class="fbarlbl">1,230</span></div></div>
+              <div class="fpct" style="color:#2e75b6"><span class="badge bg">61.5%</span></div>
             </div>
-            <div class="fdrop">▼ −4 accepted but not yet issued</div>
+            <div class="fdrop">▼ 0 gap (converted flag = policies issued in this dataset)</div>
             <div class="fstep">
               <div class="flabel">Issued</div>
-              <div class="ftrack"><div class="fbar2" style="width:61.1%;background:#0070c0"><span class="fbarlbl">399</span></div></div>
-              <div class="fpct" style="color:#0070c0"><span class="badge bb">61.1%</span></div>
+              <div class="ftrack"><div class="fbar2" style="width:61.5%;background:#0070c0"><span class="fbarlbl">1,230</span></div></div>
+              <div class="fpct" style="color:#0070c0"><span class="badge bb">61.5%</span></div>
             </div>
-            <div class="fdrop">▼ M-13 · −202 issued but not yet in force (NTU Gap)</div>
+            <div class="fdrop">▼ M-13 · −648 issued but not in force (NTU Gap)</div>
             <div class="fstep">
               <div class="flabel">In Force</div>
-              <div class="ftrack"><div class="fbar2" style="width:30.2%;background:#107c41"><span class="fbarlbl">197</span></div></div>
-              <div class="fpct" style="color:#107c41"><span class="badge bg">30.2%</span></div>
+              <div class="ftrack"><div class="fbar2" style="width:29.1%;background:#107c41"><span class="fbarlbl">582</span></div></div>
+              <div class="fpct" style="color:#107c41"><span class="badge bg">29.1%</span></div>
             </div>
           </div>
-          <div class="alert-box alert-warn"><strong>M-14 NTU Gap:</strong>&nbsp;202 contracts stuck — Issued → In Force. Payment follow-up required immediately.</div>
+          <div class="alert-box alert-warn"><strong>M-14 NTU Gap: 648 contracts</strong> stuck between Issued → In Force. Immediate payment follow-up required.</div>
         </div>
 
         <div class="ccard">
-          <div class="ctitle">Monthly Trend — Quotations · Policies · Conversion Rate <span class="cid">M-15 · M-16 · M-17</span></div>
-          <div class="chw"><canvas id="tC" role="img" aria-label="Line chart: monthly quotations, policies issued and conversion rate 2024">2024 monthly trends showing quotations ranging 46-72, policies 27-43, conversion rate 51-67%.</canvas></div>
+          <div class="ctitle">Monthly Trend — Quotations · Policies Issued · Conv. Rate · Rejected+Expired Rate <span class="cid">M-15·16·17·19</span></div>
+          <div class="chw"><canvas id="tC" role="img" aria-label="Line chart monthly quotations policies and conversion rate 2024-2025">Monthly trend chart showing quotations, policies issued, conversion rate and lost rate.</canvas></div>
           <div class="legend-row">
-            <div class="li"><div class="lsq" style="background:#1f3864"></div> Quotations (M-15)</div>
-            <div class="li"><div class="lsq" style="background:#107c41"></div> Policies Issued (M-16)</div>
-            <div class="li"><div class="lsq-dash"></div> Conv. Rate % (M-17)</div>
+            <div class="li"><div class="lsq" style="background:#1f3864"></div>Quotations (M-15)</div>
+            <div class="li"><div class="lsq" style="background:#107c41"></div>Policies (M-16)</div>
+            <div class="li"><div class="lsq-dash"></div>Conv. Rate % (M-17)</div>
+            <div class="li"><div class="lsq" style="background:#c00000;height:2px;opacity:.7"></div>Lost Rate % (M-19)</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== NAV 1 ===== -->
+    <!-- NAV 1 -->
     <div id="pg-n1" class="page">
       <div class="krow krow-3">
         <div class="kcard" style="border-left-color:#c00000">
           <div class="klbl">N1-04 · Rejected Quotations</div>
-          <div class="kval" style="color:#c00000">31</div>
-          <div class="ksub"><span class="badge br">4.7% of total quotations</span></div>
+          <div class="kval" style="color:#c00000">102</div>
+          <div class="ksub"><span class="badge br">5.1% of total</span></div>
         </div>
         <div class="kcard" style="border-left-color:#843c0c">
           <div class="klbl">N1-05 · Expired Quotations</div>
-          <div class="kval" style="color:#843c0c">123</div>
-          <div class="ksub"><span class="badge br">18.8% abandoned — follow up before expiry</span></div>
+          <div class="kval" style="color:#843c0c">373</div>
+          <div class="ksub"><span class="badge br">18.6% abandoned</span></div>
         </div>
         <div class="kcard" style="border-left-color:#0070c0">
           <div class="klbl">N1-06 · Quote-to-Accept Rate</div>
-          <div class="kval">60.5%</div>
-          <div class="ksub"><span class="dn">vs 61.9% in 2023 (−1.4 pts)</span></div>
+          <div class="kval">61.5%</div>
+          <div class="ksub"><span class="dn">2024: 61.1% · 2023: 61.9%</span></div>
         </div>
       </div>
-
       <div class="crow crow-211" style="flex:1;min-height:0">
         <div class="ccard">
           <div class="ctitle">Conv. Rate & Avg Premium by Provider <span class="cid">N1-01 · N1-02</span></div>
-          <div class="chw"><canvas id="pvC" role="img" aria-label="Grouped bar chart conversion rate and average premium by insurance provider 2024">Provider comparison: PVI 64.6%, Bảo Minh 63.7%, Bảo Việt 61.7%, PTI 60.2%, PJICO 55.9%.</canvas></div>
+          <div class="chw"><canvas id="pvC" role="img" aria-label="Grouped bar chart conversion rate and average premium by provider">Provider comparison all-time data.</canvas></div>
           <div class="legend-row">
             <div class="li"><div class="ldot" style="background:#1f3864"></div>Conv. Rate % (left)</div>
             <div class="li"><div class="ldot" style="background:#843c0c"></div>Avg Premium M VND (right)</div>
@@ -260,30 +265,30 @@
         </div>
         <div class="ccard">
           <div class="ctitle">Volume Share by Provider <span class="cid">N1-03</span></div>
-          <div class="chw"><canvas id="dvC" role="img" aria-label="Donut chart quotation volume share by provider 2024">Volume share: Bảo Việt 20.4%, PJICO 21.9%, PVI 19.9%, Bảo Minh 19.0%, PTI 18.8%.</canvas></div>
+          <div class="chw"><canvas id="dvC" role="img" aria-label="Donut chart volume share by provider">Volume share across providers.</canvas></div>
           <div class="legrow">
-            <div class="li"><div class="ldot" style="background:#1f3864"></div>Bảo Việt — 20.4%</div>
-            <div class="li"><div class="ldot" style="background:#0070c0"></div>PJICO — 21.9%</div>
-            <div class="li"><div class="ldot" style="background:#107c41"></div>PVI — 19.9%</div>
-            <div class="li"><div class="ldot" style="background:#843c0c"></div>Bảo Minh — 19.0%</div>
-            <div class="li"><div class="ldot" style="background:#f2c811"></div>PTI — 18.8%</div>
+            <div class="li"><div class="ldot" style="background:#1f3864"></div>Bảo Minh — 20.5%</div>
+            <div class="li"><div class="ldot" style="background:#0070c0"></div>PJICO — 20.6%</div>
+            <div class="li"><div class="ldot" style="background:#107c41"></div>Bảo Việt — 19.9%</div>
+            <div class="li"><div class="ldot" style="background:#843c0c"></div>PTI — 20.1%</div>
+            <div class="li"><div class="ldot" style="background:#f2c811"></div>PVI — 19.0%</div>
           </div>
         </div>
         <div class="ccard">
           <div class="ctitle">Quotations by Package <span class="cid">N1-07</span></div>
-          <div class="chw"><canvas id="pkC" role="img" aria-label="Donut chart quotation distribution by package type 2024">Package mix: PKG-Standard 27.1%, PKG-Premium 25.0%, PKG-Comprehensive 23.6%, PKG-Basic 24.3%.</canvas></div>
+          <div class="chw"><canvas id="pkC" role="img" aria-label="Donut chart quotations by package type">Package distribution.</canvas></div>
           <div class="legrow">
-            <div class="li"><div class="ldot" style="background:#1f3864"></div>Standard — 27.1%</div>
-            <div class="li"><div class="ldot" style="background:#0070c0"></div>Premium — 25.0%</div>
-            <div class="li"><div class="ldot" style="background:#107c41"></div>Comprehensive — 23.6%</div>
-            <div class="li"><div class="ldot" style="background:#f2c811"></div>Basic — 24.3%</div>
+            <div class="li"><div class="ldot" style="background:#1f3864"></div>Standard — 26.7%</div>
+            <div class="li"><div class="ldot" style="background:#0070c0"></div>Comprehensive — 25.4%</div>
+            <div class="li"><div class="ldot" style="background:#107c41"></div>Premium — 23.7%</div>
+            <div class="li"><div class="ldot" style="background:#f2c811"></div>Basic — 24.4%</div>
           </div>
         </div>
       </div>
-      <div class="alert-box alert-info"><strong>Insight:</strong> Provider share is evenly distributed (~20% each) — no single-provider concentration risk. PVI leads conversion at 64.6% and highest avg premium (4.49M VND). PJICO conversion is lowest at 55.9% — review product positioning.</div>
+      <div class="alert-box alert-info"><strong>Insight:</strong> Providers share volume evenly (~20% each) — no concentration risk. Bảo Việt leads conversion at 63.8%. PJICO is lowest at 58.4% — review product positioning. PKG-Premium has the highest conv. rate at 64.3%.</div>
     </div>
 
-    <!-- ===== NAV 2 ===== -->
+    <!-- NAV 2 -->
     <div id="pg-n2" class="page">
       <div class="krow krow-4">
         <div class="kcard" style="border-left-color:#1f3864">
@@ -298,138 +303,151 @@
         </div>
         <div class="kcard" style="border-left-color:#0070c0">
           <div class="klbl">Top Agent — Policies Issued</div>
-          <div class="kval-sm">Agent #3</div>
-          <div class="ksub"><span class="badge bb">N2-01 · 28 policies in 2024</span></div>
+          <div class="kval-sm">Agent #20</div>
+          <div class="ksub"><span class="badge bb">N2-01 · 76 policies all-time</span></div>
         </div>
         <div class="kcard" style="border-left-color:#c07b00">
           <div class="klbl">Best Conversion Rate Agent</div>
-          <div class="kval-sm">Agent #5</div>
-          <div class="ksub"><span class="badge bg">N2-02 · 73.5% conv. rate</span></div>
+          <div class="kval-sm">Agent #20</div>
+          <div class="ksub"><span class="badge bg">N2-02 · 73.1% conv. rate</span></div>
         </div>
       </div>
-
       <div class="crow crow-2" style="flex:1;min-height:0">
         <div class="ccard">
           <div class="ctitle">Policies Issued & Conv. Rate by Agent (Top 10) <span class="cid">N2-01 · N2-02</span></div>
-          <div class="chw"><canvas id="apC" role="img" aria-label="Grouped bar chart policies issued and conversion rate by top 10 agents 2024">Top agents: #3 leads with 28 policies, #5 has best conversion rate 73.5%.</canvas></div>
+          <div class="chw"><canvas id="apC" role="img" aria-label="Grouped bar chart policies issued and conversion rate by top 10 agents">Top 10 agents by policies issued.</canvas></div>
           <div class="legend-row">
             <div class="li"><div class="ldot" style="background:#1f3864"></div>Policies Issued (N2-01)</div>
-            <div class="li"><div class="ldot" style="background:#107c41"></div>Conv. Rate % (N2-02, right axis)</div>
+            <div class="li"><div class="ldot" style="background:#107c41"></div>Conv. Rate % (N2-02, right)</div>
           </div>
         </div>
         <div class="ccard">
-          <div class="ctitle">Agent vs Regional Benchmark — Δ Conversion Rate <span class="cid">N2-06</span></div>
-          <div class="chw"><canvas id="bmC" role="img" aria-label="Bar chart agent delta conversion rate versus regional benchmark 2024">Agent benchmark deviation: some agents above regional average, some below needing coaching.</canvas></div>
-          <div class="alert-box alert-info" style="margin-top:4px;font-size:9px"><strong>N2-06:</strong> Positive = above regional benchmark · Negative = coaching required. Formula: [Conv Rate by Agent] − [Conv Rate by Region (61.1%)]</div>
+          <div class="ctitle">Agent vs Regional Benchmark — Δ Conv. Rate <span class="cid">N2-06</span></div>
+          <div class="chw"><canvas id="bmC" role="img" aria-label="Bar chart agent delta versus regional benchmark">Agent benchmark deviation chart.</canvas></div>
+          <div class="alert-box alert-info" style="margin-top:4px;font-size:9px"><strong>N2-06:</strong> Positive = above benchmark (61.5%) · Negative = coaching required</div>
         </div>
       </div>
     </div>
 
-    <!-- ===== NAV 3 ===== -->
+    <!-- NAV 3 -->
     <div id="pg-n3" class="page">
       <div class="krow krow-3">
         <div class="kcard" style="border-left-color:#c00000">
           <div class="klbl">N3-03 · Rejected Quotations</div>
-          <div class="kval" style="color:#c00000">31</div>
-          <div class="ksub"><span class="badge br">4.7% — review product / training</span></div>
+          <div class="kval" style="color:#c00000">102</div>
+          <div class="ksub"><span class="badge br">5.1% of total</span></div>
         </div>
         <div class="kcard" style="border-left-color:#843c0c">
           <div class="klbl">N3-04 · Expired Quotations</div>
-          <div class="kval" style="color:#843c0c">123</div>
-          <div class="ksub"><span class="badge br">Follow up before expiry date</span></div>
+          <div class="kval" style="color:#843c0c">373</div>
+          <div class="ksub"><span class="badge br">18.6% — follow up before expiry</span></div>
         </div>
         <div class="kcard" style="border-left-color:#c00000">
           <div class="klbl">N3-06 · Lost Deal Analysis</div>
-          <div class="kval" style="color:#c00000">154</div>
+          <div class="kval" style="color:#c00000">475</div>
           <div class="ksub"><span class="badge br">Rejected + Expired combined</span></div>
         </div>
       </div>
-
       <div class="crow crow-2" style="flex:1;min-height:0">
-        <!-- FILLED MAP VISUAL -->
+        <!-- POWER BI STYLE MAP -->
         <div class="ccard">
-          <div class="ctitle">Conv. Rate by City — Filled Map Visual <span class="cid">N3-01</span></div>
-          <div class="map-container">
-            <div class="map-svg-wrap">
-              <svg viewBox="0 0 340 260" xmlns="http://www.w3.org/2000/svg" style="max-height:100%;max-width:100%">
-                <!-- Vietnam simplified shape -->
+          <div class="ctitle">Conv. Rate by City — Filled Map <span class="cid">N3-01</span></div>
+          <div class="map-outer">
+            <div class="map-svg-wrap" id="mapWrap">
+              <div class="map-tip" id="mapTip"></div>
+              <svg id="mapSvg" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
                 <defs>
-                  <filter id="shadow"><feDropShadow dx="1" dy="1" stdDeviation="2" flood-opacity=".15"/></filter>
+                  <filter id="ms"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity=".18"/></filter>
+                  <filter id="mh"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity=".35"/></filter>
                 </defs>
-                <!-- Vietnam outline simplified -->
-                <path d="M170,15 L185,20 L195,30 L200,45 L195,60 L185,70 L180,85 L185,100 L190,115 L195,130 L200,145 L205,160 L210,175 L215,188 L212,200 L205,210 L195,218 L185,222 L175,225 L165,222 L158,215 L152,205 L150,192 L148,180 L145,168 L142,155 L140,142 L142,128 L145,115 L142,100 L138,88 L135,75 L138,62 L142,50 L148,38 L158,25 Z" fill="#e8f0f8" stroke="#b0c4de" stroke-width="1.5" filter="url(#shadow)"/>
+                <!-- Vietnam background -->
+                <rect width="300" height="340" fill="#eaf3fb" rx="6"/>
+                <!-- Grid lines subtle -->
+                <line x1="0" y1="100" x2="300" y2="100" stroke="#d0e8f5" stroke-width=".5"/>
+                <line x1="0" y1="200" x2="300" y2="200" stroke="#d0e8f5" stroke-width=".5"/>
+                <line x1="100" y1="0" x2="100" y2="340" stroke="#d0e8f5" stroke-width=".5"/>
+                <line x1="200" y1="0" x2="200" y2="340" stroke="#d0e8f5" stroke-width=".5"/>
+                <!-- Vietnam shape — more accurate silhouette -->
+                <path d="M148,18 L162,20 L172,26 L178,35 L180,46 L176,56 L170,62 L168,72 L172,80 L178,88 L184,96 L188,106 L190,118 L190,130 L188,142 L186,152 L188,162 L192,172 L196,182 L198,192 L196,204 L192,214 L186,222 L178,228 L170,232 L162,230 L155,224 L150,215 L146,204 L144,193 L142,182 L140,170 L138,158 L138,145 L140,132 L140,120 L137,108 L134,96 L134,84 L137,73 L140,62 L140,51 L143,40 L146,30 Z"
+                      fill="#c8dff0" stroke="#a0c0d8" stroke-width="1.2" filter="url(#ms)"/>
 
-                <!-- City dots with conv rate colors -->
-                <!-- Hà Nội: 59.6% - medium blue -->
-                <circle cx="168" cy="68" r="16" fill="#2e75b6" opacity=".85"/>
-                <text x="168" y="64" text-anchor="middle" font-size="8" font-weight="700" fill="white">Hà Nội</text>
-                <text x="168" y="75" text-anchor="middle" font-size="9" font-weight="700" fill="white">59.6%</text>
+                <!-- City regions as rounded rect tiles — Power BI card style -->
+                <!-- Hà Nội: 60.0% -->
+                <g id="city-hanoi" class="city-tile" data-city="Hà Nội" data-conv="60.0" data-q="275" data-p="165" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="86" y="58" width="68" height="38" rx="5" fill="#3d7ab5" filter="url(#ms)"/>
+                  <text x="120" y="74" text-anchor="middle" font-size="9" font-weight="700" fill="white">Hà Nội</text>
+                  <text x="120" y="87" text-anchor="middle" font-size="11" font-weight="700" fill="white">60.0%</text>
+                </g>
+                <!-- Hải Phòng: 61.6% -->
+                <g id="city-haiphong" class="city-tile" data-city="Hải Phòng" data-conv="61.6" data-q="294" data-p="181" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="170" y="68" width="68" height="38" rx="5" fill="#2f6ca3" filter="url(#ms)"/>
+                  <text x="204" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="white">Hải Phòng</text>
+                  <text x="204" y="97" text-anchor="middle" font-size="11" font-weight="700" fill="white">61.6%</text>
+                </g>
+                <!-- Đà Nẵng: 65.9% — best -->
+                <g id="city-danang" class="city-tile" data-city="Đà Nẵng" data-conv="65.9" data-q="308" data-p="203" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="58" y="172" width="68" height="38" rx="5" fill="#1f3864" filter="url(#ms)"/>
+                  <text x="92" y="188" text-anchor="middle" font-size="9" font-weight="700" fill="white">Đà Nẵng</text>
+                  <text x="92" y="201" text-anchor="middle" font-size="11" font-weight="700" fill="#f2c811">65.9%</text>
+                </g>
+                <!-- Huế: 63.0% -->
+                <g id="city-hue" class="city-tile" data-city="Huế" data-conv="63.0" data-q="265" data-p="167" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="174" y="150" width="62" height="38" rx="5" fill="#265f94" filter="url(#ms)"/>
+                  <text x="205" y="166" text-anchor="middle" font-size="9" font-weight="700" fill="white">Huế</text>
+                  <text x="205" y="179" text-anchor="middle" font-size="11" font-weight="700" fill="white">63.0%</text>
+                </g>
+                <!-- Nha Trang: 63.1% -->
+                <g id="city-nhatrang" class="city-tile" data-city="Nha Trang" data-conv="63.1" data-q="293" data-p="185" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="174" y="222" width="68" height="38" rx="5" fill="#255d91" filter="url(#ms)"/>
+                  <text x="208" y="238" text-anchor="middle" font-size="9" font-weight="700" fill="white">Nha Trang</text>
+                  <text x="208" y="251" text-anchor="middle" font-size="11" font-weight="700" fill="white">63.1%</text>
+                </g>
+                <!-- TP HCM: 59.2% -->
+                <g id="city-hcm" class="city-tile" data-city="TP HCM" data-conv="59.2" data-q="262" data-p="155" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="58" y="258" width="68" height="38" rx="5" fill="#4a86b8" filter="url(#ms)"/>
+                  <text x="92" y="274" text-anchor="middle" font-size="9" font-weight="700" fill="white">TP HCM</text>
+                  <text x="92" y="287" text-anchor="middle" font-size="11" font-weight="700" fill="white">59.2%</text>
+                </g>
+                <!-- Cần Thơ: 57.4% — lowest -->
+                <g id="city-cantho" class="city-tile" data-city="Cần Thơ" data-conv="57.4" data-q="303" data-p="174" onmouseenter="showTip(evt,this)" onmouseleave="hideTip()" style="cursor:pointer">
+                  <rect x="58" y="298" width="68" height="38" rx="5" fill="#6a9fc4" filter="url(#ms)"/>
+                  <text x="92" y="314" text-anchor="middle" font-size="9" font-weight="700" fill="white">Cần Thơ</text>
+                  <text x="92" y="327" text-anchor="middle" font-size="11" font-weight="700" fill="white">57.4%</text>
+                </g>
 
-                <!-- Hải Phòng: 55.6% -->
-                <circle cx="195" cy="80" r="12" fill="#5a9fd4" opacity=".85"/>
-                <text x="195" y="77" text-anchor="middle" font-size="7" fill="white">H. Phòng</text>
-                <text x="195" y="87" text-anchor="middle" font-size="8" font-weight="700" fill="white">55.6%</text>
+                <!-- Connecting dots/lines to show geography -->
+                <line x1="120" y1="96" x2="120" y2="172" stroke="#a0b8cc" stroke-width=".8" stroke-dasharray="3,3" opacity=".5"/>
+                <line x1="92" y1="210" x2="92" y2="258" stroke="#a0b8cc" stroke-width=".8" stroke-dasharray="3,3" opacity=".5"/>
+                <line x1="92" y1="258" x2="92" y2="298" stroke="#a0b8cc" stroke-width=".8" stroke-dasharray="3,3" opacity=".5"/>
 
-                <!-- Đà Nẵng: 69.2% - dark green (best) -->
-                <circle cx="185" cy="145" r="16" fill="#107c41" opacity=".9"/>
-                <text x="185" y="141" text-anchor="middle" font-size="8" font-weight="700" fill="white">Đà Nẵng</text>
-                <text x="185" y="152" text-anchor="middle" font-size="9" font-weight="700" fill="white">69.2%</text>
-
-                <!-- Huế: 55.4% - light blue -->
-                <circle cx="175" cy="165" r="11" fill="#5a9fd4" opacity=".85"/>
-                <text x="175" y="162" text-anchor="middle" font-size="7" fill="white">Huế</text>
-                <text x="175" y="172" text-anchor="middle" font-size="8" font-weight="700" fill="white">55.4%</text>
-
-                <!-- Nha Trang: 72.3% - darkest (highest) -->
-                <circle cx="200" cy="188" r="14" fill="#0a5c30" opacity=".9"/>
-                <text x="200" y="184" text-anchor="middle" font-size="7" font-weight="700" fill="white">Nha Trang</text>
-                <text x="200" y="195" text-anchor="middle" font-size="9" font-weight="700" fill="white">72.3%</text>
-
-                <!-- TP HCM: 57.1% -->
-                <circle cx="173" cy="215" r="15" fill="#4a8fbf" opacity=".85"/>
-                <text x="173" y="211" text-anchor="middle" font-size="8" font-weight="700" fill="white">TP HCM</text>
-                <text x="173" y="222" text-anchor="middle" font-size="9" font-weight="700" fill="white">57.1%</text>
-
-                <!-- Cần Thơ: 55.7% - lightest (lowest) -->
-                <circle cx="158" cy="228" r="12" fill="#7ab3d4" opacity=".85"/>
-                <text x="158" y="224" text-anchor="middle" font-size="7" fill="white">Cần Thơ</text>
-                <text x="158" y="234" text-anchor="middle" font-size="8" font-weight="700" fill="white">55.7%</text>
-
-                <!-- compass & label -->
-                <text x="295" y="30" font-size="9" fill="#888" text-anchor="middle">Filled Map</text>
-                <text x="295" y="42" font-size="8" fill="#aaa" text-anchor="middle">N3-01 Visual</text>
-                <text x="295" y="54" font-size="7" fill="#aaa" text-anchor="middle">(Power BI)</text>
-
-                <!-- color scale bar -->
+                <!-- Legend — color scale -->
                 <defs>
-                  <linearGradient id="scaleG" x1="0" x2="1" y1="0" y2="0">
-                    <stop offset="0%" stop-color="#7ab3d4"/>
-                    <stop offset="100%" stop-color="#0a5c30"/>
+                  <linearGradient id="lg2" x1="0" x2="1">
+                    <stop offset="0%" stop-color="#6a9fc4"/>
+                    <stop offset="100%" stop-color="#1f3864"/>
                   </linearGradient>
                 </defs>
-                <rect x="265" y="220" width="60" height="10" fill="url(#scaleG)" rx="2"/>
-                <text x="265" y="218" font-size="7" fill="#888">55%</text>
-                <text x="318" y="218" font-size="7" fill="#888">72%</text>
-                <text x="292" y="245" font-size="7" fill="#888" text-anchor="middle">Conv. Rate</text>
+                <rect x="8" y="318" width="80" height="8" fill="url(#lg2)" rx="2"/>
+                <text x="8" y="315" font-size="8" fill="#888">57%</text>
+                <text x="82" y="315" font-size="8" fill="#888">66%</text>
+                <text x="44" y="333" text-anchor="middle" font-size="8" fill="#999">Conv. Rate</text>
+
+                <!-- N label -->
+                <text x="268" y="24" font-size="11" fill="#6a9fc4" font-weight="700">↑ N</text>
+                <text x="258" y="34" font-size="7" fill="#aaa">Vietnam</text>
               </svg>
-            </div>
-            <div class="map-legend">
-              <div class="map-legend-item"><div class="map-swatch" style="background:#0a5c30"></div>≥70% (Nha Trang 72.3%)</div>
-              <div class="map-legend-item"><div class="map-swatch" style="background:#107c41"></div>65–70% (Đà Nẵng 69.2%)</div>
-              <div class="map-legend-item"><div class="map-swatch" style="background:#4a8fbf"></div>57–65% (Hà Nội 59.6%)</div>
-              <div class="map-legend-item"><div class="map-swatch" style="background:#7ab3d4"></div>&lt;57% (Cần Thơ 55.7%)</div>
             </div>
           </div>
         </div>
 
         <div class="ccard">
-          <div class="ctitle">Lost Deals & Quotations by City <span class="cid">N3-04 · N3-06</span></div>
-          <div class="chw"><canvas id="ldC" role="img" aria-label="Stacked bar chart rejected and expired quotations by city 2024">Lost deals by city: Đà Nẵng and Cần Thơ have most lost quotations.</canvas></div>
+          <div class="ctitle">Lost Deals by City — Rejected & Expired <span class="cid">N3-04 · N3-06</span></div>
+          <div class="chw"><canvas id="ldC" role="img" aria-label="Stacked bar chart rejected and expired quotations by city">Lost deals per city stacked by rejected and expired.</canvas></div>
           <div class="legend-row">
-            <div class="li"><div class="ldot" style="background:#c00000"></div>Rejected (N3-03)</div>
-            <div class="li"><div class="ldot" style="background:#f2c811"></div>Expired (N3-04)</div>
+            <div class="li"><div class="ldot" style="background:#c00000"></div>Rejected</div>
+            <div class="li"><div class="ldot" style="background:#f2c811"></div>Expired</div>
           </div>
-          <div class="alert-box alert-info" style="margin-top:4px;font-size:9px"><strong>Note:</strong> In Power BI production, N3-01 will use Filled Map visual with city-level data. Current SVG illustrates the color-gradient concept.</div>
+          <div class="alert-box alert-info" style="font-size:9px;margin-top:4px"><strong>Power BI:</strong> N3-01 will use native Filled Map visual with city geocoding. Current mockup uses tile-map concept illustrating the color-gradient logic.</div>
         </div>
       </div>
     </div>
@@ -448,26 +466,55 @@ function goTab(id){
   setTimeout(()=>buildCharts(id),40);
 }
 
-function setFilter(el,type,val){
-  el.closest('.fgroup').querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');
+function applyFilter(){
+  const yr=document.getElementById('f-year').value;
+  const q=document.getElementById('f-quarter').value;
+  const pv=document.getElementById('f-provider').value;
+  const ct=document.getElementById('f-city').value;
+  const parts=[];
+  if(yr!=='all') parts.push(yr);
+  if(q!=='all') parts.push(q);
+  if(pv!=='all') parts.push(pv);
+  if(ct!=='all') parts.push(ct);
+  document.getElementById('fbar-info').textContent = parts.length ? 'Filter: '+parts.join(' · ') : 'Showing: All data · 2,000 quotations';
 }
 
+function showTip(evt, el){
+  const tip = document.getElementById('mapTip');
+  const wrap = document.getElementById('mapWrap');
+  const r = wrap.getBoundingClientRect();
+  const mx = evt.clientX - r.left, my = evt.clientY - r.top;
+  tip.innerHTML = `<strong>${el.dataset.city}</strong><br>Conv. Rate: <strong>${el.dataset.conv}%</strong><br>Quotations: ${el.dataset.q} · Policies: ${el.dataset.p}`;
+  tip.style.display='block';
+  tip.style.left=(mx+12)+'px'; tip.style.top=(my-10)+'px';
+  el.querySelector('rect').setAttribute('filter','url(#mh)');
+}
+function hideTip(){
+  document.getElementById('mapTip').style.display='none';
+  document.querySelectorAll('.city-tile rect').forEach(r=>r.setAttribute('filter','url(#ms)'));
+}
+
+// --- DATA ---
 const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-// Real 2024 data from Excel
-const mQuot=[50,50,46,55,63,52,72,53,46,52,53,61];
-const mPol=[33,32,27,34,40,35,43,27,27,34,32,35];
-const mConv=[66.0,64.0,58.7,61.8,63.5,67.3,59.7,50.9,58.7,65.4,60.4,57.4];
-const agents=['Agt #3','Agt #20','Agt #5','Agt #12','Agt #11','Agt #1','Agt #14','Agt #19','Agt #7','Agt #4'];
-const agPol=[28,27,25,24,23,22,21,21,21,20];
-const agConv=[65.1,71.1,73.5,66.7,69.7,57.9,65.6,67.7,70.0,69.0];
-const benchmark=61.1;
+// 12 months of 2024 data
+const mQ=[50,50,46,55,63,52,72,53,46,52,53,61];
+const mP=[33,32,27,34,40,35,43,27,27,34,32,35];
+const mC=[66.0,64.0,58.7,61.8,63.5,67.3,59.7,50.9,58.7,65.4,60.4,57.4];
+// M-19 lost rate = (rejected+expired)/total
+const mL=[18,22,20,20,19,19,20,21,22,21,19,20];
+
+const agents=['Agt #20','Agt #1','Agt #3','Agt #5','Agt #11','Agt #15','Agt #13','Agt #10','Agt #8','Agt #2'];
+const agPol=[76,71,71,70,68,65,64,63,63,61];
+const agConv=[73.1,63.4,68.9,68.6,64.2,57.0,63.4,65.6,57.8,58.7];
+const benchmark=61.5;
+
 const providers=['Bảo Việt','PJICO','PVI','Bảo Minh','PTI'];
-const pConv=[61.7,55.9,64.6,63.7,60.2];
-const pPrem=[4.06,4.31,4.49,3.82,4.18];
+const pConv=[63.8,58.4,60.3,63.2,61.8];
+const pPrem=[3.99,4.15,4.22,3.99,4.23];
+
 const cities=['Hà Nội','Hải Phòng','Đà Nẵng','Huế','Nha Trang','TP HCM','Cần Thơ'];
-const cRej=[4,5,6,3,7,4,2];
-const cExp=[32,39,27,30,21,29,45]; // scaled proportionally
+const cRej=[15,14,16,12,18,13,14];
+const cExp=[95,67,89,86,90,94,104];
 
 let built={};
 function buildCharts(id){
@@ -476,58 +523,26 @@ function buildCharts(id){
     new Chart(document.getElementById('tC'),{
       type:'line',
       data:{labels:mo,datasets:[
-        {label:'Quotations',data:mQuot,borderColor:'#1f3864',backgroundColor:'rgba(31,56,100,.07)',fill:true,tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y'},
-        {label:'Policies Issued',data:mPol,borderColor:'#107c41',backgroundColor:'transparent',tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y'},
-        {label:'Conv. Rate %',data:mConv,borderColor:'#c09000',borderDash:[5,3],backgroundColor:'transparent',tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y2'}
+        {label:'Quotations',data:mQ,borderColor:'#1f3864',backgroundColor:'rgba(31,56,100,.07)',fill:true,tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y'},
+        {label:'Policies',data:mP,borderColor:'#107c41',backgroundColor:'transparent',tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y'},
+        {label:'Conv.Rate%',data:mC,borderColor:'#c09000',borderDash:[5,3],backgroundColor:'transparent',tension:.4,pointRadius:3,borderWidth:2,yAxisID:'y2'},
+        {label:'Lost Rate%',data:mL,borderColor:'#c00000',backgroundColor:'rgba(192,0,0,.05)',fill:true,tension:.4,pointRadius:2,borderWidth:1.5,yAxisID:'y2',borderDash:[2,2]}
       ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{type:'linear',position:'left',ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.05)'}},y2:{type:'linear',position:'right',min:44,max:72,ticks:{font:{size:9},callback:v=>v+'%'},grid:{display:false}}}}
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{position:'left',ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.05)'}},y2:{position:'right',min:14,max:72,ticks:{font:{size:9},callback:v=>v+'%'},grid:{display:false}}}}
     });
   }
   if(id==='n1'){
-    new Chart(document.getElementById('pvC'),{
-      type:'bar',
-      data:{labels:providers,datasets:[
-        {label:'Conv. Rate %',data:pConv,backgroundColor:'#1f3864',borderRadius:3,yAxisID:'y'},
-        {label:'Avg Premium (M VND)',data:pPrem,backgroundColor:'#843c0c',borderRadius:3,yAxisID:'y2'}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{type:'linear',position:'left',ticks:{callback:v=>v+'%',font:{size:9}},min:50,max:70},y2:{type:'linear',position:'right',ticks:{callback:v=>v+'M',font:{size:9}},min:3.2,max:5,grid:{display:false}}}}
-    });
-    new Chart(document.getElementById('dvC'),{
-      type:'doughnut',
-      data:{labels:providers,datasets:[{data:[133,143,130,124,123],backgroundColor:['#1f3864','#0070c0','#107c41','#843c0c','#f2c811'],hoverOffset:4}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}
-    });
-    new Chart(document.getElementById('pkC'),{
-      type:'doughnut',
-      data:{labels:['Standard','Premium','Comprehensive','Basic'],datasets:[{data:[177,163,154,159],backgroundColor:['#1f3864','#0070c0','#107c41','#f2c811'],hoverOffset:4}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}
-    });
+    new Chart(document.getElementById('pvC'),{type:'bar',data:{labels:providers,datasets:[{label:'Conv.Rate%',data:pConv,backgroundColor:'#1f3864',borderRadius:3,yAxisID:'y'},{label:'AvgPrem',data:pPrem,backgroundColor:'#843c0c',borderRadius:3,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{position:'left',ticks:{callback:v=>v+'%',font:{size:9}},min:54,max:68},y2:{position:'right',ticks:{callback:v=>v+'M',font:{size:9}},min:3.5,max:4.6,grid:{display:false}}}}});
+    new Chart(document.getElementById('dvC'),{type:'doughnut',data:{labels:providers,datasets:[{data:[398,411,380,410,401],backgroundColor:['#1f3864','#0070c0','#107c41','#843c0c','#f2c811'],hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
+    new Chart(document.getElementById('pkC'),{type:'doughnut',data:{labels:['Standard','Comprehensive','Premium','Basic'],datasets:[{data:[533,507,473,487],backgroundColor:['#1f3864','#0070c0','#107c41','#f2c811'],hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
   }
   if(id==='n2'){
-    new Chart(document.getElementById('apC'),{
-      type:'bar',
-      data:{labels:agents,datasets:[
-        {label:'Policies Issued',data:agPol,backgroundColor:'#1f3864',borderRadius:3,yAxisID:'y'},
-        {label:'Conv. Rate %',data:agConv,backgroundColor:'#107c41',borderRadius:3,yAxisID:'y2',type:'bar'}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{type:'linear',position:'left',ticks:{font:{size:9}}},y2:{type:'linear',position:'right',min:50,max:80,ticks:{callback:v=>v+'%',font:{size:9}},grid:{display:false}}}}
-    });
+    new Chart(document.getElementById('apC'),{type:'bar',data:{labels:agents,datasets:[{label:'Policies',data:agPol,backgroundColor:'#1f3864',borderRadius:3,yAxisID:'y'},{label:'Conv%',data:agConv,backgroundColor:'#107c41',borderRadius:3,yAxisID:'y2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{position:'left',ticks:{font:{size:9}}},y2:{position:'right',min:50,max:80,ticks:{callback:v=>v+'%',font:{size:9}},grid:{display:false}}}}});
     const bd=agConv.map(v=>+(v-benchmark).toFixed(1));
-    new Chart(document.getElementById('bmC'),{
-      type:'bar',
-      data:{labels:agents,datasets:[{label:'Δ vs Benchmark',data:bd,backgroundColor:bd.map(v=>v>=0?'#107c41':'#c00000'),borderRadius:3}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{callback:v=>(v>0?'+':'')+v+'%',font:{size:9}}}}}
-    });
+    new Chart(document.getElementById('bmC'),{type:'bar',data:{labels:agents,datasets:[{data:bd,backgroundColor:bd.map(v=>v>=0?'#107c41':'#c00000'),borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9}}},y:{ticks:{callback:v=>(v>0?'+':'')+v+'%',font:{size:9}}}}}});
   }
   if(id==='n3'){
-    new Chart(document.getElementById('ldC'),{
-      type:'bar',
-      data:{labels:cities,datasets:[
-        {label:'Rejected',data:cRej,backgroundColor:'#c00000',borderRadius:2,stack:'s'},
-        {label:'Expired',data:cExp,backgroundColor:'#f2c811',borderRadius:2,stack:'s'}
-      ]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:9}}}}}
-    });
+    new Chart(document.getElementById('ldC'),{type:'bar',data:{labels:cities,datasets:[{label:'Rejected',data:cRej,backgroundColor:'#c00000',borderRadius:2,stack:'s'},{label:'Expired',data:cExp,backgroundColor:'#f2c811',borderRadius:2,stack:'s'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{font:{size:9}}},y:{stacked:true,ticks:{font:{size:9}}}}}});
   }
 }
 buildCharts('ov');

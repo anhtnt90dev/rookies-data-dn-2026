@@ -56,23 +56,6 @@ from delta.tables import DeltaTable
 # META   "language_group": "synapse_pyspark"
 # META }
 
-# CELL ********************
-
-# import os
-
-# print(os.path.exists("/lakehouse/default/Files"))
-# print(os.path.exists("/lakehouse/default/Files/config"))
-# print(os.path.exists("/lakehouse/default/Files/config/mapping"))
-# print(os.path.exists("/lakehouse/default/Files/config/mapping/bronze-to-silver"))
-# print(os.path.exists("/lakehouse/default/Files/config/mapping/bronze-to-silver/customer.json"))
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
 # MARKDOWN ********************
 
 # ---
@@ -104,10 +87,6 @@ from delta.tables import DeltaTable
 # }
 
 # p_config_load_table = json.dumps(p_config_load_table_dump)
-
-
-
-
 
 # METADATA ********************
 
@@ -162,6 +141,7 @@ force_load_type: str = "incremental"
 SOURCE_CONFIG_TABLE: str = "cfg.source_tables"
 NEXT_RUN_MODE_TABLE: str = "cfg.next_run_mode"
 AUDIT_TABLE_SESSION: str = "log.audit_table_session"
+INVALID_RECORD_TABLE = "log.invalid_record"
 
 # Audit helper notebook (imported via %run or notebookutils)
 AUDIT_LOGGING_HELPER_NOTEBOOK: str = "nb_audit_logging_helper_dev"
@@ -223,7 +203,7 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # CELL ********************
 
 # DUMP
-# p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
+p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
 
 # METADATA ********************
 
@@ -818,6 +798,97 @@ def _validate_foreign_key(
 
 # CELL ********************
 
+def log_invalid_batch_records(
+    rejected_df: DataFrame,
+    table_session_id: str,
+    target_table: str,
+    layer: str,
+    record_key_column: str,
+) -> None:
+    """
+    Log invalid records into log.invalid_records.
+
+    Each validation error becomes one row in the log table.
+    """
+
+    if rejected_df.rdd.isEmpty():
+        return
+
+    log_df = (
+        rejected_df
+        # Split multiple validation errors
+        .withColumn(
+            "error_item",
+            F.explode(
+                F.split(
+                    F.col("__dq_failure_reason"),
+                    r"\s*\|\s*"
+                )
+            )
+        )
+        # Parse error column + reason
+        .withColumn(
+            "error_column",
+            F.split(F.col("error_item"), "::").getItem(0)
+        )
+        .withColumn(
+            "error_reason",
+            F.split(F.col("error_item"), "::").getItem(1)
+        )
+        .select(
+            F.expr("uuid()").alias("id"),
+
+            F.lit(table_session_id).alias("table_session_id"),
+
+            F.lit(layer).alias("layer"),
+
+            F.lit(target_table).alias("target_table"),
+
+            F.col(record_key_column)
+                .cast("string")
+                .alias("record_key"),
+
+            F.to_json(
+                F.struct(
+                    *[
+                        c
+                        for c in rejected_df.columns
+                        if c != "__dq_failure_reason"
+                    ]
+                )
+            ).alias("raw_data"),
+
+            F.col("error_column"),
+
+            F.col("error_reason"),
+
+            F.lit("DQ_VALIDATION").alias("error_type"),
+
+            F.lit(False).alias("is_retryable"),
+
+            F.current_timestamp().alias("created_at"),
+        )
+    )
+
+    log_df.write \
+        .format("delta") \
+        .mode("append") \
+        .saveAsTable(INVALID_RECORD_TABLE)
+
+    print(
+        f"[DQ LOG] Logged {log_df.count():,} invalid record errors "
+        f"to log.invalid_records"
+    )
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 # ---------------------------------------------------------------------------
 # Validator registry — maps name_func string → callable
 # Add a new entry here to register additional validators without touching
@@ -899,6 +970,7 @@ def run_dq_validation(
 
     failure_conditions: list[F.Column] = []
     reason_when_clauses: list[F.Column] = []
+    KEY_NAME_FUNCTION = "name_func"
 
     # ------------------------------------------------------------------
     # Iterate columns → validates → params  (mirrors stage-validate skeleton)
@@ -913,7 +985,7 @@ def run_dq_validation(
 
         for validate in validates:
 
-            func_name: str = validate.get("name_func", "")
+            func_name: str = validate.get(KEY_NAME_FUNCTION, "")
 
             if func_name not in VALIDATORS:
                 raise ValueError(
@@ -934,12 +1006,23 @@ def run_dq_validation(
                     "reason_error", f"{func_name}:{column_name}"
                 )
 
+                # Validate mapping configuration
+                if column_name not in available_columns:
+                    raise ValueError(
+                        f"[DQ] Column '{column_name}' "
+                        f"not found in dataframe. "
+                        f"Validator='{func_name}' "
+                        f"Source='{source_table}'"
+                    )
+
                 # Forward all remaining param keys as kwargs to the validator
                 validator_kwargs = {
                     key: value
                     for key, value in param.items()
                     if key not in {"key", "reason_error"}
                 }
+
+             
 
                 # Evaluate the failure-condition Column expression
                 failure_col: F.Column = validator_func(
@@ -948,12 +1031,21 @@ def run_dq_validation(
 
                 # Emit reason_error only when this specific rule fires
                 reason_when_clauses.append(
-                    F.when(failure_col, F.lit(reason_error))
+                    F.when(
+                        failure_col,
+                        F.lit(
+                            f"{column_name}::{reason_error}"
+                        ),
+                    )
                 )
 
+                # Append to failure conditions list to make validation active
+                failure_conditions.append(failure_col)
+
                 print(
-                    f"[DQ] Registered rule | column='{column_name}' "
-                    f"| func='{func_name}' | reason='{reason_error}'"
+                    f"[DQ] Registered rule "
+                    f"| column='{column_name}' "
+                    f"| validator='{func_name}'"
                 )
 
     # ------------------------------------------------------------------
@@ -961,7 +1053,11 @@ def run_dq_validation(
     # ------------------------------------------------------------------
     if not failure_conditions:
         print(f"[DQ] No validation rules configured for '{source_table}'. Skipping.")
-        return input_df, spark.createDataFrame([], input_df.schema), 0  # noqa: F821
+        return (
+            input_df,
+            spark.createDataFrame([], input_df.schema),
+            0,
+        )
 
     # ------------------------------------------------------------------
     # Combine all failure conditions (any rule failing = row rejected)
@@ -975,9 +1071,12 @@ def run_dq_validation(
     # Build combined failure-reason string (pipe-separated active reasons)
     # ------------------------------------------------------------------
 
-    combined_reason: F.Column = F.concat_ws(
+    combined_reason = F.concat_ws(
         " | ",
-        *[F.coalesce(clause, F.lit("")) for clause in reason_when_clauses],
+        *[
+            F.coalesce(reason, F.lit(""))
+            for reason in reason_when_clauses
+        ]
     )
 
     # ------------------------------------------------------------------
@@ -989,13 +1088,19 @@ def run_dq_validation(
         F.when(is_any_rule_failing, combined_reason).otherwise(F.lit(None)),
     )
 
-    df_valid: DataFrame = tagged_df.filter(
-        F.col(DQ_FAILURE_REASON_COLUMN).isNull()
-    ).drop(DQ_FAILURE_REASON_COLUMN)
+    df_valid = (
+        tagged_df
+        .filter(F.col(DQ_FAILURE_REASON_COLUMN).isNull())
+        .drop(DQ_FAILURE_REASON_COLUMN)
+    )
 
     df_rejected: DataFrame = tagged_df.filter(
         F.col(DQ_FAILURE_REASON_COLUMN).isNotNull()
     )
+
+    # Cache because count + downstream usage
+    # df_valid.cache()
+    # df_rejected.cache()
 
     # ------------------------------------------------------------------
     # Count & log
@@ -1003,50 +1108,17 @@ def run_dq_validation(
     rejected_row_count: int = df_rejected.count()
     valid_row_count: int = df_valid.count()
 
-
-
     print(
-        f"[DQ] Validation complete for '{source_table}': "
-        f"valid={valid_row_count:,} | rejected={rejected_row_count:,}"
+        f"[DQ] Validation complete "
+        f"| source={source_table} "
+        f"| valid={valid_row_count:,} "
+        f"| rejected={rejected_row_count:,}"
     )
-
-    # ------------------------------------------------------------------
-    # Persist rejected rows to the quarantine table
-    # ------------------------------------------------------------------
-
-    #TODO: Insert into log.invalid_record
-    # if rejected_row_count > 0:
-    #     _write_to_quarantine(df_rejected, quarantine_table_name)
 
     return df_valid, df_rejected, rejected_row_count
 
 
-def _write_to_quarantine(rejected_df: DataFrame, quarantine_table_name: str) -> None:
-    """
-    Append rejected rows (with ``__dq_failure_reason``) to the quarantine
-    Delta table.  Adds ``__quarantined_at`` timestamp before writing.
-    Write failures are caught and logged without blocking the main pipeline.
-    """
-    quarantine_df: DataFrame = rejected_df.withColumn(
-        "__quarantined_at", F.current_timestamp()
-    )
-    try:
-        (
-            quarantine_df.write
-            .format("delta")
-            .mode("append")
-            .option("mergeSchema", "true")
-            .saveAsTable(quarantine_table_name)
-        )
-        print(
-            f"[DQ] Wrote {rejected_df.count():,} rejected row(s) "
-            f"to quarantine table '{quarantine_table_name}'."
-        )
-    except Exception as quarantine_error:
-        print(
-            f"[DQ] Warning — Failed to write to quarantine table "
-            f"'{quarantine_table_name}': {quarantine_error}"
-        )
+
 
 # METADATA ********************
 
@@ -1216,8 +1288,6 @@ def write_silver_merge(
 # ---------------------------------------------------------------------------
 # Read source configuration and resolve run mode
 # ---------------------------------------------------------------------------
-
-
 
 # Read the configuration row for this pipeline invocation
 config_row: dict = config_load_table
@@ -1457,7 +1527,7 @@ try:
 
     # -----------------------------------------------------------------------
     # STEP 5 — Data Quality (DQ) Validation
-    # -----------------------------------------------------------------------
+    # -----------------------------------------------------------------------IN
     print("\n" + "=" * 70)
     print("STEP 5 | Running Data Quality validation")
     print("=" * 70)
@@ -1469,15 +1539,24 @@ try:
         {"column": pk_column, "rule": "not_null"}
         for pk_column in PRIMARY_KEY_COLUMNS
     ]
-    # NOTE: Table-specific business rules (foreign_key, date_order, in_set)
+
     # can be appended here or loaded from a separate DQ config source.
 
     df_valid, df_rejected, rejected_row_count = run_dq_validation(
         input_df=mapped_silver_df_final,
         column_mappings=column_mappings,
-        source_table=source_table,
+        source_table=BRONZE_TABLE_NAME,
         quarantine_table_name=QUARANTINE_TABLE_NAME,
     )
+
+    if rejected_row_count > 0:
+        log_invalid_batch_records(
+            df_rejected, 
+            table_session_id=table_session_id,
+            layer=LAYER_SILVER,
+            target_table=SILVER_TABLE_NAME,
+            record_key_column=config_load_table["primary_key"]
+        )
 
     # If all rows are rejected, skip the MERGE step and mark as WARNING
     if df_valid.count() == 0:
@@ -1616,6 +1695,33 @@ print(f"  Final status      : {pipeline_status}")
 if error_message:
     print(f"  Error             : {error_message[:200]}...")
 print("=" * 70)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+summary = {
+    "notebook": "nb_ingest_bronze_silver_dev",
+    "session_id": session_id,
+    "batch_id": batch_id,
+    "run_mode": current_run_mode,
+    "load_type": resolved_load_type,
+    "source_table": BRONZE_TABLE_NAME,
+    "target_table": SILVER_TABLE_NAME,
+    "source_rows_read": source_row_count,
+    "rows_inserted": inserted_row_count,
+    "rows_updated": updated_row_count,
+    "rows_rejected": rejected_row_count,
+    "final_status": pipeline_status,
+    "error_message": error_message,
+}
+
+notebookutils.notebook.exit(json.dumps(summary))
 
 # METADATA ********************
 

@@ -148,22 +148,11 @@
     },
     {
       "target": "operation_type",
-      "expression": "operation_type",
-      "validates": [
-        {
-          "name_func": "_validate_is_not_empty",
-          "params": [
-            {
-              "key": "operation_type",
-              "reason_error": "operation_type key is empty"
-            }
-          ]
-        }
-      ]
+      "expression": "_operation_type"
     },
     {
       "target": "is_deleted",
-      "expression": "operation_type"
+      "expression": "_operation_type"
     },
     {
       "target": "issued_at",

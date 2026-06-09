@@ -24,6 +24,7 @@
 
 # Reusable audit logging helpers for Microsoft Fabric notebooks.
 import re
+import time
 import uuid
 from enum import Enum
 
@@ -91,6 +92,8 @@ AUDIT_DETAIL_TABLE = "log.audit_detail"
 AUDIT_FILE_SESSION_TABLE = "log.audit_file_session"
 RETRY_LOG_TABLE = "log.retry_log"
 INVALID_RECORD_TABLE = "log.invalid_record"
+RETRY_POLICY_TABLE = "cfg.retry_policy"
+NEXT_RUN_MODE_TABLE = "cfg.next_run_mode"
 
 
 # METADATA ********************
@@ -253,6 +256,98 @@ def should_process_file(
         return True
 
     return existing_file[0]["file_status"] != AuditStatus.SUCCESS.value
+
+
+def get_failed_or_missing_files(
+    batch_id: int,
+    source_table_id: int,
+    source_files,
+    audit_file_session_table: str = AUDIT_FILE_SESSION_TABLE,
+) -> list:
+    """Return source files that need processing for recovery: missing, failed, or incomplete."""
+    audit_file_session_table = validate_table_name(audit_file_session_table)
+    files_to_process = []
+
+    for source_file in source_files:
+        existing_file = (
+            spark.table(audit_file_session_table)
+            .where(
+                (F.col("batch_id") == F.lit(int(batch_id)))
+                & (F.col("source_table_id") == F.lit(int(source_table_id)))
+                & (F.col("source_file") == F.lit(source_file))
+            )
+            .select("id", "file_status")
+            .limit(1)
+            .collect()
+        )
+
+        if not existing_file:
+            files_to_process.append({
+                "source_file": source_file,
+                "reason": "MISSING",
+                "file_session_id": None,
+            })
+            continue
+
+        file_status = existing_file[0]["file_status"]
+        if file_status != AuditStatus.SUCCESS.value:
+            files_to_process.append({
+                "source_file": source_file,
+                "reason": file_status or "INCOMPLETE",
+                "file_session_id": str(existing_file[0]["id"]),
+            })
+
+    return files_to_process
+
+
+def should_process_table_layer(
+    batch_id: int,
+    source_table_id: int,
+    layer: str,
+    audit_table_session_table: str = AUDIT_TABLE_SESSION_TABLE,
+) -> bool:
+    """Return False when a prior session already completed the batch/source/layer successfully."""
+    audit_table_session_table = validate_table_name(audit_table_session_table)
+    layer = require_layer(layer)
+    layer_status_column = {
+        Layer.BRONZE.value: "bronze_status",
+        Layer.SILVER.value: "silver_status",
+        Layer.GOLD.value: "gold_status",
+    }[layer]
+
+    successful_rows = (
+        spark.table(audit_table_session_table)
+        .where(
+            (F.col("batch_id") == F.lit(int(batch_id)))
+            & (F.col("source_table_id") == F.lit(int(source_table_id)))
+            & (F.col(layer_status_column) == F.lit(AuditStatus.SUCCESS.value))
+        )
+        .limit(1)
+        .collect()
+    )
+
+    return len(successful_rows) == 0
+
+
+def get_recovery_table_plan(
+    batch_id: int,
+    source_table_ids,
+    layer: str,
+    audit_table_session_table: str = AUDIT_TABLE_SESSION_TABLE,
+) -> list:
+    layer = require_layer(layer)
+    return [
+        {
+            "source_table_id": int(source_table_id),
+            "should_process": should_process_table_layer(
+                batch_id=batch_id,
+                source_table_id=int(source_table_id),
+                layer=layer,
+                audit_table_session_table=audit_table_session_table,
+            ),
+        }
+        for source_table_id in source_table_ids
+    ]
 
 # METADATA ********************
 
@@ -500,6 +595,143 @@ def log_retry_attempt(
             WHERE id = '{str(file_session_id)}'
         """)
 
+
+def parse_error_type_list(error_types) -> list:
+    if error_types is None:
+        return []
+
+    return [
+        item.strip().upper()
+        for item in str(error_types).split(",")
+        if item and item.strip()
+    ]
+
+
+def get_active_retry_policy(
+    layer: str = None,
+    source_table_id: int = None,
+    retry_policy_table: str = RETRY_POLICY_TABLE,
+) -> dict:
+    """Return the active retry policy. Layer/source parameters are reserved for future scoped policies."""
+    retry_policy_table = validate_table_name(retry_policy_table)
+
+    policy_rows = (
+        spark.table(retry_policy_table)
+        .where(F.col("is_active") == F.lit(True))
+        .orderBy(F.col("id"))
+        .limit(1)
+        .collect()
+    )
+
+    if not policy_rows:
+        raise Exception(f"No active retry policy found in {retry_policy_table}")
+
+    policy = policy_rows[0].asDict()
+    return {
+        "id": policy["id"],
+        "policy_name": policy["policy_name"],
+        "max_retry_count": int(policy["max_retry_count"]),
+        "retry_delay_seconds": int(policy["retry_delay_seconds"]),
+        "backoff_strategy": str(policy["backoff_strategy"]).upper(),
+        "retryable_error_types": parse_error_type_list(policy["retryable_error_types"]),
+        "non_retryable_error_types": parse_error_type_list(policy["non_retryable_error_types"]),
+    }
+
+
+def is_retryable_error(error_type, retry_policy: dict) -> bool:
+    error_type_value = enum_value(error_type)
+
+    if error_type_value in retry_policy.get("retryable_error_types", []):
+        return True
+
+    if error_type_value in retry_policy.get("non_retryable_error_types", []):
+        return False
+
+    return error_type_value == ErrorType.SYSTEM.value
+
+
+def get_retry_delay_seconds(retry_policy: dict, retry_attempt_no: int) -> int:
+    base_delay = int(retry_policy.get("retry_delay_seconds", 0))
+    backoff_strategy = str(retry_policy.get("backoff_strategy", "FIXED_DELAY")).upper()
+
+    if backoff_strategy == "EXPONENTIAL":
+        return base_delay * (2 ** max(retry_attempt_no - 1, 0))
+
+    return base_delay
+
+
+def get_error_attribute(error, attribute_name: str, default_value=None):
+    if hasattr(error, attribute_name):
+        return getattr(error, attribute_name)
+    return default_value
+
+
+def run_with_retry(
+    operation_fn,
+    table_session_id: str,
+    layer: str,
+    operation_name: str,
+    error_type: str = ErrorType.SYSTEM,
+    policy: dict = None,
+    file_session_id: str = None,
+    is_final_table_step: bool = True,
+    apply_retry_delay: bool = False,
+):
+    """Run a controlled operation with audited retries. This is a framework helper, not production orchestration."""
+    layer = require_layer(layer)
+    retry_policy = policy or get_active_retry_policy()
+    retry_attempt_count = 0
+
+    while True:
+        try:
+            result = operation_fn()
+            finish_table_layer(
+                table_session_id=table_session_id,
+                layer=layer,
+                status=AuditStatus.SUCCESS,
+                is_final_table_step=is_final_table_step,
+                write_detail=True,
+            )
+            return result
+        except Exception as error:
+            current_error_type = enum_value(get_error_attribute(error, "error_type", error_type))
+            current_error_code = get_error_attribute(
+                error,
+                "error_code",
+                f"{operation_name.upper()}_{current_error_type}_ERROR",
+            )
+            current_error_message = str(error)[:1000]
+            should_retry = is_retryable_error(current_error_type, retry_policy)
+
+            if (not should_retry) or retry_attempt_count >= retry_policy["max_retry_count"]:
+                finish_table_layer(
+                    table_session_id=table_session_id,
+                    layer=layer,
+                    status=AuditStatus.FAILED,
+                    is_final_table_step=is_final_table_step,
+                    error_code=current_error_code,
+                    error_message=current_error_message,
+                    error_type=current_error_type,
+                    is_retryable=should_retry,
+                    write_detail=True,
+                )
+                raise
+
+            retry_attempt_count += 1
+            log_retry_attempt(
+                table_session_id=table_session_id,
+                file_session_id=file_session_id,
+                layer=layer,
+                status=AuditStatus.FAILED,
+                error_code=current_error_code,
+                error_message=current_error_message,
+                error_type=current_error_type,
+                is_retryable=True,
+            )
+
+            if apply_retry_delay:
+                time.sleep(get_retry_delay_seconds(retry_policy, retry_attempt_count))
+
 # METADATA ********************
 
 # META {
@@ -559,6 +791,46 @@ def log_invalid_record(
     )
 
     invalid_df.write.format("delta").mode("append").saveAsTable(invalid_record_table)
+
+
+def log_invalid_records_from_dataframe(
+    invalid_df,
+    table_session_id: str,
+    layer: str,
+    target_table: str,
+    record_key_column: str,
+    raw_data_column: str,
+    error_reason_column: str,
+    file_session_id: str = None,
+    error_column_column: str = None,
+    error_type: str = ErrorType.DATA,
+    is_retryable: bool = False,
+    invalid_record_table: str = INVALID_RECORD_TABLE,
+):
+    """Append invalid records from a dataframe using the existing log.invalid_record schema."""
+    invalid_record_table = validate_table_name(invalid_record_table)
+    layer = require_layer(layer)
+
+    selected_df = invalid_df.select(
+        F.expr("uuid()").alias("id"),
+        F.lit(str(table_session_id)).alias("table_session_id"),
+        F.lit(str(file_session_id) if file_session_id else None).cast("string").alias("file_session_id"),
+        F.lit(layer).alias("layer"),
+        F.lit(target_table).alias("target_table"),
+        F.col(record_key_column).cast("string").alias("record_key"),
+        F.col(raw_data_column).cast("string").alias("raw_data"),
+        (
+            F.col(error_column_column).cast("string")
+            if error_column_column
+            else F.lit(None).cast("string")
+        ).alias("error_column"),
+        F.col(error_reason_column).cast("string").alias("error_reason"),
+        F.lit(enum_value(error_type)).alias("error_type"),
+        F.lit(bool(is_retryable)).alias("is_retryable"),
+        F.current_timestamp().alias("created_at"),
+    )
+
+    selected_df.write.format("delta").mode("append").saveAsTable(invalid_record_table)
 
 # METADATA ********************
 
@@ -686,6 +958,173 @@ def finish_pipeline_session(
     """)
 
     print(f"Finished pipeline session: session_id={session_id}, status={final_status}")
+
+
+def ensure_next_run_mode_table(next_run_mode_table: str = NEXT_RUN_MODE_TABLE):
+    next_run_mode_table = validate_table_name(next_run_mode_table)
+    spark.sql("CREATE SCHEMA IF NOT EXISTS cfg")
+    spark.sql(f"""
+        CREATE TABLE IF NOT EXISTS {next_run_mode_table} (
+            next_run_mode STRING,
+            batch_id BIGINT,
+            session_id BIGINT,
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP
+        )
+        USING DELTA
+    """)
+
+
+def set_next_run_mode(
+    next_run_mode: str,
+    batch_id: int = None,
+    session_id: str = None,
+    next_run_mode_table: str = NEXT_RUN_MODE_TABLE,
+):
+    """Store the singleton next-run context used by framework recovery simulations."""
+    next_run_mode_table = validate_table_name(next_run_mode_table)
+    next_run_mode = require_status(next_run_mode, [RunMode.NEW, RunMode.RECOVERY])
+    ensure_next_run_mode_table(next_run_mode_table)
+
+    schema = StructType([
+        StructField("next_run_mode", StringType(), False),
+        StructField("batch_id", LongType(), True),
+        StructField("session_id", LongType(), True),
+    ])
+    next_run_df = (
+        spark.createDataFrame([
+            Row(
+                next_run_mode=next_run_mode,
+                batch_id=int(batch_id) if batch_id is not None else None,
+                session_id=to_optional_long(session_id),
+            )
+        ], schema)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+    )
+
+    spark.sql(f"DELETE FROM {next_run_mode_table}")
+    next_run_df.write.format("delta").mode("append").saveAsTable(next_run_mode_table)
+
+
+def reset_next_run_mode(next_run_mode_table: str = NEXT_RUN_MODE_TABLE):
+    set_next_run_mode(RunMode.NEW, None, None, next_run_mode_table)
+
+
+def to_optional_long(value):
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def get_next_batch_id(audit_session_table: str = AUDIT_SESSION_TABLE) -> int:
+    audit_session_table = validate_table_name(audit_session_table)
+    try:
+        current_max = (
+            spark.table(audit_session_table)
+            .agg(F.coalesce(F.max("batch_id"), F.lit(0)).alias("max_batch_id"))
+            .collect()[0]["max_batch_id"]
+        )
+        return int(current_max) + 1
+    except Exception:
+        return int(time.time() * 1000)
+
+
+def get_next_run_context(
+    requested_run_mode: str = None,
+    next_run_mode_table: str = NEXT_RUN_MODE_TABLE,
+) -> dict:
+    ensure_next_run_mode_table(next_run_mode_table)
+    requested_mode = require_status(requested_run_mode, [RunMode.NEW, RunMode.RECOVERY]) if requested_run_mode else None
+
+    rows = (
+        spark.table(next_run_mode_table)
+        .select("next_run_mode", "batch_id", "session_id")
+        .limit(1)
+        .collect()
+    )
+
+    stored_context = rows[0].asDict() if rows else {
+        "next_run_mode": RunMode.NEW.value,
+        "batch_id": None,
+        "session_id": None,
+    }
+
+    run_mode = requested_mode or enum_value(stored_context.get("next_run_mode") or RunMode.NEW)
+    run_mode = require_status(run_mode, [RunMode.NEW, RunMode.RECOVERY])
+
+    batch_id = stored_context.get("batch_id")
+    if run_mode == RunMode.RECOVERY.value and batch_id is None:
+        raise Exception("RECOVERY run requires cfg.next_run_mode.batch_id")
+
+    return {
+        "run_mode": run_mode,
+        "batch_id": int(batch_id) if batch_id is not None else None,
+        "previous_session_id": stored_context.get("session_id"),
+    }
+
+
+def initialize_run_context(
+    pipeline_name: str,
+    pipeline_run_id: str,
+    requested_run_mode: str = None,
+    sla_target_ms: int = None,
+    next_run_mode_table: str = NEXT_RUN_MODE_TABLE,
+    audit_session_table: str = AUDIT_SESSION_TABLE,
+) -> dict:
+    """Create a fresh audit session and select the correct logical batch for NEW or RECOVERY."""
+    context = get_next_run_context(requested_run_mode, next_run_mode_table)
+
+    if context["run_mode"] == RunMode.NEW.value:
+        batch_id = get_next_batch_id(audit_session_table)
+    else:
+        batch_id = context["batch_id"]
+
+    session_id = start_pipeline_session(
+        pipeline_name=pipeline_name,
+        pipeline_run_id=pipeline_run_id,
+        batch_id=batch_id,
+        run_mode=context["run_mode"],
+        sla_target_ms=sla_target_ms,
+        audit_session_table=audit_session_table,
+    )
+
+    return {
+        "run_mode": context["run_mode"],
+        "batch_id": batch_id,
+        "session_id": session_id,
+        "previous_session_id": context.get("previous_session_id"),
+        "pipeline_name": pipeline_name,
+        "pipeline_run_id": pipeline_run_id,
+    }
+
+
+def mark_recovery_required(
+    batch_id: int,
+    failed_layer: str,
+    failed_table: str = None,
+    failed_file: str = None,
+    error_code: str = None,
+    error_message: str = None,
+    session_id: str = None,
+    next_run_mode_table: str = NEXT_RUN_MODE_TABLE,
+):
+    """Set the next run to RECOVERY for the failed logical batch."""
+    require_layer(failed_layer)
+    set_next_run_mode(RunMode.RECOVERY, batch_id, session_id, next_run_mode_table)
+    print({
+        "next_run_mode": RunMode.RECOVERY.value,
+        "batch_id": int(batch_id),
+        "session_id": str(session_id) if session_id else None,
+        "failed_layer": enum_value(failed_layer),
+        "failed_table": failed_table,
+        "failed_file": failed_file,
+        "error_code": error_code,
+        "error_message": error_message,
+    })
 
 
 # METADATA ********************

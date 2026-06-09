@@ -11,9 +11,10 @@ This document describes how the Microsoft Fabric audit logging MVP implements th
 | `Job_Config`                            | `cfg.source_table`                            | Stores configured source-table metadata. This table is designed but is not implemented by the audit MVP.       |
 | `Watermark`                             | `cfg.watermark`                               | Stores Source-to-Bronze ingestion checkpoints. This table is designed but is not implemented by the audit MVP. |
 | `Batch_Log`                             | `log.audit_session`                           | Stores one record for each pipeline execution session.                                                         |
-| `Pipeline_Log`                          | `log.audit_table_session`, `log.audit_file_session`, `log.audit_detail` | Stores table/layer execution status, per-file execution status, and append-only processing details.            |
-| `Pipeline_Error`                        | `log.invalid_record`                          | Stores records rejected by validation or transformation rules.                                                 |
-| Retry details supporting `Pipeline_Log` | `log.retry_log`                               | Stores retry attempts for transient system failures.                                                           |
+| `Pipeline_Log`                          | `log.audit_session`, `log.audit_table_session`, `log.audit_file_session`, `log.audit_detail` | Stores run/session, table/layer, per-file, row-count, and reconciliation tracking.                             |
+| `Pipeline_Error`                        | `log.invalid_record`, table/file error fields, `log.retry_log` | Stores rejected validation records, operational failure details, and retry attempt failures.                   |
+| Retry support                           | `cfg.retry_policy`, `log.retry_log`           | Stores configurable retry policy and retry attempts for transient system failures.                             |
+| Batch/session recovery context          | `cfg.next_run_mode`, `batch_id`, `session_id`, audit statuses | Stores the state needed to start NEW runs or resume failed batches in RECOVERY mode.                           |
 
 ## Identity and Update Rules
 
@@ -23,6 +24,8 @@ This document describes how the Microsoft Fabric audit logging MVP implements th
 - `(batch_id, source_table_id, source_file)` is the idempotency key for `log.audit_file_session`.
 - One `log.audit_file_session` record represents one source file for one configured source table in one batch.
 - `table_session_id` links `log.audit_file_session`, `log.audit_detail`, `log.retry_log`, and `log.invalid_record` to their parent table execution.
+- `log.invalid_record` does not physically duplicate `batch_id`, `session_id`, or source entity. Those are traced by joining `log.invalid_record.table_session_id` to `log.audit_table_session.id`.
+- `cfg.next_run_mode` stores the next run mode and failed `batch_id` for recovery. Its physical `session_id` column is `BIGINT`, while MVP audit session IDs are UUID strings, so the current framework treats `batch_id` as the durable recovery key until the session identifier type is resolved.
 - `log.audit_detail` is append-only. Its generated `id` uniquely identifies each detail, while `(table_session_id, layer, attempt_no)` describes its execution attempt.
 - The row-count MVP uses its `ErrorType` classification as the table-level `error_code` when a standardized downstream error code is not available.
 - UUID string IDs are used by the physical MVP implementation. The logical design permits the ID generation strategy to be finalized during implementation.

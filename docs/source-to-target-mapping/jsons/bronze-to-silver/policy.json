@@ -133,6 +133,15 @@
       "expression": "premium_amount",
       "validates": [
         {
+          "name_func": "_validate_is_numeric",
+          "params": [
+            {
+              "key": "premium_amount",
+              "reason_error": "premium_amount must be greater than 0"
+            }
+          ]
+        },
+        {
           "name_func": "_validate_min_value",
           "params": [
             {

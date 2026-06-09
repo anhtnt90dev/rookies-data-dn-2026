@@ -203,7 +203,8 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # CELL ********************
 
 # DUMP
-# p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
+p_config_load_table = "{\"id\":7,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"policy\",\"source_location\":\"Files/landing/policy_system/policy\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"policy_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/policy.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/policy.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.policy\",\"silver_table_name\":\"silver.policy\",\"load_sequence\":7,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
+
 
 # METADATA ********************
 
@@ -807,24 +808,24 @@ def _validate_min_value(
 
 def _validate_less_than(
     df: DataFrame,
-    left_column: str,
-    right_column: str,
+    column_name,
+    compare_column,
     **_,
 ) -> F.Column:
     """
-    True when left_column >= right_column (violation).
+    True when column_name >= compare_column (violation).
 
     Valid:
-        left_column < right_column
+        column_name < compare_column
 
     Invalid:
-        left_column == right_column
-        left_column > right_column
+        column_name == compare_column
+        column_name > compare_column
     """
     return (
-        F.col(left_column).isNotNull()
-        & F.col(right_column).isNotNull()
-        & (F.col(left_column) >= F.col(right_column))
+        F.col(column_name).isNotNull()
+        & F.col(compare_column).isNotNull()
+        & (F.col(column_name) >= F.col(compare_column))
     )
 
 def _validate_accepted_values(df: DataFrame, column_name: str, values: list, **_) -> F.Column:
@@ -1470,17 +1471,23 @@ COLUMN_WATERMARK_VALUE:str = "watermark_value"
 # CELL ********************
 
 # DUMP START SESSION PIPELINE LOG
-try:
-    session_id_dump = start_pipeline_session(
-        pipeline_name="TEST_SILVER_LAYER",
-        pipeline_run_id="PL_01",
-        batch_id=batch_id,
-        run_mode=current_run_mode,
-    )
+# try:
+#     session_id_dump = start_pipeline_session(
+#         pipeline_name="TEST_SILVER_LAYER",
+#         pipeline_run_id="PL_01",
+#         batch_id=batch_id,
+#         run_mode=current_run_mode,
+#     )
 
-    print(f"[AUDIT] Started table layer session")
-except Exception as audit_start_error:
-    print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
+#     print(f"[AUDIT] Started table layer session")
+# except Exception as audit_start_error:
+#     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
+
+# p_session_id="3a967666-924c-4c08-904d-7b734f4880cc"
+# p_pipeline_run_id="PL_01"
+
+session_id = p_session_id
+pipeline_run_id = p_pipeline_run_id
 
 
 # METADATA ********************
@@ -1492,7 +1499,7 @@ except Exception as audit_start_error:
 
 # CELL ********************
 
-print(session_id_dump)
+print(p_session_id)
 
 # METADATA ********************
 

@@ -36,7 +36,7 @@
     },
     {
       "target": "operation_type",
-      "expression": "_operation_type"
+      "expression": "operation_type"
     },
     {
       "target": "batch_date",

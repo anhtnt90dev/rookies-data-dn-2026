@@ -47,7 +47,7 @@
       "expression": "last_updated"
     },
     {
-      "target": "_operation_type",
+      "target": "operation_type",
       "expression": "operation_type"
     },
     {

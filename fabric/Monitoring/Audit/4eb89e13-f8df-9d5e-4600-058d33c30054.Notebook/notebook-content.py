@@ -963,11 +963,21 @@ def finish_pipeline_session(
 def ensure_next_run_mode_table(next_run_mode_table: str = NEXT_RUN_MODE_TABLE):
     next_run_mode_table = validate_table_name(next_run_mode_table)
     spark.sql("CREATE SCHEMA IF NOT EXISTS cfg")
+    
+    # Safely migrate existing BIGINT column to STRING by dropping the table if the schema is incorrect.
+    try:
+        schema = spark.table(next_run_mode_table).schema
+        if any(f.name == "session_id" and isinstance(f.dataType, LongType) for f in schema.fields):
+            spark.sql(f"DROP TABLE IF EXISTS {next_run_mode_table}")
+            print(f"Dropped {next_run_mode_table} to migrate session_id to STRING")
+    except Exception:
+        pass
+
     spark.sql(f"""
         CREATE TABLE IF NOT EXISTS {next_run_mode_table} (
             next_run_mode STRING,
             batch_id BIGINT,
-            session_id BIGINT,
+            session_id STRING,
             created_at TIMESTAMP,
             updated_at TIMESTAMP
         )
@@ -981,7 +991,11 @@ def set_next_run_mode(
     session_id: str = None,
     next_run_mode_table: str = NEXT_RUN_MODE_TABLE,
 ):
-    """Store the singleton next-run context used by framework recovery simulations."""
+    """
+    Store the singleton next-run context used by framework recovery simulations.
+    - batch_id is the durable recovery key.
+    - session_id stores the failed/previous audit session UUID for recovery lineage.
+    """
     next_run_mode_table = validate_table_name(next_run_mode_table)
     next_run_mode = require_status(next_run_mode, [RunMode.NEW, RunMode.RECOVERY])
     ensure_next_run_mode_table(next_run_mode_table)
@@ -989,14 +1003,14 @@ def set_next_run_mode(
     schema = StructType([
         StructField("next_run_mode", StringType(), False),
         StructField("batch_id", LongType(), True),
-        StructField("session_id", LongType(), True),
+        StructField("session_id", StringType(), True),
     ])
     next_run_df = (
         spark.createDataFrame([
             Row(
                 next_run_mode=next_run_mode,
                 batch_id=int(batch_id) if batch_id is not None else None,
-                session_id=to_optional_long(session_id),
+                session_id=str(session_id) if session_id is not None else None,
             )
         ], schema)
         .withColumn("created_at", F.current_timestamp())
@@ -1009,15 +1023,6 @@ def set_next_run_mode(
 
 def reset_next_run_mode(next_run_mode_table: str = NEXT_RUN_MODE_TABLE):
     set_next_run_mode(RunMode.NEW, None, None, next_run_mode_table)
-
-
-def to_optional_long(value):
-    if value is None:
-        return None
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return None
 
 
 def get_next_batch_id(audit_session_table: str = AUDIT_SESSION_TABLE) -> int:

@@ -102,7 +102,7 @@ def create_config_tables() -> None:
     CREATE TABLE IF NOT EXISTS cfg.next_run_mode (
         next_run_mode STRING,
         batch_id BIGINT,
-        session_id BIGINT,
+        session_id STRING,
         created_at TIMESTAMP,
         updated_at TIMESTAMP
     )
@@ -237,7 +237,7 @@ def insert_next_run_mode_data() -> None:
     schema = StructType([
         StructField("next_run_mode", StringType(), False),
         StructField("batch_id", LongType(), True),
-        StructField("session_id", LongType(), True),
+        StructField("session_id", StringType(), True),
     ])
 
     df = (

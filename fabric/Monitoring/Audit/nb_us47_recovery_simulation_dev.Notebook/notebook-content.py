@@ -465,6 +465,7 @@ recovery_context = initialize_run_context(
 assert recovery_context["run_mode"] == RunMode.RECOVERY.value
 assert recovery_context["batch_id"] == new_context["batch_id"]
 assert recovery_context["session_id"] != new_context["session_id"]
+assert recovery_context["previous_session_id"] == new_context["session_id"]
 
 recovery_table_plan = get_recovery_table_plan(
     batch_id=recovery_context["batch_id"],
@@ -525,6 +526,7 @@ print({
     "batch_id": new_context["batch_id"],
     "new_session_id": new_context["session_id"],
     "recovery_session_id": recovery_context["session_id"],
+    "previous_session_id_returned": recovery_context["previous_session_id"],
     "tests": {
         "A_new_run": {
             "run_mode": new_context["run_mode"],

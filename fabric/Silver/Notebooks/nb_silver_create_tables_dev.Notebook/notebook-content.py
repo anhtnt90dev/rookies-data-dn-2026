@@ -40,16 +40,16 @@
 # MAGIC --
 # MAGIC -- File Location: sql/lakehouse/create_silver_tables.sql
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- CREATE SCHEMA
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC CREATE SCHEMA IF NOT EXISTS silver;
-# MAGIC
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 1. JSON SOURCES mapping to Silver
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.cancellation
 # MAGIC -- Source Table: bronze.cancellation
@@ -65,14 +65,14 @@
 # MAGIC     updated_at          TIMESTAMP,
 # MAGIC     operation_type      STRING,
 # MAGIC     is_deleted          BOOLEAN,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _loaded_at          TIMESTAMP,
 # MAGIC     _source_system      STRING,
 # MAGIC     _source_name        STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.payment
 # MAGIC -- Source Table: bronze.payment
@@ -89,15 +89,15 @@
 # MAGIC     last_updated_at         TIMESTAMP,
 # MAGIC     updated_at              TIMESTAMP,
 # MAGIC     operation_type          STRING,
-# MAGIC     is_deleted              BOOLEAN,
-# MAGIC
+# MAGIC     is_deleted              BOOLEAN, 
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
 # MAGIC     _loaded_at              TIMESTAMP,
 # MAGIC     _source_system          STRING,
 # MAGIC     _source_name            STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.policy
 # MAGIC -- Source Table: bronze.policy
@@ -114,22 +114,22 @@
 # MAGIC     policy_status       STRING,
 # MAGIC     premium_amount      DECIMAL(18,2),
 # MAGIC     operation_type      STRING,
-# MAGIC     is_deleted          BOOLEAN,
+# MAGIC     is_deleted          BOOLEAN, 
 # MAGIC     issued_at           TIMESTAMP,
 # MAGIC     last_updated_at     TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _loaded_at          TIMESTAMP,
 # MAGIC     _source_system      STRING,
 # MAGIC     _source_name        STRING
 # MAGIC ) USING DELTA;
-# MAGIC
-# MAGIC
+# MAGIC 
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 2. CRM DATABASE SOURCES mapping to Silver
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.customer
 # MAGIC -- Source Table: bronze.customer
@@ -146,14 +146,14 @@
 # MAGIC     district        STRING,
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.agent
 # MAGIC -- Source Table: bronze.agent
@@ -167,14 +167,14 @@
 # MAGIC     manager_name    STRING,
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.provider
 # MAGIC -- Source Table: bronze.insurance_provider
@@ -187,14 +187,14 @@
 # MAGIC     is_active       BOOLEAN,
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _loaded_at      TIMESTAMP,
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.vehicle
 # MAGIC -- Source Table: bronze.vehicle
@@ -210,14 +210,14 @@
 # MAGIC     vehicle_value     DECIMAL(18,2),
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id         STRING,
 # MAGIC     _loaded_at        TIMESTAMP,
 # MAGIC     _source_system    STRING,
 # MAGIC     _source_name      STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.quotation
 # MAGIC -- Source Table: bronze.quotation
@@ -235,14 +235,14 @@
 # MAGIC     quotation_expiry_at     TIMESTAMP,
 # MAGIC     created_at              TIMESTAMP,
 # MAGIC     updated_at              TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
 # MAGIC     _loaded_at              TIMESTAMP,
 # MAGIC     _source_system          STRING,
 # MAGIC     _source_name            STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: silver.quotation_item
 # MAGIC -- Source Table: bronze.quotation_item
@@ -256,7 +256,7 @@
 # MAGIC     deductible_amount   DECIMAL(18,2),
 # MAGIC     created_at          TIMESTAMP,
 # MAGIC     updated_at          TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _loaded_at          TIMESTAMP,

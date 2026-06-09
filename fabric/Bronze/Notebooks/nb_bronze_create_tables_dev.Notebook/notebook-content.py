@@ -40,16 +40,16 @@
 # MAGIC --
 # MAGIC -- File Location: sql/lakehouse/create_bronze_tables.sql
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- CREATE SCHEMA
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC CREATE SCHEMA IF NOT EXISTS bronze;
-# MAGIC
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 1. JSON SOURCES (Append-Only Ingestion)
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.cancellation
 # MAGIC -- Source System: policy_system
@@ -65,7 +65,7 @@
 # MAGIC     refund_amount       STRING,
 # MAGIC     last_updated_at     TIMESTAMP,
 # MAGIC     source_system       STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _operation_type     STRING,
@@ -75,7 +75,7 @@
 # MAGIC     _source_name        STRING,
 # MAGIC     _source_file        STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.payment
 # MAGIC -- Source System: payment_system
@@ -93,7 +93,7 @@
 # MAGIC     transaction_reference   STRING,
 # MAGIC     last_updated_at         TIMESTAMP,
 # MAGIC     source_system           STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
 # MAGIC     _operation_type         STRING,
@@ -103,7 +103,7 @@
 # MAGIC     _source_name            STRING,
 # MAGIC     _source_file            STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.policy
 # MAGIC -- Source System: policy_system
@@ -124,7 +124,7 @@
 # MAGIC     issued_date         STRING,
 # MAGIC     last_updated_at     TIMESTAMP,
 # MAGIC     source_system       STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _operation_type     STRING,
@@ -134,12 +134,12 @@
 # MAGIC     _source_name        STRING,
 # MAGIC     _source_file        STRING
 # MAGIC ) USING DELTA;
-# MAGIC
-# MAGIC
+# MAGIC 
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 2. CRM DATABASE SOURCES
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.customer
 # MAGIC -- Source System: crm_system
@@ -158,7 +158,7 @@
 # MAGIC     district        STRING,
 # MAGIC     created_date    TIMESTAMP,
 # MAGIC     updated_date    TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _operation_type STRING,
@@ -167,7 +167,7 @@
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.agent
 # MAGIC -- Source System: crm_system
@@ -183,7 +183,7 @@
 # MAGIC     manager_name    STRING,
 # MAGIC     created_date    TIMESTAMP,
 # MAGIC     updated_date    TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _operation_type STRING,
@@ -192,7 +192,7 @@
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.insurance_provider
 # MAGIC -- Source System: crm_system
@@ -207,7 +207,7 @@
 # MAGIC     active_flag     INT,
 # MAGIC     created_date    TIMESTAMP,
 # MAGIC     updated_date    TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id       STRING,
 # MAGIC     _operation_type STRING,
@@ -216,7 +216,7 @@
 # MAGIC     _source_system  STRING,
 # MAGIC     _source_name    STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.vehicle
 # MAGIC -- Source System: crm_system
@@ -234,7 +234,7 @@
 # MAGIC     vehicle_value     DECIMAL(18,2),
 # MAGIC     created_date      TIMESTAMP,
 # MAGIC     updated_date      TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id         STRING,
 # MAGIC     _operation_type   STRING,
@@ -243,7 +243,7 @@
 # MAGIC     _source_system    STRING,
 # MAGIC     _source_name      STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.quotation
 # MAGIC -- Source System: crm_system
@@ -263,7 +263,7 @@
 # MAGIC     quotation_expiry_date   TIMESTAMP,
 # MAGIC     created_date            TIMESTAMP,
 # MAGIC     updated_date            TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id               STRING,
 # MAGIC     _operation_type         STRING,
@@ -272,7 +272,7 @@
 # MAGIC     _source_system          STRING,
 # MAGIC     _source_name            STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: bronze.quotation_item
 # MAGIC -- Source System: crm_system
@@ -288,7 +288,7 @@
 # MAGIC     deductible_amount   DECIMAL(18,2),
 # MAGIC     created_date        TIMESTAMP,
 # MAGIC     updated_date        TIMESTAMP,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Technical Metadata Columns
 # MAGIC     _batch_id           STRING,
 # MAGIC     _operation_type     STRING,

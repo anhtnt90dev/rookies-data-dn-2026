@@ -40,16 +40,16 @@
 # MAGIC --
 # MAGIC -- File Location: sql/lakehouse/create_gold_tables.sql
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- CREATE SCHEMA
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC CREATE SCHEMA IF NOT EXISTS gold;
-# MAGIC
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 1. DIMENSION TABLES
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_date
 # MAGIC -- Source: Generated Calendar
@@ -68,7 +68,7 @@
 # MAGIC     year_month     STRING,
 # MAGIC     is_weekend     BOOLEAN
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_customer
 # MAGIC -- Source Table: silver.customer (SCD Type 2)
@@ -90,7 +90,7 @@
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_agent
 # MAGIC -- Source Table: silver.agent (SCD Type 2)
@@ -109,7 +109,7 @@
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_provider
 # MAGIC -- Source Table: silver.provider (SCD Type 2)
@@ -127,7 +127,7 @@
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_package
 # MAGIC -- Source Table: silver.quotation (SCD Type 1)
@@ -139,7 +139,7 @@
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_coverage
 # MAGIC -- Source Table: silver.quotation_item (SCD Type 1)
@@ -151,7 +151,7 @@
 # MAGIC     created_at      TIMESTAMP,
 # MAGIC     updated_at      TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_quotation
 # MAGIC -- Source Table: silver.quotation (SCD Type 1)
@@ -164,7 +164,7 @@
 # MAGIC     created_at           TIMESTAMP,
 # MAGIC     updated_at           TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_policy
 # MAGIC -- Source Table: silver.policy (SCD Type 1)
@@ -176,7 +176,7 @@
 # MAGIC     created_at         TIMESTAMP,
 # MAGIC     updated_at         TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_quotation_status
 # MAGIC -- Source Table: silver.quotation (SCD Type 1)
@@ -188,7 +188,7 @@
 # MAGIC     created_at            TIMESTAMP,
 # MAGIC     updated_at            TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_policy_status
 # MAGIC -- Source Table: silver.policy (SCD Type 1)
@@ -200,7 +200,7 @@
 # MAGIC     created_at          TIMESTAMP,
 # MAGIC     updated_at          TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_payment_status
 # MAGIC -- Source Table: silver.payment (SCD Type 1)
@@ -212,7 +212,7 @@
 # MAGIC     created_at            TIMESTAMP,
 # MAGIC     updated_at            TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_payment_method
 # MAGIC -- Source Table: silver.payment (SCD Type 1)
@@ -224,7 +224,7 @@
 # MAGIC     created_at           TIMESTAMP,
 # MAGIC     updated_at           TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_cancellation_reason
 # MAGIC -- Source Table: silver.cancellation (SCD Type 1)
@@ -236,7 +236,7 @@
 # MAGIC     created_at              TIMESTAMP,
 # MAGIC     updated_at              TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.dim_vehicle
 # MAGIC -- Source Table: silver.vehicle (SCD Type 2)
@@ -257,12 +257,12 @@
 # MAGIC     created_at        TIMESTAMP,
 # MAGIC     updated_at        TIMESTAMP
 # MAGIC ) USING DELTA;
-# MAGIC
-# MAGIC
+# MAGIC 
+# MAGIC 
 # MAGIC -- =====================================================================
 # MAGIC -- 2. FACT TABLES
 # MAGIC -- =====================================================================
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.fact_quotation
 # MAGIC -- Source Table: silver.quotation
@@ -274,7 +274,7 @@
 # MAGIC     customer_id               STRING,
 # MAGIC     agent_id                  STRING,
 # MAGIC     provider_code             STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Dimension Foreign Keys
 # MAGIC     quotation_key             BIGINT,
 # MAGIC     customer_key              BIGINT,
@@ -285,11 +285,11 @@
 # MAGIC     quotation_date_key        INT,
 # MAGIC     quotation_expiry_date_key INT,
 # MAGIC     vehicle_key               BIGINT, -- Resolved via customer_id context
-# MAGIC
+# MAGIC     
 # MAGIC     -- Measures
 # MAGIC     premium_amount            DECIMAL(18,2),
 # MAGIC     converted_flag            BOOLEAN,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Metadata / Audit columns
 # MAGIC     created_at                TIMESTAMP,
 # MAGIC     updated_at                TIMESTAMP,
@@ -300,7 +300,7 @@
 # MAGIC     deleted_at                TIMESTAMP,
 # MAGIC     delete_batch_id           STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.fact_quotation_item
 # MAGIC -- Source Tables: silver.quotation_item (primary), silver.quotation (header)
@@ -310,7 +310,7 @@
 # MAGIC     -- Degenerate Dimensions / Business Keys
 # MAGIC     quotation_item_id         STRING,
 # MAGIC     quotation_id              STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Dimension Foreign Keys
 # MAGIC     quotation_key             BIGINT,
 # MAGIC     quotation_date_key        INT,
@@ -321,11 +321,11 @@
 # MAGIC     quotation_status_key      BIGINT,
 # MAGIC     coverage_key              BIGINT,
 # MAGIC     vehicle_key               BIGINT, -- Resolved via customer_id context
-# MAGIC
+# MAGIC     
 # MAGIC     -- Measures
 # MAGIC     coverage_amount           DECIMAL(18,2),
 # MAGIC     deductible_amount         DECIMAL(18,2),
-# MAGIC
+# MAGIC     
 # MAGIC     -- Metadata / Audit columns
 # MAGIC     created_at                TIMESTAMP,
 # MAGIC     updated_at                TIMESTAMP,
@@ -336,7 +336,7 @@
 # MAGIC     deleted_at                TIMESTAMP,
 # MAGIC     delete_batch_id           STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.fact_policy
 # MAGIC -- Source Tables: silver.policy (primary), silver.quotation (context)
@@ -349,7 +349,7 @@
 # MAGIC     quotation_id              STRING,
 # MAGIC     customer_id               STRING,
 # MAGIC     provider_code             STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Dimension Foreign Keys
 # MAGIC     policy_key                BIGINT,
 # MAGIC     quotation_key             BIGINT,
@@ -362,10 +362,10 @@
 # MAGIC     policy_start_date_key     INT,
 # MAGIC     policy_end_date_key       INT,
 # MAGIC     vehicle_key               BIGINT, -- Resolved via customer_id context
-# MAGIC
+# MAGIC     
 # MAGIC     -- Measures
 # MAGIC     premium_amount            DECIMAL(18,2),
-# MAGIC
+# MAGIC     
 # MAGIC     -- Metadata / Audit columns
 # MAGIC     created_at                TIMESTAMP,
 # MAGIC     updated_at                TIMESTAMP,
@@ -376,7 +376,7 @@
 # MAGIC     deleted_at                TIMESTAMP,
 # MAGIC     delete_batch_id           STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.fact_payment
 # MAGIC -- Source Tables: silver.payment (primary), silver.policy (context)
@@ -387,7 +387,7 @@
 # MAGIC     payment_id                STRING,
 # MAGIC     policy_id                 STRING,
 # MAGIC     transaction_reference     STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Dimension Foreign Keys
 # MAGIC     policy_key                BIGINT,
 # MAGIC     payment_status_key        BIGINT,
@@ -397,10 +397,10 @@
 # MAGIC     customer_key              BIGINT,
 # MAGIC     provider_key              BIGINT,
 # MAGIC     vehicle_key               BIGINT, -- Resolved via customer_id context
-# MAGIC
+# MAGIC     
 # MAGIC     -- Measures
 # MAGIC     payment_amount            DECIMAL(18,2),
-# MAGIC
+# MAGIC     
 # MAGIC     -- Metadata / Audit columns
 # MAGIC     created_at                TIMESTAMP,
 # MAGIC     updated_at                TIMESTAMP,
@@ -411,7 +411,7 @@
 # MAGIC     deleted_at                TIMESTAMP,
 # MAGIC     delete_batch_id           STRING
 # MAGIC ) USING DELTA;
-# MAGIC
+# MAGIC 
 # MAGIC -- ---------------------------------------------------------------------
 # MAGIC -- TABLE: gold.fact_cancellation
 # MAGIC -- Source Tables: silver.cancellation (primary), silver.policy (context)
@@ -421,7 +421,7 @@
 # MAGIC     -- Degenerate Dimensions / Business Keys
 # MAGIC     cancellation_id           STRING,
 # MAGIC     policy_id                 STRING,
-# MAGIC
+# MAGIC     
 # MAGIC     -- Dimension Foreign Keys
 # MAGIC     policy_key                BIGINT,
 # MAGIC     cancellation_reason_key   BIGINT,
@@ -429,10 +429,10 @@
 # MAGIC     customer_key              BIGINT,
 # MAGIC     provider_key              BIGINT,
 # MAGIC     vehicle_key               BIGINT, -- Resolved via customer_id context
-# MAGIC
+# MAGIC     
 # MAGIC     -- Measures
 # MAGIC     refund_amount             DECIMAL(18,2),
-# MAGIC
+# MAGIC     
 # MAGIC     -- Metadata / Audit columns
 # MAGIC     created_at                TIMESTAMP,
 # MAGIC     updated_at                TIMESTAMP,

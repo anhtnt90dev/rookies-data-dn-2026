@@ -4,7 +4,7 @@
 This document outlines the Git branching strategy and commit message standards for the project. Adhering to these conventions ensures a clean repository history, easy tracking of user stories, and streamlined collaboration.
 
 > [!IMPORTANT]
-> **Zero Tolerance Policy**: Direct pushes to protected branches (`develop` and `main`) are strictly prohibited. All changes must be proposed via a Pull Request.
+> **Zero Tolerance Policy**: Direct pushes to protected branches (`dev` and `main`) are strictly prohibited. All changes must be proposed via a Pull Request.
 
 ---
 
@@ -17,13 +17,13 @@ We use a modified Git Flow strategy. Branch names must be mapped to an **Azure D
 | Branch Type | Base Branch | Target Branch | Description |
 | :--- | :--- | :--- | :--- |
 | `main` | - | - | Production-ready stable branch. |
-| `develop` | - | - | Integration branch for day-to-day development. |
-| `feature/*` | `develop` | `develop` | Active development for new user stories. |
-| `release/*` | `develop` | `main` & `develop` | Release candidates (UAT, stabilization). |
-| `hotfix/*` | `main` | `main` & `develop` | Urgent production bug fixes. |
-| `doc/*` | `develop` / `main` | `develop` / `main` | Documentations, architecture diagrams, and guides. |
-| `refactor/*` | `develop` | `develop` | Restructuring existing code/notebooks without changing behavior or adding features. |
-| `chore/*` | `develop` | `develop` | Routine maintenance tasks (e.g., folder reorganizations, CI/CD updates, dependency upgrades). |
+| `dev` | - | - | Integration branch for day-to-day development. |
+| `feature/*` | `dev` | `dev` | Active development for new user stories. |
+| `release/*` | `dev` | `main` & `dev` | Release candidates (UAT, stabilization). |
+| `hotfix/*` | `main` | `main` & `dev` | Urgent production bug fixes. |
+| `doc/*` | `dev` / `main` | `dev` / `main` | Documentations, architecture diagrams, and guides. |
+| `refactor/*` | `dev` | `dev` | Restructuring existing code/notebooks without changing behavior or adding features. |
+| `chore/*` | `dev` | `dev` | Routine maintenance tasks (e.g., folder reorganizations, CI/CD updates, dependency upgrades). |
 
 ### Branch Naming Format
 
@@ -70,7 +70,7 @@ Branch names must follow this structure:
 
 #### Documentation
 *   `doc/us-4012-git-workflow-guide`
-*   `doc/no-ref-fix-typo-conventions-md`
+*   `doc/no-ref-fix-typo-branching-and-commit-conventions-md`
 
 #### Project Structure & Maintenance (Chores / Refactoring)
 *   `chore/us-5011-reorganize-kpi-docs-folders`

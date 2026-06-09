@@ -147,7 +147,7 @@
     },
     {
       "target": "operation_type",
-      "expression": "operation_type"
+      "expression": "_operation_type"
     },
     {
       "target": "is_deleted",

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard 02 – Policy & Payment Operations Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f0f2f5; --surface:#fff; --surface2:#f6f8fa; --border:#d0d7de;
+  --text:#1a1f2e; --muted:#57606a; --dim:#8c959f;
+  --green:#1a7f37; --red:#cf222e; --amber:#9a6700;
+  --blue:#0969da; --purple:#6639ba; --teal:#0a7489;
+  --sidebar-w:210px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:13px}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:#1a2332;border-right:1px solid #0d1117;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-icon{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;margin-bottom:7px}
+.sb-name{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.08em;text-transform:uppercase}
+.sb-nav{flex:1;padding:10px 8px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:6px;cursor:pointer;color:rgba(255,255,255,.5);font-size:12.5px;font-weight:500;transition:all .15s;margin-bottom:2px;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.nav-item.active{background:rgba(9,105,218,.35);color:#58a6ff}
+.nav-icon{font-size:13px;width:15px;text-align:center}
+.sb-foot{padding:12px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:10px;color:rgba(255,255,255,.22);line-height:1.7}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:15px 24px 0;position:sticky;top:0;z-index:50}
+.hdr-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.pg-title{font-size:16px;font-weight:700;color:var(--text)}
+.pg-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.live-badge{background:rgba(26,127,55,.1);border:1px solid rgba(26,127,55,.3);color:#1a7f37;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.filters{display:flex;gap:10px;padding-bottom:13px;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:2px}
+.fl{font-size:9px;color:var(--dim);letter-spacing:.07em;text-transform:uppercase;font-weight:600}
+select{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 24px 5px 9px;border-radius:6px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%237d8590'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;min-width:120px}
+
+/* ── PAGE CONTAINER ── */
+.page{display:none;padding:18px 24px 28px;flex:1}
+.page.active{display:block}
+
+/* ── SECTION LABEL ── */
+.sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:8px;margin-top:2px;display:flex;align-items:center;gap:8px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.sec-mt{margin-top:16px}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;gap:10px;margin-bottom:14px}
+.g5{grid-template-columns:repeat(5,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 14px;position:relative;overflow:hidden;transition:border-color .2s}
+.kcard:hover{border-color:var(--blue)}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--kc,var(--blue));border-radius:10px 10px 0 0}
+.kcard.g{--kc:var(--green)}.kcard.r{--kc:var(--red)}.kcard.a{--kc:var(--amber)}.kcard.p{--kc:var(--purple)}.kcard.t{--kc:var(--teal)}
+.klbl{font-size:9.5px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.kval{font-size:18px;font-weight:700;color:var(--text);line-height:1;margin-bottom:4px}
+.kval.sm{font-size:15px}
+.kdelta{display:flex;align-items:center;gap:3px;font-size:10px;font-weight:600}
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--muted)}
+
+/* ── CHART CARDS ── */
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;overflow:hidden}
+.cc-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.cc-sub{font-size:9.5px;color:var(--dim);font-weight:400;font-style:italic}
+.cc canvas{flex:1;min-height:0;width:100%!important}
+.cc-rel{flex:1;min-height:0;position:relative}
+.cc-rel canvas{position:absolute;top:0;left:0;width:100%!important;height:100%!important}
+
+/* ── CHART GRIDS ── */
+.cg{display:grid;gap:10px;margin-bottom:10px}
+.cg-322{grid-template-columns:3fr 2fr 2fr}
+.cg-32{grid-template-columns:3fr 2fr}
+.cg-23{grid-template-columns:2fr 3fr}
+.cg-222{grid-template-columns:1fr 1fr 1fr}
+.cg-2{grid-template-columns:1fr 1fr}
+.cg-211{grid-template-columns:2fr 1fr 1fr}
+.cg-1{grid-template-columns:1fr}
+.h230{grid-template-rows:230px}
+.h210{grid-template-rows:210px}
+.h200{grid-template-rows:200px}
+.h260{grid-template-rows:260px}
+
+/* ── FUNNEL ── */
+.funnel{display:flex;flex-direction:column;gap:0;flex:1;justify-content:center}
+.f-step{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.f-lbl{font-size:11px;font-weight:600;color:var(--text);width:120px;flex-shrink:0}
+.f-track{flex:1;height:28px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative}
+.f-bar{height:100%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+.f-bar-lbl{font-size:11px;font-weight:700;color:#fff}
+.f-pct{font-size:11px;font-weight:700;width:52px;text-align:right;flex-shrink:0}
+.f-arrow{text-align:center;font-size:10px;color:var(--dim);padding-left:130px;margin-bottom:2px}
+.f-drop{font-size:9.5px;color:var(--red);padding-left:130px;margin-top:-1px;margin-bottom:4px}
+
+/* ── DONUT ── */
+.donut-wrap{position:relative;width:88px;height:88px;margin:0 auto 8px;flex-shrink:0}
+.dleg{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.dleg-item{display:flex;align-items:center;gap:6px;font-size:10px}
+.dleg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dleg-lbl{color:var(--muted);flex:1}
+.dleg-val{color:var(--text);font-weight:600;font-family:'DM Mono',monospace}
+
+/* ── PROVIDER BARS ── */
+.prov-item{margin-bottom:8px;flex-shrink:0}
+.prov-hdr{display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px}
+.prov-nm{color:var(--muted)}
+.prov-pct{font-weight:600;font-family:'DM Mono',monospace}
+.prov-track{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.prov-fill{height:100%;border-radius:3px;transition:width 1s ease}
+
+/* ── AGING BARS ── */
+.aging-item{margin-bottom:7px;flex-shrink:0}
+.aging-hdr{display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px}
+.aging-lbl{color:var(--muted)}
+.aging-val{font-weight:600;font-family:'DM Mono',monospace}
+.aging-track{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.aging-fill{height:100%;border-radius:3px}
+
+/* ── GAUGE ── */
+.gauge-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:0}
+.gauge-tgt{text-align:center;font-size:10px;color:var(--muted);flex-shrink:0}
+.gauge-tgt span{color:var(--green);font-weight:600}
+
+/* ── SCATTER ── */
+.scatter-note{font-size:9.5px;color:var(--muted);margin-top:6px;flex-shrink:0;display:flex;gap:12px;flex-wrap:wrap}
+.s-dot{display:inline-flex;align-items:center;gap:4px}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow:auto;flex:1;min-height:0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:9px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;padding:0 8px 6px 0;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:5px 8px 5px 0;font-size:10.5px;color:var(--muted);border-bottom:1px solid rgba(208,215,222,.45);white-space:nowrap}
+td.mono{color:var(--blue);font-family:'DM Mono',monospace;font-size:9.5px}
+td.amt{color:var(--text);font-weight:600;font-family:'DM Mono',monospace;text-align:right}
+.view-more{text-align:right;margin-top:7px;font-size:10.5px;color:var(--blue);cursor:pointer;font-weight:500;flex-shrink:0}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:600;white-space:nowrap}
+.b-paid{background:rgba(26,127,55,.1);color:#1a7f37}
+.b-pending{background:rgba(154,103,0,.1);color:#9a6700}
+.b-failed{background:rgba(207,34,46,.08);color:#cf222e}
+.b-refunded{background:rgba(102,57,186,.1);color:#6639ba}
+.b-active{background:rgba(9,105,218,.08);color:#0969da}
+.b-expired{background:rgba(87,96,106,.1);color:#57606a}
+.b-cancelled{background:rgba(207,34,46,.08);color:#cf222e}
+.b-pending2{background:rgba(10,116,137,.1);color:#0a7489}
+
+/* ── ALERT ── */
+.alert{border-radius:6px;padding:7px 11px;font-size:10.5px;margin-top:8px;display:flex;gap:7px;align-items:flex-start;flex-shrink:0}
+.alert-r{background:rgba(207,34,46,.06);border:1px solid rgba(207,34,46,.18);color:#82071e}
+.alert-a{background:rgba(154,103,0,.07);border:1px solid rgba(154,103,0,.2);color:#6e4800}
+.alert-b{background:rgba(9,105,218,.05);border:1px solid rgba(9,105,218,.15);color:#0550ae}
+
+/* ── TAB SWITCHER (inside pages) ── */
+.tab-bar{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid var(--border)}
+.tab{padding:7px 14px;font-size:11.5px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;margin-bottom:-1px}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue)}
+.tab:hover:not(.on){color:var(--text)}
+.tab-pane{display:none}.tab-pane.on{display:block}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d0d7de;border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">IA</div>
+    <div class="sb-name">Insurance Analytics</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item active"  data-page="overview">      <span class="nav-icon">◉</span> Overview</div>
+    <div class="nav-item"         data-page="policy-ops">    <span class="nav-icon">📋</span> Policy Operations</div>
+    <div class="nav-item"         data-page="payment-mon">   <span class="nav-icon">💳</span> Payment Monitoring</div>
+    <div class="nav-item"         data-page="provider-perf"> <span class="nav-icon">🏢</span> Provider Performance</div>
+    <div class="nav-item"         data-page="detail-rec">    <span class="nav-icon">🗂</span> Detail Records</div>
+  </nav>
+  <div class="sb-foot">
+    <div>Data as of: 25/05/2026 23:59</div>
+    <div>Refreshed: 25/05/2026 08:30</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="hdr-top">
+      <div>
+        <div class="pg-title">Dashboard 02 – Policy &amp; Payment Operations Analytics</div>
+        <div class="pg-sub">Comprehensive view of policy lifecycle and payment collection performance</div>
+      </div>
+      <div class="live-badge">● LIVE</div>
+    </div>
+    <div class="filters">
+      <div class="fg"><div class="fl">Date Range</div>
+        <select><option>01/01/2026 – 25/05/2026</option><option>All time</option><option>Q1 2026</option><option>Q2 2026</option></select>
+      </div>
+      <div class="fg"><div class="fl">Provider</div>
+        <select><option>All Providers</option><option>Bao Viet</option><option>PVI</option><option>PTI</option><option>MIC</option><option>Liberty</option></select>
+      </div>
+      <div class="fg"><div class="fl">Region</div>
+        <select><option>All Regions</option><option>North</option><option>Central</option><option>South</option></select>
+      </div>
+      <div class="fg"><div class="fl">Policy Status</div>
+        <select><option>All</option><option>ACTIVE</option><option>EXPIRED</option><option>CANCELLED</option><option>PENDING</option></select>
+      </div>
+      <div class="fg"><div class="fl">Payment Status</div>
+        <select><option>All</option><option>PAID</option><option>PENDING</option><option>FAILED</option><option>REFUNDED</option></select>
+      </div>
+      <div class="fg"><div class="fl">Payment Method</div>
+        <select><option>All Methods</option><option>Bank Transfer</option><option>Credit Card</option><option>E-wallet</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       1. OVERVIEW
+  ═══════════════════════════════════════════ -->
+  <div class="page active" id="page-overview">
+    <div class="sec">Key Performance Indicators</div>
+    <div class="kpi-grid g5">
+      <div class="kcard g"><div class="klbl">Total Policies Issued</div><div class="kval">600</div><div class="kdelta up">▲ 14.3% vs PY</div></div>
+      <div class="kcard g"><div class="klbl">Total Premium Written</div><div class="kval sm">6.30bn</div><div class="kdelta up">▲ 21.9% vs PY</div></div>
+      <div class="kcard g"><div class="klbl">Total Payments Collected</div><div class="kval sm">3.68bn</div><div class="kdelta up">▲ 18.1% vs PY</div></div>
+      <div class="kcard t"><div class="klbl">Collection Rate</div><div class="kval">58.4%</div><div class="kdelta up">▲ 2.6pp vs PY</div></div>
+      <div class="kcard r"><div class="klbl">Cancellation Rate</div><div class="kval">10.0%</div><div class="kdelta dn">▲ 1.2pp vs PY</div></div>
+    </div>
+
+    <!-- Insight 1: Premium vs Payment Trend -->
+    <div class="sec sec-mt">Insight 1 — Are we collecting premium as fast as we issue policies?</div>
+    <div class="cg cg-1 h230">
+      <div class="cc">
+        <div class="cc-title">Premium Written vs Payment Collected — Monthly Trend<span class="cc-sub">M-11 · M-12</span></div>
+        <div class="cc-rel"><canvas id="ov_trend"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Insight 2 + 3 -->
+    <div class="sec sec-mt">Insight 2 — Where are we losing customers? &nbsp;·&nbsp; Insight 3 — Monthly Business Trend</div>
+    <div class="cg cg-32 h260">
+      <!-- Funnel -->
+      <div class="cc">
+        <div class="cc-title">Policy Lifecycle Funnel<span class="cc-sub">Policies Issued → Active In-Force</span></div>
+        <div class="funnel">
+          <div class="f-step">
+            <div class="f-lbl">Policies Issued</div>
+            <div class="f-track"><div class="f-bar" style="width:100%;background:#0969da"><span class="f-bar-lbl">600</span></div></div>
+            <div class="f-pct" style="color:#0969da">100%</div>
+          </div>
+          <div class="f-arrow">▼</div>
+          <div class="f-step">
+            <div class="f-lbl">Payments Received</div>
+            <div class="f-track"><div class="f-bar" style="width:58.4%;background:#1a7f37"><span class="f-bar-lbl">350</span></div></div>
+            <div class="f-pct" style="color:#1a7f37">58.4%</div>
+          </div>
+          <div class="f-drop">▼ −250 policies with no payment collected yet</div>
+          <div class="f-step">
+            <div class="f-lbl">Active Policies</div>
+            <div class="f-track"><div class="f-bar" style="width:25%;background:#0a7489"><span class="f-bar-lbl">150</span></div></div>
+            <div class="f-pct" style="color:#0a7489">25.0%</div>
+          </div>
+          <div class="f-drop">▼ −200 expired policies (normal lifecycle)</div>
+          <div class="f-step">
+            <div class="f-lbl">Cancelled Policies</div>
+            <div class="f-track"><div class="f-bar" style="width:10%;background:#cf222e"><span class="f-bar-lbl">60</span></div></div>
+            <div class="f-pct" style="color:#cf222e">10.0%</div>
+          </div>
+          <div class="f-drop">▼ Spike in May 2026 — investigate root cause</div>
+        </div>
+        <div class="alert alert-r">⚠ 10% cancellation rate up 1.2pp — review provider retention</div>
+      </div>
+      <!-- Monthly business trend -->
+      <div class="cc">
+        <div class="cc-title">Monthly Business Trend<span class="cc-sub">Issued · Collected · Cancellations</span></div>
+        <div class="cc-rel"><canvas id="ov_monthly"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       2. POLICY OPERATIONS
+  ═══════════════════════════════════════════ -->
+  <div class="page" id="page-policy-ops">
+    <div class="sec">Policy Operations KPIs</div>
+    <div class="kpi-grid g4">
+      <div class="kcard g"><div class="klbl">Policies Issued</div><div class="kval">600</div><div class="kdelta up">▲ 14.3% vs PY</div></div>
+      <div class="kcard t"><div class="klbl">Active Policies</div><div class="kval">150</div><div class="kdelta up">▲ 15.4% vs PY</div></div>
+      <div class="kcard a"><div class="klbl">Expired Policies</div><div class="kval">261</div><div class="kdelta neu">43.5% of portfolio</div></div>
+      <div class="kcard g"><div class="klbl">Avg Premium / Policy</div><div class="kval sm">10.5M</div><div class="kdelta up">▲ 6.8% vs PY</div></div>
+    </div>
+
+    <!-- Insight 1 + 2 -->
+    <div class="sec sec-mt">Insight 1 — Are policy sales growing? &nbsp;·&nbsp; Insight 2 — Portfolio health</div>
+    <div class="cg cg-322 h230">
+      <div class="cc">
+        <div class="cc-title">Policy Issuance Volume — Monthly Trend<span class="cc-sub">Issued by Month</span></div>
+        <div class="cc-rel"><canvas id="po_issued"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Policy Status Distribution<span class="cc-sub">Current Portfolio</span></div>
+        <div class="donut-wrap"><canvas id="po_status" width="88" height="88"></canvas></div>
+        <div class="dleg">
+          <div class="dleg-item"><div class="dleg-dot" style="background:#0969da"></div><div class="dleg-lbl">Active</div><div class="dleg-val">25.0%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#57606a"></div><div class="dleg-lbl">Expired</div><div class="dleg-val">43.5%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#cf222e"></div><div class="dleg-lbl">Cancelled</div><div class="dleg-val">10.0%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#0a7489"></div><div class="dleg-lbl">Pending</div><div class="dleg-val">21.5%</div></div>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Policies by Package<span class="cc-sub">Most popular packages</span></div>
+        <div class="donut-wrap"><canvas id="po_pkg" width="88" height="88"></canvas></div>
+        <div class="dleg">
+          <div class="dleg-item"><div class="dleg-dot" style="background:#0969da"></div><div class="dleg-lbl">Package A</div><div class="dleg-val">38.2%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#1a7f37"></div><div class="dleg-lbl">Package B</div><div class="dleg-val">33.5%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#9a6700"></div><div class="dleg-lbl">Package C</div><div class="dleg-val">28.3%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insight 4 + 5 -->
+    <div class="sec sec-mt">Insight 4 — Which areas generate the most business? &nbsp;·&nbsp; Insight 5 — Where is revenue coming from?</div>
+    <div class="cg cg-2 h210">
+      <div class="cc">
+        <div class="cc-title">Policies &amp; Premium by Region<span class="cc-sub">Policy count · Premium VND</span></div>
+        <div class="cc-rel"><canvas id="po_region"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Premium Distribution by Package &amp; Provider<span class="cc-sub">Revenue breakdown</span></div>
+        <div class="cc-rel"><canvas id="po_premium"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       3. PAYMENT MONITORING
+  ═══════════════════════════════════════════ -->
+  <div class="page" id="page-payment-mon">
+    <div class="sec">Payment Operations KPIs</div>
+    <div class="kpi-grid g5">
+      <div class="kcard g"><div class="klbl">Total Payments</div><div class="kval">412</div><div class="kdelta up">▲ 11.2% vs PY</div></div>
+      <div class="kcard g"><div class="klbl">Payment Amount</div><div class="kval sm">3.68bn</div><div class="kdelta up">▲ 18.1% vs PY</div></div>
+      <div class="kcard t"><div class="klbl">Successful Payment Rate</div><div class="kval">58.4%</div><div class="kdelta up">▲ 2.6pp vs PY</div></div>
+      <div class="kcard r"><div class="klbl">Failed Payment Rate</div><div class="kval">12.1%</div><div class="kdelta dn">▲ 1.4pp vs PY</div></div>
+      <div class="kcard a"><div class="klbl">Avg Payment Value</div><div class="kval sm">8.93M</div><div class="kdelta up">▲ 6.2% vs PY</div></div>
+    </div>
+
+    <!-- Insight 1 + 2 + 3 -->
+    <div class="sec sec-mt">Insight 1 — Collection Rate &nbsp;·&nbsp; Insight 2 — Payment Status &nbsp;·&nbsp; Insight 3 — Payment Method</div>
+    <div class="cg cg-322 h230">
+      <!-- Collection Rate gauge-style + aging -->
+      <div class="cc">
+        <div class="cc-title">Pending Payment Aging (VND)<span class="cc-sub">M-16 to M-20 · How long has money been outstanding?</span></div>
+        <div class="aging-item"><div class="aging-hdr"><span class="aging-lbl">0 – 7 days</span><span class="aging-val">12M</span></div><div class="aging-track"><div class="aging-fill" style="width:1%;background:#3fb950"></div></div></div>
+        <div class="aging-item"><div class="aging-hdr"><span class="aging-lbl">8 – 30 days</span><span class="aging-val">38M</span></div><div class="aging-track"><div class="aging-fill" style="width:3%;background:#3fb950"></div></div></div>
+        <div class="aging-item"><div class="aging-hdr"><span class="aging-lbl">31 – 60 days</span><span class="aging-val">47M</span></div><div class="aging-track"><div class="aging-fill" style="width:3%;background:#e3b341"></div></div></div>
+        <div class="aging-item"><div class="aging-hdr"><span class="aging-lbl">61 – 90 days</span><span class="aging-val">57M</span></div><div class="aging-track"><div class="aging-fill" style="width:4%;background:#f0883e"></div></div></div>
+        <div class="aging-item"><div class="aging-hdr"><span class="aging-lbl">&gt; 90 days</span><span class="aging-val" style="color:#cf222e;font-weight:700">1.42bn</span></div><div class="aging-track"><div class="aging-fill" style="width:100%;background:#f85149"></div></div></div>
+        <div class="alert alert-r">⚠ 1.42bn (&gt;90d) — immediate collection action required</div>
+      </div>
+      <!-- Payment Status -->
+      <div class="cc">
+        <div class="cc-title">Payment Status Distribution<span class="cc-sub">Are failures increasing?</span></div>
+        <div class="donut-wrap"><canvas id="pm_status" width="88" height="88"></canvas></div>
+        <div class="dleg">
+          <div class="dleg-item"><div class="dleg-dot" style="background:#1a7f37"></div><div class="dleg-lbl">Paid</div><div class="dleg-val">58.4%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#9a6700"></div><div class="dleg-lbl">Pending</div><div class="dleg-val">24.3%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#cf222e"></div><div class="dleg-lbl">Failed</div><div class="dleg-val">12.1%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#6639ba"></div><div class="dleg-lbl">Refunded</div><div class="dleg-val">5.2%</div></div>
+        </div>
+      </div>
+      <!-- Payment Method -->
+      <div class="cc">
+        <div class="cc-title">Payment Method Performance<span class="cc-sub">Which channel do customers prefer?</span></div>
+        <div class="donut-wrap"><canvas id="pm_method" width="88" height="88"></canvas></div>
+        <div class="dleg">
+          <div class="dleg-item"><div class="dleg-dot" style="background:#0969da"></div><div class="dleg-lbl">Bank Transfer</div><div class="dleg-val">48.2%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#1a7f37"></div><div class="dleg-lbl">Credit Card</div><div class="dleg-val">31.4%</div></div>
+          <div class="dleg-item"><div class="dleg-dot" style="background:#9a6700"></div><div class="dleg-lbl">E-wallet</div><div class="dleg-val">20.4%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insight 4 + 5 -->
+    <div class="sec sec-mt">Insight 4 — Are collections improving? &nbsp;·&nbsp; Insight 5 — Provider collection performance</div>
+    <div class="cg cg-23 h230">
+      <!-- Provider collection rate -->
+      <div class="cc">
+        <div class="cc-title">Provider Collection Performance<span class="cc-sub">Payment Amount · Collection Rate</span></div>
+        <div class="cc-rel"><canvas id="pm_prov"></canvas></div>
+      </div>
+      <!-- Payment trend -->
+      <div class="cc">
+        <div class="cc-title">Monthly Payment Trend — M-11 / M-12 / M-13<span class="cc-sub">Collected · Pending · Failed</span></div>
+        <div class="cc-rel"><canvas id="pm_trend"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       4. PROVIDER PERFORMANCE
+  ═══════════════════════════════════════════ -->
+  <div class="page" id="page-provider-perf">
+    <div class="sec">Provider KPIs</div>
+    <div class="kpi-grid g4">
+      <div class="kcard t"><div class="klbl">Active Providers</div><div class="kval">5</div><div class="kdelta neu">Bao Viet · PVI · MIC · PTI · Liberty</div></div>
+      <div class="kcard g"><div class="klbl">Top Premium Provider</div><div class="kval sm">Bao Viet</div><div class="kdelta up">▲ 2.18bn written</div></div>
+      <div class="kcard g"><div class="klbl">Best Collection Rate</div><div class="kval sm">Bao Viet</div><div class="kdelta up">▲ 72.3%</div></div>
+      <div class="kcard r"><div class="klbl">Highest Cancel. Rate</div><div class="kval sm">Liberty</div><div class="kdelta dn">▲ 18.4% cancellations</div></div>
+    </div>
+
+    <!-- Insight 1 + 2 + 3 -->
+    <div class="sec sec-mt">Insight 1 — Top by Premium &nbsp;·&nbsp; Insight 2 — Collection Rate &nbsp;·&nbsp; Insight 3 — Cancellation Rate</div>
+    <div class="cg cg-222 h230">
+      <div class="cc">
+        <div class="cc-title">Top Providers by Premium Volume<span class="cc-sub">Which generate highest premium?</span></div>
+        <div class="cc-rel"><canvas id="pp_premium"></canvas></div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Collection Rate by Provider<span class="cc-sub">Payments / Premium written</span></div>
+        <div id="pp_collect_bars" style="flex:1;overflow:auto;padding-top:4px"></div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Cancellation Rate by Provider<span class="cc-sub">Cancelled / Issued policies</span></div>
+        <div class="cc-rel"><canvas id="pp_cancel"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Insight 4: Quality Matrix + Insight 5: Provider trend -->
+    <div class="sec sec-mt">Insight 4 — Provider Quality Matrix &nbsp;·&nbsp; Insight 5 — Provider Trend</div>
+    <div class="cg cg-32 h260">
+      <div class="cc">
+        <div class="cc-title">Provider Quality Matrix<span class="cc-sub">X = Collection Rate · Y = Cancellation Rate · Size = Premium volume</span></div>
+        <div class="cc-rel"><canvas id="pp_scatter"></canvas></div>
+        <div class="scatter-note">
+          <span class="s-dot"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#1a7f37"></span> Best: High Collection + Low Cancellation</span>
+          <span class="s-dot"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#cf222e"></span> Risk: Low Collection + High Cancellation</span>
+        </div>
+      </div>
+      <div class="cc">
+        <div class="cc-title">Provider Performance Trend<span class="cc-sub">Premium written over time</span></div>
+        <div class="cc-rel"><canvas id="pp_trend"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       5. DETAIL RECORDS
+  ═══════════════════════════════════════════ -->
+  <div class="page" id="page-detail-rec">
+    <div class="sec">Detail Records — Drill-through Investigation</div>
+
+    <div class="tab-bar">
+      <div class="tab on"  data-tab="t-policy">Policy Records</div>
+      <div class="tab"     data-tab="t-payment">Payment Records</div>
+      <div class="tab"     data-tab="t-cancel">Cancellation Records</div>
+    </div>
+
+    <!-- Tab: Policy -->
+    <div class="tab-pane on" id="t-policy">
+      <div class="cc" style="min-height:320px">
+        <div class="cc-title">Policy Detail Table</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Policy ID</th><th>Customer</th><th>Provider</th><th>Package</th><th style="text-align:right">Premium (VND)</th><th>Start Date</th><th>End Date</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">POL-20260101-001</td><td>Nguyen Van A</td><td>Bao Viet</td><td>Package A</td><td class="amt">18,500,000</td><td>01/01/2026</td><td>31/12/2026</td><td><span class="badge b-active">Active</span></td></tr>
+              <tr><td class="mono">POL-20260102-002</td><td>Tran Thi B</td><td>PVI</td><td>Package B</td><td class="amt">12,200,000</td><td>02/01/2026</td><td>01/01/2027</td><td><span class="badge b-active">Active</span></td></tr>
+              <tr><td class="mono">POL-20260103-003</td><td>Le Van C</td><td>MIC</td><td>Package C</td><td class="amt">9,800,000</td><td>03/01/2026</td><td>02/01/2027</td><td><span class="badge b-expired">Expired</span></td></tr>
+              <tr><td class="mono">POL-20260105-004</td><td>Pham Thi D</td><td>PTI</td><td>Package A</td><td class="amt">22,000,000</td><td>05/01/2026</td><td>04/01/2027</td><td><span class="badge b-cancelled">Cancelled</span></td></tr>
+              <tr><td class="mono">POL-20260106-005</td><td>Hoang Van E</td><td>Liberty</td><td>Package B</td><td class="amt">15,600,000</td><td>06/01/2026</td><td>05/01/2027</td><td><span class="badge b-active">Active</span></td></tr>
+              <tr><td class="mono">POL-20260108-006</td><td>Vu Thi F</td><td>Bao Viet</td><td>Package C</td><td class="amt">8,400,000</td><td>08/01/2026</td><td>07/01/2027</td><td><span class="badge b-pending2">Pending</span></td></tr>
+              <tr><td class="mono">POL-20260110-007</td><td>Dang Van G</td><td>PVI</td><td>Package A</td><td class="amt">19,200,000</td><td>10/01/2026</td><td>09/01/2027</td><td><span class="badge b-active">Active</span></td></tr>
+              <tr><td class="mono">POL-20260112-008</td><td>Bui Thi H</td><td>MIC</td><td>Package B</td><td class="amt">11,800,000</td><td>12/01/2026</td><td>11/01/2027</td><td><span class="badge b-expired">Expired</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="view-more">Export all policy records →</div>
+      </div>
+    </div>
+
+    <!-- Tab: Payment -->
+    <div class="tab-pane" id="t-payment">
+      <div class="cc" style="min-height:320px">
+        <div class="cc-title">Payment Detail Table</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Payment ID</th><th>Policy ID</th><th>Customer</th><th>Provider</th><th>Method</th><th style="text-align:right">Amount (VND)</th><th>Date</th><th>Failure Reason</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">PAY00001</td><td class="mono">POL-001</td><td>Nguyen Van A</td><td>Bao Viet</td><td>Bank Transfer</td><td class="amt">18,500,000</td><td>24/05/2026</td><td>—</td><td><span class="badge b-paid">Paid</span></td></tr>
+              <tr><td class="mono">PAY00002</td><td class="mono">POL-002</td><td>Tran Thi B</td><td>PVI</td><td>Credit Card</td><td class="amt">6,030,000</td><td>23/05/2026</td><td>—</td><td><span class="badge b-pending">Pending</span></td></tr>
+              <tr><td class="mono">PAY00003</td><td class="mono">POL-003</td><td>Le Van C</td><td>MIC</td><td>E-wallet</td><td class="amt">6,045,000</td><td>22/05/2026</td><td>—</td><td><span class="badge b-refunded">Refunded</span></td></tr>
+              <tr><td class="mono">PAY00004</td><td class="mono">POL-004</td><td>Pham Thi D</td><td>PTI</td><td>Bank Transfer</td><td class="amt">6,060,000</td><td>21/05/2026</td><td style="color:#cf222e">Insuf. Funds</td><td><span class="badge b-failed">Failed</span></td></tr>
+              <tr><td class="mono">PAY00005</td><td class="mono">POL-005</td><td>Hoang Van E</td><td>Liberty</td><td>Credit Card</td><td class="amt">6,075,000</td><td>20/05/2026</td><td style="color:#cf222e">Card Declined</td><td><span class="badge b-failed">Failed</span></td></tr>
+              <tr><td class="mono">PAY00006</td><td class="mono">POL-006</td><td>Vu Thi F</td><td>Bao Viet</td><td>E-wallet</td><td class="amt">8,200,000</td><td>19/05/2026</td><td>—</td><td><span class="badge b-paid">Paid</span></td></tr>
+              <tr><td class="mono">PAY00007</td><td class="mono">POL-007</td><td>Dang Van G</td><td>PVI</td><td>Bank Transfer</td><td class="amt">11,400,000</td><td>18/05/2026</td><td style="color:#cf222e">Bank Error</td><td><span class="badge b-failed">Failed</span></td></tr>
+              <tr><td class="mono">PAY00008</td><td class="mono">POL-008</td><td>Bui Thi H</td><td>MIC</td><td>Credit Card</td><td class="amt">9,600,000</td><td>17/05/2026</td><td>—</td><td><span class="badge b-pending">Pending</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="view-more">Export all payment records →</div>
+      </div>
+    </div>
+
+    <!-- Tab: Cancellation -->
+    <div class="tab-pane" id="t-cancel">
+      <div class="cc" style="min-height:320px">
+        <div class="cc-title">Cancellation Detail Table</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Cancellation ID</th><th>Policy ID</th><th>Customer</th><th>Provider</th><th>Reason</th><th style="text-align:right">Refund Amount (VND)</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">CAN-20260501-001</td><td class="mono">POL-041</td><td>Nguyen Van X</td><td>Liberty</td><td>Customer request</td><td class="amt">4,200,000</td><td>01/05/2026</td></tr>
+              <tr><td class="mono">CAN-20260503-002</td><td class="mono">POL-088</td><td>Tran Thi Y</td><td>Liberty</td><td>Non-payment</td><td class="amt">0</td><td>03/05/2026</td></tr>
+              <tr><td class="mono">CAN-20260510-003</td><td class="mono">POL-112</td><td>Le Van Z</td><td>PTI</td><td>Duplicate policy</td><td class="amt">9,800,000</td><td>10/05/2026</td></tr>
+              <tr><td class="mono">CAN-20260515-004</td><td class="mono">POL-134</td><td>Pham Thi W</td><td>Liberty</td><td>Customer request</td><td class="amt">7,600,000</td><td>15/05/2026</td></tr>
+              <tr><td class="mono">CAN-20260520-005</td><td class="mono">POL-157</td><td>Hoang Van V</td><td>MIC</td><td>Non-payment</td><td class="amt">0</td><td>20/05/2026</td></tr>
+              <tr><td class="mono">CAN-20260522-006</td><td class="mono">POL-203</td><td>Vu Thi U</td><td>Liberty</td><td>Underwriting rejected</td><td class="amt">12,000,000</td><td>22/05/2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="view-more">Export all cancellation records →</div>
+      </div>
+    </div>
+
+  </div><!-- /detail-rec -->
+
+</div><!-- /main -->
+
+<script>
+// ── NAVIGATION ──
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const pid = item.dataset.page;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    item.classList.add('active');
+    document.getElementById('page-' + pid).classList.add('active');
+    if (!window._built) window._built = {};
+    if (!window._built[pid]) { window._built[pid] = true; buildPage(pid); }
+  });
+});
+
+// ── TAB SWITCHER (Detail Records) ──
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    const parent = t.closest('.page') || document;
+    parent.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    parent.querySelectorAll('.tab-pane').forEach(x => x.classList.remove('on'));
+    t.classList.add('on');
+    document.getElementById(t.dataset.tab).classList.add('on');
+  });
+});
+
+// ── CHART DEFAULTS ──
+Chart.defaults.color = '#57606a';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 10;
+const G = '#e8ecf0';
+const M6 = ['Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'];
+const PROVS = ['Bao Viet','PVI','MIC','PTI','Liberty'];
+
+// ── BUILD ON INIT ──
+window._built = { overview: true };
+buildPage('overview');
+
+function buildPage(id) {
+  if (id === 'overview')      buildOverview();
+  if (id === 'policy-ops')    buildPolicyOps();
+  if (id === 'payment-mon')   buildPaymentMon();
+  if (id === 'provider-perf') buildProviderPerf();
+}
+
+// ────────────────────────────────────────
+function buildOverview() {
+  // Insight 1: Premium vs Collected trend
+  new Chart(document.getElementById('ov_trend'), {
+    type: 'line',
+    data: {
+      labels: M6,
+      datasets: [
+        { label: 'Premium Written', data: [880,920,1050,1120,1080,1250], borderColor:'#0969da', backgroundColor:'rgba(9,105,218,.07)', fill:true, tension:.4, pointRadius:3, borderWidth:2 },
+        { label: 'Payment Collected', data: [520,580,620,670,610,680], borderColor:'#1a7f37', backgroundColor:'rgba(26,127,55,.06)', fill:true, tension:.4, pointRadius:3, borderWidth:2, borderDash:[5,3] }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{ boxWidth:8, padding:14, font:{size:10.5} } },
+        tooltip:{ callbacks:{ label: c => ` ${c.dataset.label}: ${c.raw}M VND` } } },
+      scales:{
+        x:{ grid:{color:G}, ticks:{font:{size:9.5}} },
+        y:{ grid:{color:G}, ticks:{font:{size:9.5}, callback: v => v+'M'} }
+      }
+    }
+  });
+
+  // Insight 3: Monthly business trend (combo)
+  new Chart(document.getElementById('ov_monthly'), {
+    type: 'bar',
+    data: {
+      labels: M6,
+      datasets: [
+        { label:'Issued Policies', data:[98,102,108,115,112,122], backgroundColor:'rgba(9,105,218,.75)', borderRadius:3, yAxisID:'y' },
+        { label:'Payment Amount (M VND)', data:[520,580,620,670,610,680], type:'line', borderColor:'#1a7f37', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2, yAxisID:'y2' },
+        { label:'Cancellations', data:[2,1,3,2,4,60], backgroundColor:'rgba(207,34,46,.7)', borderRadius:3, yAxisID:'y' }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{ boxWidth:8, padding:14, font:{size:10.5} } } },
+      scales:{
+        x:{ grid:{color:G}, ticks:{font:{size:9.5}} },
+        y:{ grid:{color:G}, ticks:{font:{size:9.5}}, stacked:false },
+        y2:{ position:'right', grid:{display:false}, ticks:{font:{size:9.5}, callback: v=>v+'M'} }
+      }
+    }
+  });
+}
+
+// ────────────────────────────────────────
+function buildPolicyOps() {
+  // Policy issued trend
+  new Chart(document.getElementById('po_issued'), {
+    type:'bar',
+    data:{ labels:M6, datasets:[{
+      label:'Policies Issued', data:[88,96,108,115,112,122],
+      backgroundColor:'rgba(9,105,218,.75)', borderRadius:4, borderWidth:0
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{grid:{color:G},ticks:{font:{size:9.5}}}, y:{grid:{color:G},ticks:{font:{size:9.5}}} }
+    }
+  });
+  // Policy status donut
+  new Chart(document.getElementById('po_status'), {
+    type:'doughnut',
+    data:{ labels:['Active','Expired','Cancelled','Pending'],
+      datasets:[{ data:[25,43.5,10,21.5], backgroundColor:['#0969da','#57606a','#cf222e','#0a7489'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }] },
+    options:{ responsive:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  // Package donut
+  new Chart(document.getElementById('po_pkg'), {
+    type:'doughnut',
+    data:{ labels:['Package A','Package B','Package C'],
+      datasets:[{ data:[38.2,33.5,28.3], backgroundColor:['#0969da','#1a7f37','#9a6700'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }] },
+    options:{ responsive:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  // Region bar
+  new Chart(document.getElementById('po_region'), {
+    type:'bar',
+    data:{ labels:['North','Central','South','Other'],
+      datasets:[
+        { label:'Policies', data:[240,158,142,60], backgroundColor:'rgba(9,105,218,.75)', borderRadius:3, yAxisID:'y' },
+        { label:'Premium (M VND)', data:[2520,1650,1480,650], type:'line', borderColor:'#9a6700', backgroundColor:'transparent', tension:.4, pointRadius:4, borderWidth:2, yAxisID:'y2' }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:12,font:{size:10}} } },
+      scales:{
+        x:{grid:{color:G},ticks:{font:{size:9.5}}},
+        y:{grid:{color:G},ticks:{font:{size:9.5}}},
+        y2:{position:'right',grid:{display:false},ticks:{font:{size:9.5},callback:v=>v+'M'}}
+      }
+    }
+  });
+  // Premium by package + provider
+  new Chart(document.getElementById('po_premium'), {
+    type:'bar',
+    data:{
+      labels:PROVS,
+      datasets:[
+        { label:'Package A', data:[820,680,510,420,190], backgroundColor:'#0969da', borderRadius:3, stack:'s' },
+        { label:'Package B', data:[680,520,380,310,145], backgroundColor:'#1a7f37', borderRadius:3, stack:'s' },
+        { label:'Package C', data:[420,310,270,200,80],  backgroundColor:'#9a6700', borderRadius:3, stack:'s' }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:12,font:{size:10}} } },
+      scales:{ x:{stacked:true,grid:{color:G},ticks:{font:{size:9.5}}}, y:{stacked:true,grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'M'}} }
+    }
+  });
+}
+
+// ────────────────────────────────────────
+function buildPaymentMon() {
+  // Payment status donut
+  new Chart(document.getElementById('pm_status'), {
+    type:'doughnut',
+    data:{ labels:['Paid','Pending','Failed','Refunded'],
+      datasets:[{ data:[58.4,24.3,12.1,5.2], backgroundColor:['#1a7f37','#9a6700','#cf222e','#6639ba'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }] },
+    options:{ responsive:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  // Payment method donut
+  new Chart(document.getElementById('pm_method'), {
+    type:'doughnut',
+    data:{ labels:['Bank Transfer','Credit Card','E-wallet'],
+      datasets:[{ data:[48.2,31.4,20.4], backgroundColor:['#0969da','#1a7f37','#9a6700'], borderWidth:2, borderColor:'#fff', hoverOffset:4 }] },
+    options:{ responsive:false, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  // Provider collection bar
+  new Chart(document.getElementById('pm_prov'), {
+    type:'bar',
+    data:{
+      labels:PROVS,
+      datasets:[
+        { label:'Collection Rate %', data:[72.3,65.8,61.4,54.2,41.0], backgroundColor:['#1a7f37','#1a7f37','#9a6700','#9a6700','#cf222e'], borderRadius:4, yAxisID:'y' },
+        { label:'Payment Amount (M VND)', data:[1580,1020,840,620,250], type:'line', borderColor:'#0969da', backgroundColor:'transparent', tension:.3, pointRadius:4, borderWidth:2, yAxisID:'y2' }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:12,font:{size:10}} } },
+      scales:{
+        x:{grid:{color:G},ticks:{font:{size:9.5}}},
+        y:{grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'%'},min:30,max:85},
+        y2:{position:'right',grid:{display:false},ticks:{font:{size:9.5},callback:v=>v+'M'}}
+      }
+    }
+  });
+  // Monthly payment trend
+  new Chart(document.getElementById('pm_trend'), {
+    type:'line',
+    data:{ labels:M6, datasets:[
+      { label:'Collected', data:[520,580,620,670,610,680], borderColor:'#1a7f37', backgroundColor:'rgba(26,127,55,.07)', fill:true, tension:.4, pointRadius:3, borderWidth:2 },
+      { label:'Pending',  data:[310,290,260,240,280,255], borderColor:'#9a6700', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2, borderDash:[4,3] },
+      { label:'Failed',   data:[82,95,78,88,74,95], borderColor:'#cf222e', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2, borderDash:[2,3] }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:12,font:{size:10}} },
+        tooltip:{ callbacks:{ label: c=>` ${c.dataset.label}: ${c.raw}M VND` } } },
+      scales:{ x:{grid:{color:G},ticks:{font:{size:9.5}}}, y:{grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'M'}} }
+    }
+  });
+}
+
+// ────────────────────────────────────────
+function buildProviderPerf() {
+  // Top by premium
+  new Chart(document.getElementById('pp_premium'), {
+    type:'bar',
+    data:{ labels:PROVS,
+      datasets:[{ label:'Premium Written (M VND)', data:[2180,1510,1000,930,680],
+        backgroundColor:['#0969da','#1a7f37','#9a6700','#6639ba','#0a7489'], borderRadius:4, borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{grid:{color:G},ticks:{font:{size:9.5}}}, y:{grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'M'}} }
+    }
+  });
+  // Collection rate bars (HTML)
+  const rates = [{n:'Bao Viet',r:72.3},{n:'PVI',r:65.8},{n:'MIC',r:61.4},{n:'PTI',r:54.2},{n:'Liberty',r:41.0}];
+  const cb = document.getElementById('pp_collect_bars');
+  rates.forEach(p => {
+    const col = p.r>=65?'#1a7f37':p.r>=55?'#9a6700':'#cf222e';
+    cb.innerHTML += `<div class="prov-item">
+      <div class="prov-hdr"><span class="prov-nm">${p.n}</span><span class="prov-pct" style="color:${col}">${p.r.toFixed(1)}%</span></div>
+      <div class="prov-track"><div class="prov-fill" style="width:${p.r}%;background:${col}"></div></div>
+    </div>`;
+  });
+  // Cancellation rate bar
+  new Chart(document.getElementById('pp_cancel'), {
+    type:'bar',
+    data:{ labels:PROVS,
+      datasets:[{ label:'Cancellation Rate %', data:[6.2,8.1,9.4,12.8,18.4],
+        backgroundColor:['#1a7f37','#1a7f37','#9a6700','#9a6700','#cf222e'], borderRadius:4, borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{grid:{color:G},ticks:{font:{size:9.5}}}, y:{grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'%'},min:0,max:24} }
+    }
+  });
+  // Quality Matrix scatter
+  new Chart(document.getElementById('pp_scatter'), {
+    type:'scatter',
+    data:{ datasets:[
+      { label:'Bao Viet', data:[{x:72.3,y:6.2}],  pointRadius:22, backgroundColor:'rgba(26,127,55,.65)',   borderColor:'#1a7f37', borderWidth:2 },
+      { label:'PVI',      data:[{x:65.8,y:8.1}],  pointRadius:18, backgroundColor:'rgba(9,105,218,.55)',   borderColor:'#0969da', borderWidth:2 },
+      { label:'MIC',      data:[{x:61.4,y:9.4}],  pointRadius:14, backgroundColor:'rgba(154,103,0,.55)',   borderColor:'#9a6700', borderWidth:2 },
+      { label:'PTI',      data:[{x:54.2,y:12.8}], pointRadius:13, backgroundColor:'rgba(102,57,186,.55)',  borderColor:'#6639ba', borderWidth:2 },
+      { label:'Liberty',  data:[{x:41.0,y:18.4}], pointRadius:10, backgroundColor:'rgba(207,34,46,.65)',   borderColor:'#cf222e', borderWidth:2 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:10,font:{size:10},usePointStyle:true} },
+        tooltip:{ callbacks:{ label: c=>`${c.dataset.label}: Collection ${c.raw.x}% · Cancel ${c.raw.y}%` } } },
+      scales:{
+        x:{ title:{display:true,text:'Collection Rate (%)',font:{size:9.5}}, grid:{color:G}, ticks:{font:{size:9.5},callback:v=>v+'%'}, min:30, max:85 },
+        y:{ title:{display:true,text:'Cancellation Rate (%)',font:{size:9.5}}, grid:{color:G}, ticks:{font:{size:9.5},callback:v=>v+'%'}, min:0, max:25 }
+      }
+    }
+  });
+  // Provider premium trend
+  new Chart(document.getElementById('pp_trend'), {
+    type:'line',
+    data:{ labels:M6, datasets:[
+      { label:'Bao Viet', data:[310,340,370,400,380,420], borderColor:'#0969da', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2 },
+      { label:'PVI',      data:[230,250,270,280,260,290], borderColor:'#1a7f37', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2 },
+      { label:'MIC',      data:[160,170,175,185,170,190], borderColor:'#9a6700', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2 },
+      { label:'PTI',      data:[140,152,158,168,155,165], borderColor:'#6639ba', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2 },
+      { label:'Liberty',  data:[90,100,107,115,105,115],  borderColor:'#cf222e', backgroundColor:'transparent', tension:.4, pointRadius:3, borderWidth:2 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', align:'start', labels:{boxWidth:8,padding:10,font:{size:10}} },
+        tooltip:{ callbacks:{ label: c=>` ${c.dataset.label}: ${c.raw}M VND` } } },
+      scales:{ x:{grid:{color:G},ticks:{font:{size:9.5}}}, y:{grid:{color:G},ticks:{font:{size:9.5},callback:v=>v+'M'}} }
+    }
+  });
+}
+</script>
+</body>
+</html>

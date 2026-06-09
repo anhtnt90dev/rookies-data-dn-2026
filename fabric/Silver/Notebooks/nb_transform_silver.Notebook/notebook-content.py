@@ -203,7 +203,7 @@ print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_i
 # CELL ********************
 
 # DUMP
-p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
+# p_config_load_table = "{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-06T09:40:07.713651\",\"updated_at\":\"2026-06-06T09:40:07.713651\"}"
 
 # METADATA ********************
 
@@ -1172,11 +1172,11 @@ def run_dq_validation(
     # ------------------------------------------------------------------
 
     combined_reason = F.concat_ws(
-        " | ",
-        *[
-            F.coalesce(reason, F.lit(""))
-            for reason in reason_when_clauses
-        ]
+    " | ",
+    F.filter(
+            F.array(*reason_when_clauses),
+            lambda x: x.isNotNull()
+        )   
     )
 
     # ------------------------------------------------------------------
@@ -1541,10 +1541,10 @@ except Exception as audit_start_error:
 try:
 
     # -----------------------------------------------------------------------
-    # STEP 2 — Load JSON Mapping File
+    #— Load JSON Mapping File
     # -----------------------------------------------------------------------
     print("\n" + "=" * 70)
-    print("STEP 2 | Loading Bronze-to-Silver mapping JSON")
+    print("Loading Bronze-to-Silver mapping JSON")
     print("=" * 70)
 
     mapping: dict = load_mapping_json(MAPPING_PATH)
@@ -1554,7 +1554,7 @@ try:
     # STEP 3 — Read Bronze Source Table
     # -----------------------------------------------------------------------
     print("\n" + "=" * 70)
-    print("STEP 3 | Reading Bronze source table")
+    print(" Reading Bronze source table")
     print("=" * 70)
 
     # For incremental, retrieve last watermark from control table
@@ -1583,7 +1583,7 @@ try:
     # STEP 4 — Apply Column Transformations
     # -----------------------------------------------------------------------
     print("\n" + "=" * 70)
-    print("STEP 4 | Applying column transformations")
+    print(" Applying column transformations")
     print("=" * 70)
 
     mapped_silver_df: DataFrame = apply_column_transformations(
@@ -1629,7 +1629,7 @@ try:
     # STEP 5 — Data Quality (DQ) Validation
     # -----------------------------------------------------------------------IN
     print("\n" + "=" * 70)
-    print("STEP 5 | Running Data Quality validation")
+    print(" Running Data Quality validation")
     print("=" * 70)
 
     # DQ rules are defined per table. In production these would be loaded
@@ -1661,7 +1661,7 @@ try:
     # If all rows are rejected, skip the MERGE step and mark as WARNING
     if df_valid.count() == 0:
         print(
-            f"[STEP 5] All {rejected_row_count:,} row(s) rejected by DQ. "
+            f" All {rejected_row_count:,} row(s) rejected by DQ. "
             "Skipping MERGE. Status=WARNING."
         )
         pipeline_status = STATUS_WARNING
@@ -1672,7 +1672,7 @@ try:
         # STEP 6 — Write to Silver (FULL LOAD or MERGE)
         # -------------------------------------------------------------------
         print("\n" + "=" * 70)
-        print("STEP 6 | Writing to Silver layer")
+        print("| Writing to Silver layer")
         print("=" * 70)
 
         write_stats: dict
@@ -1695,7 +1695,7 @@ try:
         pipeline_status = STATUS_SUCCESS
 
         print(
-            f"[STEP 6] Silver write complete: "
+            f"Silver write complete: "
             f"inserted={inserted_row_count:,} | updated={updated_row_count:,}"
         )
 
@@ -1713,7 +1713,7 @@ finally:
     # STEP 7 — Write Audit Log (always runs, even on failure)
     # -----------------------------------------------------------------------
     print("\n" + "=" * 70)
-    print("STEP 7 | Writing audit log")
+    print(" Writing audit log")
     print("=" * 70)
 
     is_final_step: bool = True  # Silver is the last layer for this notebook

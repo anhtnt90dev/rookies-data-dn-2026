@@ -947,7 +947,7 @@ def log_invalid_batch_records(
 
     print(
         f"[DQ LOG] Logged {log_df.count():,} invalid record errors "
-        f"to log.invalid_records"
+        f"to log.invalid_record"
     )
 
 # METADATA ********************

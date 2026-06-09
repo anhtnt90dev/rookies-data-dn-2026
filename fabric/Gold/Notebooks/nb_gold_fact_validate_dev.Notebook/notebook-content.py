@@ -264,7 +264,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
         table_session_df = (
             spark.table(AUDIT_TABLE_SESSION_TABLE)
             .join(audit_session_df.select(F.col("id").alias("__session_id")), F.col("session_id") == F.col("__session_id"), "inner")
-            .where(F.col("source_table_id") == F.lit(spec["cfg_dim_fact_table_id"]))
+            .where(F.col("source_table_id") == F.lit(get_cfg_fact_table_id("fact_policy")))
         )
         audit_detail_count = int(
             spark.table(AUDIT_DETAIL_TABLE)

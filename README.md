@@ -1,255 +1,101 @@
-# Rookie Data DN 2026
+# Rookie Data DN 2026 - Insurance Analytics
 
-## Project Overview
-
-This repository contains project documentation, source code, SQL scripts, test assets, and Microsoft Fabric-related artifacts for the Insurance Analytics MockProject.
-
-GitHub is the primary source control system for all project deliverables. Team members must work through feature branches and Pull Requests to ensure traceability, collaboration, and reviewability.
+This repository serves as the single source of truth for the **Insurance Analytics MockProject** (Rookie Data DN 2026 / CarPro Insurance Analytics). It contains all project documentation, SQL scripts, test assets, and Microsoft Fabric-related configurations and notebooks.
 
 ---
 
-## Repository Structure
+## 1. Project Overview
+
+The objective of this project is to implement a medallion data architecture (Bronze → Silver → Gold) to ingest, clean, model, and serve insurance analytics data. The data platform leverages **Microsoft Fabric** as the primary integration engine and **GitHub** for source control management and collaboration.
+
+---
+
+## 2. Directory Structure
+
+Below is the current physical folder structure of the repository:
 
 ```text
 rookies-data-dn-2026/
 │
-├── README.md
 ├── .gitignore
+├── README.md
 │
-├── config/
+├── architecture/                     # Architecture diagrams and exports
+│   ├── README.md
+│   ├── diagrams/
+│   └── exports/
 │
-├── docs/
-│   ├── architecture/
-│   ├── business-process/
-│   ├── data-modeling/
-│   ├── final-deliverables/
-│   ├── git/
-│   │   └── processing-guide/
-│   │       ├── conflict-resolution.md
-│   │       ├── conventions.md
-│   │       ├── promotion-workflow.md
-│   │       ├── pull-request-process.md
-│   │       └── README.md
-│   ├── project-management/
-│   └── source-to-target-mapping/
+├── config/                           # Environment configuration templates
+│   └── .gitkeep
 │
-├── fabric/
+├── docs/                             # Project documentation and designs
+│   ├── architecture/                 # System architecture design documents
+│   ├── business-process/             # Business workflow analysis
+│   │   ├── diagram/                  # BPMN & sequence diagram source files
+│   │   │   └── business_measure_kpi/ # Measure and KPI documents for source databases
+│   │   ├── diagrams/
+│   │   └── docs/                     # Detailed business process specs
+│   ├── data-modeling/                # Star schema designs & table definitions
+│   │   ├── dimensional-design/       # Conformed dimension scope and SCD designs
+│   │   └── facts/                    # Fact table column-level requirements
+│   ├── final-deliverables/           # Reviewed deliverables for submissions
+│   ├── kpi-measure/                  # Business KPI mathematical mappings
+│   ├── project-management/           # Sprint boards and team agreements
+│   ├── source-to-target-mapping/     # Source column mappings to Bronze/Silver/Gold
+│   └── standards/                    # Global team development guidelines
+│       ├── git/                      # Git workflow documentation
+│       │   ├── README.md             # Git processing guide index
+│       │   └── processing-guide/     # Detailed Git workflow sub-docs
+│       ├── naming_convention.md      # Python & SQL naming standard
+│       └── workspace_fabric_structure.md # Fabric Lakehouse design layout
 │
-├── sql/
+├── fabric/                           # Microsoft Fabric Git integration artifacts
+│   ├── Bronze/                       # Bronze ingestion notebooks
+│   ├── Config/                       # Pipeline control tables config
+│   ├── Gold/                         # Gold dimensional building notebooks
+│   ├── Lakehouse/                    # Fabric Lakehouse schema definitions
+│   ├── Monitoring/                   # Validation & audit notebooks
+│   ├── Pipelines/                    # Data pipeline orchestrator definitions
+│   ├── Silver/                       # Silver transformation notebooks
+│   └── Source/                       # Ingestion metadata definitions
 │
-└── tests/
+├── sql/                              # Raw SQL scripts and DDLs
+│   ├── etl-control/                  # Control flow table and audit scripts
+│   ├── lakehouse/                    # Table/view definitions for Lakehouses
+│   ├── source/                       # Source system simulator DDLs
+│   └── validation/                   # Manual test queries
+│
+└── tests/                            # Quality assurance and testing suite
+    ├── data-quality/                 # PySpark row-level validations
+    ├── pipeline-tests/               # Integration pipeline validations
+    └── reconciliation/               # Source-to-target reconciliation checks
 ```
 
 ---
 
-## Folder Usage
+## 3. Git & Development Standards
 
-### `config/`
+To keep collaboration clean and trackable, all team members must follow our Git branching, naming, and commit conventions.
 
-Stores configuration templates and environment-independent configuration files.
+Detailed Git guidelines are located in the [Git Naming Convention & Structure Guide](docs/standards/git/processing-guide/02-naming-convention-and-structure.md).
 
-Examples:
+### Quick Links to Git processing guides:
+- [Repository Structure & Naming Guide](docs/standards/git/processing-guide/02-naming-convention-and-structure.md) – Directory usage rules and general file naming.
+- [Branching & Commit Conventions](docs/standards/git/processing-guide/01-branching-and-commit-conventions.md) – Kebab-case branch templates and conventional commit structures.
+- [Pull Request Process](docs/standards/git/processing-guide/03-pull-request-process.md) – PR template, reviewer checklists, and merge requirements.
+- [Promotion Workflow](docs/standards/git/processing-guide/00-promotion-workflow.md) – Environment progression (Feature → dev → release → main).
+- [Conflict Resolution Guide](docs/standards/git/processing-guide/04-conflict-resolution.md) – Resolving conflicts in source code and Jupyter Notebooks.
 
-- Pipeline configuration templates
-- Source system configuration templates
-- Parameter files
-
-Do not store credentials, secrets, passwords, or access tokens.
-
----
-
-### `docs/`
-
-Stores all project documentation and design artifacts.
-
-#### `docs/architecture/`
-
-Architecture-related documentation:
-
-- Solution architecture
-- Data platform architecture
-- Fabric workspace design
-- OneLake structure
-- Layer responsibility documents
-- Security and access design
-
-#### `docs/business-process/`
-
-Business understanding and process documentation:
-
-- Business process descriptions
-- BPMN diagrams
-- Sequence diagrams
-- Business rules
-- Status mapping documents
-
-#### `docs/data-modeling/`
-
-Data modeling artifacts:
-
-- Star schema design
-- Dimension design
-- Fact design
-- Grain definition
-- ERD diagrams
-
-#### `docs/source-to-target-mapping/`
-
-Mapping documentation between source systems and analytical models.
-
-Examples:
-
-- Customer mapping
-- Quotation mapping
-- Policy mapping
-- Payment mapping
-
-#### `docs/project-management/`
-
-Project planning and management artifacts.
-
-Examples:
-
-- Sprint documents
-- Task descriptions
-- Working agreements
-- Team guidelines
-- Planning notes
-
-#### `docs/final-deliverables/`
-
-Final reviewed outputs prepared for submission or stakeholder review.
-
-Examples:
-
-- Final presentations
-- Final design documents
-- Approved diagrams
-- Sprint deliverables
+### Code Naming Conventions:
+- For Python variables, classes, SQL tables, and database schemas, follow the [Python & SQL Naming Convention Guide](docs/standards/naming_convention.md).
+- For Fabric-specific item structures, consult the [Fabric Workspace Structure Guide](docs/standards/workspace_fabric_structure.md).
 
 ---
 
-### `docs/git/processing-guide/`
+## 4. Development Workflow Checklist
 
-Stores team Git workflow documentation.
-
-Contents include:
-
-| File                      | Purpose                          |
-| ------------------------- | -------------------------------- |
-| `conventions.md`          | Branching and commit conventions |
-| `pull-request-process.md` | Pull Request workflow            |
-| `promotion-workflow.md`   | Branch promotion strategy        |
-| `conflict-resolution.md`  | Merge conflict handling guide    |
-| `README.md`               | Overview of Git working process  |
-
-This folder serves as the single source of truth for repository collaboration practices.
-
----
-
-### `fabric/`
-
-Reserved for Microsoft Fabric Git Integration artifacts.
-
-Fabric-generated assets should remain aligned with the structure created by Fabric Git Integration.
-
-Examples:
-
-- Pipelines
-- Notebooks
-- Lakehouse metadata
-- Semantic models
-- Fabric deployment artifacts
-
-Avoid creating custom structures that conflict with Fabric-managed assets.
-
----
-
-### `sql/`
-
-Stores SQL scripts used throughout the project.
-
-Examples:
-
-- Source database scripts
-- Analytical table definitions
-- Validation scripts
-- ETL control scripts
-- Test scripts
-
----
-
-### `tests/`
-
-Stores testing and validation artifacts.
-
-Examples:
-
-- Data quality tests
-- Reconciliation tests
-- Validation queries
-- Pipeline verification scripts
-
----
-
-## Naming Convention
-
-General rules:
-
-- Use lowercase names.
-- Use hyphens (`-`) instead of spaces.
-- Keep names concise and meaningful.
-- Include task IDs when appropriate.
-
-Examples:
-
-```text
-task-112-description-ac.md
-sequence-diagram-insurance-process-v3.png
-project-structure-and-folder-organization-guideline.docx
-```
-
----
-
-## Git Workflow
-
-1. Create a branch from the appropriate base branch.
-2. Commit related changes only.
-3. Create a Pull Request.
-4. Request peer review.
-5. Resolve comments and conflicts if required.
-6. Merge after approval.
-
-Refer to:
-
-```text
-docs/git/processing-guide/
-```
-
-for detailed Git workflow documentation.
-
----
-
-## Empty Folder Tracking
-
-Git does not track empty folders.
-
-If an empty folder must be preserved in the repository structure, add a:
-
-```text
-.gitkeep
-```
-
-file inside the folder.
-
----
-
-## Project Guideline
-
-Repository structure and folder organization guidance is maintained under:
-
-```text
-docs/project-management/
-```
-
-and should be updated whenever the agreed project structure changes.
+1. **Start Task**: Create a feature branch off `dev` following [Branching Conventions](docs/standards/git/processing-guide/01-branching-and-commit-conventions.md).
+2. **Implement Changes**: Write code using [Code Naming Standards](docs/standards/naming_convention.md).
+3. **Commit Code**: Commit changes frequently with [Conventional Commits](docs/standards/git/processing-guide/01-branching-and-commit-conventions.md).
+4. **Push & Create PR**: Push feature branch and create a PR using the [PR Template](docs/standards/git/processing-guide/03-pull-request-process.md).
+5. **Review & Merge**: Review with checklist, resolve any [Conflicts](docs/standards/git/processing-guide/04-conflict-resolution.md), merge to `dev`, and delete the branch.

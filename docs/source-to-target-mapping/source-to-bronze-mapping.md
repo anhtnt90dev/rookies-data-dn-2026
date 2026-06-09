@@ -125,7 +125,7 @@ Provide a standardized Source to Bronze mapping reference for CRM (database) and
 | cancellation_date | STRING | cancellation_date | STRING | 23 | N/A | N/A | Direct Mapping |
 | cancellation_reason | STRING | cancellation_reason | STRING | 255 | N/A | N/A | Direct Mapping |
 | refund_amount | STRING | refund_amount | STRING | 30 | N/A | N/A | Direct Mapping |
-| last_updated | STRING | last_updated | STRING | 23 | N/A | N/A | Direct Mapping |
+| last_updated | STRING | last_updated_at | TIMESTAMP | 23 | N/A | N/A | Direct Mapping |
 | source_system | STRING | source_system | STRING | 50 | N/A | N/A | Direct Mapping |
 | N/A | N/A | _batch_id | STRING | 50 | N/A | N/A | Pipeline Generated |
 | operation_type | STRING | _operation_type | STRING | 1 | N/A | N/A | Direct Mapping (JSON Sources) |

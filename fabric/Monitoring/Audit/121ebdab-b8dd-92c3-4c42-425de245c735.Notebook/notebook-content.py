@@ -98,6 +98,15 @@ bronze_table_session_id = start_table_layer(
     batch_id=batch_id,
     load_type="FULL",
 )
+source_file = "Files/landing/crm_system/customer/test_customer_file.json"
+
+file_session_id = start_file_session(
+    session_id=audit_session_id,
+    table_session_id=bronze_table_session_id,
+    source_table_id=source_table_id,
+    batch_id=batch_id,
+    source_file=source_file,
+)
 
 bronze_row_count_result = capture_row_counts({
     "table_session_id": bronze_table_session_id,
@@ -108,6 +117,17 @@ bronze_row_count_result = capture_row_counts({
     "source_use_batch_filter": False,
     "target_use_batch_filter": True,
 })
+
+finish_file_session(
+    file_session_id=file_session_id,
+    status=bronze_row_count_result["status"],
+    processed_row_count=bronze_row_count_result.get("target_row_count"),
+    rejected_row_count=0,
+    error_code=bronze_row_count_result.get("error_code"),
+    error_message=bronze_row_count_result.get("error_message"),
+    error_type=bronze_row_count_result.get("error_type"),
+    is_retryable=bronze_row_count_result.get("is_retryable"),
+)
 
 finish_table_layer(
     table_session_id=bronze_table_session_id,
@@ -148,6 +168,25 @@ silver_row_count_result = capture_row_counts({
     "target_use_batch_filter": True,
     "rejected_row": rejected_row_count,
 })
+invalid_rows = (
+    spark.table(bronze_table)
+    .where((F.col("_batch_id") == F.lit(batch_id)) & F.col("customer_name").isNull())
+    .collect()
+)
+
+for invalid_row in invalid_rows:
+    log_invalid_record(
+        table_session_id=silver_table_session_id,
+        file_session_id=file_session_id,
+        layer=Layer.SILVER,
+        target_table=silver_table,
+        record_key=str(invalid_row["customer_id"]),
+        raw_data=str(invalid_row.asDict()),
+        error_column="customer_name",
+        error_reason="customer_name is null",
+        error_type=ErrorType.DATA,
+        is_retryable=False,
+    )
 
 finish_table_layer(
     table_session_id=silver_table_session_id,

@@ -1,0 +1,124 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "items": {
+            "value": "@createArray('customers','agents','insurance_providers','vehicle','quotation','quotation_item')",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "Copy",
+              "typeProperties": {
+                "source": {
+                  "type": "FabricSqlDatabaseSource",
+                  "sqlReaderQuery": {
+                    "value": "@concat('SELECT * FROM ', pipeline().parameters.p_schema_name, '.', item())",
+                    "type": "Expression"
+                  },
+                  "partitionOption": "None",
+                  "queryTimeout": "02:00:00",
+                  "datasetSettings": {
+                    "type": "FabricSqlDatabaseTable",
+                    "schema": [],
+                    "connectionSettings": {
+                      "name": "insurance_crm_db",
+                      "properties": {
+                        "type": "FabricSqlDatabase",
+                        "typeProperties": {
+                          "artifactId": "67f50932-d7ae-8938-4204-efc1e59d4622",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000"
+                        },
+                        "externalReferences": {
+                          "connection": "6246af08-901e-4660-89da-21d0ff066422"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "annotations": []
+                  }
+                },
+                "sink": {
+                  "type": "ParquetSink",
+                  "formatSettings": {
+                    "type": "ParquetWriteSettings",
+                    "enableVertiParquet": true
+                  },
+                  "storeSettings": {
+                    "type": "AzureBlobStorageWriteSettings"
+                  },
+                  "datasetSettings": {
+                    "type": "Parquet",
+                    "typeProperties": {
+                      "location": {
+                        "type": "LakehouseLocation",
+                        "folderPath": {
+                          "value": "@concat(\n  'landing/',\n  pipeline().parameters.p_source_system,\n  '/',\n  item(),\n  '/',\n  pipeline().parameters.p_load_type,\n  '/',\n  if(\n    empty(pipeline().parameters.p_batch_date),\n    formatDateTime(utcNow(), 'yyyy-MM-dd'),\n    pipeline().parameters.p_batch_date\n  ),\n  '/'\n)",
+                          "type": "Expression"
+                        }
+                      },
+                      "compressionCodec": "snappy"
+                    },
+                    "schema": [],
+                    "linkedService": {
+                      "name": "lh_insurance_dev",
+                      "properties": {
+                        "type": "Lakehouse",
+                        "typeProperties": {
+                          "artifactId": "e2adb411-3221-a686-42b5-cbe3442aa4c8",
+                          "workspaceId": "00000000-0000-0000-0000-000000000000",
+                          "rootFolder": "Files"
+                        },
+                        "annotations": []
+                      }
+                    },
+                    "annotations": []
+                  }
+                },
+                "translator": {
+                  "type": "TabularTranslator",
+                  "typeConversion": true,
+                  "typeConversionSettings": {
+                    "allowDataTruncation": true,
+                    "treatBooleanAsNumber": false
+                  }
+                },
+                "enableStaging": false
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 2,
+                "retryIntervalInSeconds": 60,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "copy_fabric_sql_db_to_landing",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "foreach_source_table",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "p_source_system": {
+        "type": "string",
+        "defaultValue": "crm"
+      },
+      "p_schema_name": {
+        "type": "string",
+        "defaultValue": "dbo"
+      },
+      "p_load_type": {
+        "type": "string",
+        "defaultValue": "full"
+      },
+      "p_batch_date": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -66,9 +66,9 @@
           "name_func": "_validate_is_not_null",
           "params": [
             {
-              "key": "cancellation_date",
+              "key": "cancellation_at",
               "type": "date",
-              "reason_error": "cancellation_date is null"
+              "reason_error": "cancellation_at is null"
             }
           ]
         }

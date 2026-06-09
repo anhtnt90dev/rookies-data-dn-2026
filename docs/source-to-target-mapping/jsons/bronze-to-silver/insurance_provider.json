@@ -72,8 +72,8 @@
           "name_func": "_validate_is_not_empty",
           "params": [
             {
-              "key": "created_date",
-              "reason_error": "created_date key is empty"
+              "key": "created_at",
+              "reason_error": "created_at key is empty"
             }
           ]
         },
@@ -81,8 +81,8 @@
           "name_func": "_validate_date_iso8601",
           "params": [
             {
-              "key": "created_date",
-              "reason_error": "created_date key invalid date format"
+              "key": "created_at",
+              "reason_error": "created_at key invalid date format"
             }
           ]
         }

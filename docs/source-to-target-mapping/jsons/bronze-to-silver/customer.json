@@ -13,7 +13,7 @@
             {
               "key": "customer_id",
               "type": "string",
-              "reason_error": "primary key is mull"
+              "reason_error": "primary key is null"
             }
           ]
         }

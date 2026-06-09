@@ -25,22 +25,12 @@
       "expression_type": "primitive",
       "validates": [
         {
-          "name_func": "_validate_is_not_",
+          "name_func": "_validate_is_not_empty",
           "params": [
             {
               "key": "agent_name",
               "type": "string",
-              "reason_error": "agent_name is null"
-            }
-          ]
-        },
-        {
-          "name_func": "_validate_max_length",
-          "params": [
-            {
-              "key": "agent_name",
-              "max_length": 200,
-              "reason_error": "agent_name exceeds max length of 200"
+              "reason_error": "column is empty"
             }
           ]
         }
@@ -77,16 +67,6 @@
               "reason_error": "branch is null"
             }
           ]
-        },
-        {
-          "name_func": "_validate_max_length",
-          "params": [
-            {
-              "key": "branch",
-              "max_length": 100,
-              "reason_error": "branch exceeds max length of 100"
-            }
-          ]
         }
       ]
     },
@@ -96,12 +76,12 @@
       "expression_type": "primitive",
       "validates": [
         {
-          "name_func": "_validate_max_length",
+          "name_func": "_validate_is_not_empty",
           "params": [
             {
               "key": "manager_name",
-              "max_length": 200,
-              "reason_error": "manager_name exceeds max length of 200"
+              "type": "string",
+              "reason_error": "manager_name is empty"
             }
           ]
         }

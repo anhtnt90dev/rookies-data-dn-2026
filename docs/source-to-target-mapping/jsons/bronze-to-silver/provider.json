@@ -21,19 +21,72 @@
     },
     {
       "target": "provider_name",
-      "expression": "provider_name"
+      "expression": "provider_name",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "provider_name",
+              "reason_error": "provider_name key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "provider_group",
-      "expression": "provider_group"
+      "expression": "provider_group",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "provider_group",
+              "reason_error": "provider_group key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "is_active",
-      "expression": "active_flag"
+      "expression": "active_flag",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "active_flag",
+              "reason_error": "active_flag key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "created_at",
-      "expression": "created_date"
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "created_date",
+              "reason_error": "created_date key is empty"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_date",
+              "reason_error": "created_date key invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "updated_at",

@@ -4,35 +4,146 @@
   "columns": [
     {
       "target": "vehicle_id",
-      "expression": "vehicle_id"
+      "expression": "vehicle_id",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "vehicle_id",
+              "type": "string",
+              "reason_error": "vehicle_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "customer_id",
-      "expression": "customer_id"
+      "expression": "customer_id",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "customer_id",
+              "type": "string",
+              "reason_error": "customer_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "plate_number",
-      "expression": "plate_number"
+      "expression": "plate_number",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "plate_number",
+              "reason_error": "plate_number key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "vehicle_brand",
-      "expression": "vehicle_brand"
+      "expression": "vehicle_brand",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "vehicle_brand",
+              "reason_error": "vehicle_brand key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "vehicle_model",
-      "expression": "vehicle_model"
+      "expression": "vehicle_model",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "vehicle_model",
+              "reason_error": "vehicle_model key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "manufacture_year",
-      "expression": "manufacture_year"
+      "expression": "manufacture_year",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "manufacture_year",
+              "reason_error": "manufacture_year key is null"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_is_numeric",
+          "params": [
+            {
+              "key": "manufacture_year",
+              "reason_error": "manufacture_year should be numeric"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "vehicle_value",
-      "expression": "vehicle_value"
+      "expression": "vehicle_value",
+      "validates": [
+        {
+          "name_func": "_validate_is_numeric",
+          "params": [
+            {
+              "key": "vehicle_value",
+              "reason_error": "vehicle_value should be numeric"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_min_value",
+          "params": [
+            {
+              "key": "vehicle_value",
+              "type": "float",
+              "min_value": 0.0,
+              "inclusive": false,
+              "reason_error": "vehicle_value must be greater than 0"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "created_at",
-      "expression": "created_date"
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_at",
+              "reason_error": "created_at invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "updated_at",

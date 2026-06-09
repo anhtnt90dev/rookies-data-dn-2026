@@ -141,7 +141,7 @@ def insert_source_table_data() -> None:
 
         (3, "crm_system", "database", "insurance_providers", "dbo.insurance_providers", "table", None, "INCREMENTAL", "provider_code",
          None, "updated_date", "bronze.insurance_provider", "silver.insurance_provider",
-         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/insurance_provider.json", 3, True),
+         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/provider.json", 3, True),
 
         (4, "crm_system", "database", "vehicle", "dbo.vehicle", "table", None, "INCREMENTAL", "vehicle_id",
          None, "updated_date", "bronze.vehicle", "silver.vehicle",

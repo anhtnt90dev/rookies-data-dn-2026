@@ -25,7 +25,7 @@ This document describes how the Microsoft Fabric audit logging MVP implements th
 - One `log.audit_file_session` record represents one source file for one configured source table in one batch.
 - `table_session_id` links `log.audit_file_session`, `log.audit_detail`, `log.retry_log`, and `log.invalid_record` to their parent table execution.
 - `log.invalid_record` does not physically duplicate `batch_id`, `session_id`, or source entity. Those are traced by joining `log.invalid_record.table_session_id` to `log.audit_table_session.id`.
-- `cfg.next_run_mode` stores the next run mode and failed `batch_id` for recovery. Its physical `session_id` column is `BIGINT`, while MVP audit session IDs are UUID strings, so the current framework treats `batch_id` as the durable recovery key until the session identifier type is resolved.
+- `cfg.next_run_mode` stores the next run mode and failed `batch_id` for recovery. Its physical `session_id` column is `STRING` and stores the previous failed audit session UUID for recovery lineage, while `batch_id` remains the durable recovery key.
 - `log.audit_detail` is append-only. Its generated `id` uniquely identifies each detail, while `(table_session_id, layer, attempt_no)` describes its execution attempt.
 - The row-count MVP uses its `ErrorType` classification as the table-level `error_code` when a standardized downstream error code is not available.
 - UUID string IDs are used by the physical MVP implementation. The logical design permits the ID generation strategy to be finalized during implementation.

@@ -74,7 +74,7 @@ erDiagram
     cfg.next_run_mode {
         varchar next_run_mode
         bigint batch_id
-        bigint session_id
+        varchar session_id
         timestamp created_at
         timestamp updated_at
     }
@@ -165,7 +165,7 @@ erDiagram
 |---|---|---|
 | `next_run_mode` | varchar(20) | Execution mode for the next pipeline run, such as NEW or RECOVERY |
 | `batch_id` | bigint | Batch identifier associated with the next pipeline run |
-| `session_id` | bigint | Session identifier associated with the next pipeline run |
+| `session_id` | varchar | Previous failed audit session UUID used for recovery lineage |
 | `created_at` | timestamp | Record creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
 
@@ -551,7 +551,7 @@ log.invalid_record.table_session_id
 -> log.audit_table_session.batch_id / session_id / source_table_id / source_table_name
 ```
 
-`cfg.next_run_mode.session_id` is currently defined as `BIGINT`, while physical audit session identifiers are UUID strings in `log.audit_session.id`. Until that schema decision is resolved, the framework relies on `batch_id` as the durable recovery context and creates a new audit `session_id` for each execution.
+`cfg.next_run_mode.session_id` is defined as `STRING` to store the previous failed audit session UUID for recovery lineage. The framework relies on `batch_id` as the durable recovery key and creates a new audit `session_id` for each execution while maintaining lineage to the failed run.
 
 ### Example Recovery Flow
 

@@ -352,14 +352,13 @@ def get_failed_tables_from_previous_run(previous_batch_id: int) -> list[str]:
 def read_bronze_table(
     source_table_name: str,
     load_type: str,
-    watermark_column: str | None = None,
-    last_watermark_value: Any = None,
+    batch_id: int | str | None = None,
 ) -> DataFrame:
     """
     Read the Bronze Delta table as a Spark DataFrame.
 
     For FULL load, returns all rows.
-    For INCREMENTAL load, filters rows where watermark_column > last_watermark_value.
+    For INCREMENTAL load, filters rows where _batch_id == batch_id.
 
     Parameters
     ----------
@@ -367,11 +366,8 @@ def read_bronze_table(
         Fully qualified Bronze table name, e.g. 'bronze.agent'.
     load_type : str
         'full' or 'incremental'.
-    watermark_column : str or None
-        Column used for incremental extraction (e.g. 'updated_at').
-    last_watermark_value : Any or None
-        The previous high-water mark value. Rows with a value strictly greater
-        than this are extracted.
+    batch_id : int or str or None
+        The batch identifier for the current run.
 
     Returns
     -------
@@ -383,7 +379,7 @@ def read_bronze_table(
     AnalysisException
         Re-raised if the Bronze table does not exist.
     ValueError
-        If incremental load is requested but watermark_column is not provided.
+        If incremental load is requested but batch_id is not provided.
     """
     try:
         bronze_df: DataFrame = spark.table(source_table_name)
@@ -394,23 +390,18 @@ def read_bronze_table(
         )
 
     if load_type.lower() == LOAD_TYPE_INCREMENTAL:
-        if not watermark_column:
+        if not batch_id:
             raise ValueError(
-                f"[BRONZE] Incremental load requires 'watermark_column' "
+                f"[BRONZE] Incremental load requires 'batch_id' "
                 f"but none was provided for table '{source_table_name}'."
             )
-        if last_watermark_value is not None:
-            bronze_df = bronze_df.filter(
-                F.col(watermark_column) > F.lit(last_watermark_value)
-            )
-            print(
-                f"[BRONZE] Incremental filter applied: {watermark_column} > {last_watermark_value}"
-            )
-        else:
-            print(
-                f"[BRONZE] Incremental mode selected but no watermark value found. "
-                "Reading all rows (first run)."
-            )
+        
+        bronze_df = bronze_df.filter(
+            F.col("_batch_id") == F.lit(str(batch_id))
+        )
+        print(
+            f"[BRONZE] Incremental filter applied: _batch_id == {batch_id}"
+        )
 
     source_row_count: int = bronze_df.count()
     print(
@@ -1539,25 +1530,10 @@ try:
     print(" Reading Bronze source table")
     print("=" * 70)
 
-    # For incremental, retrieve last watermark from control table
-    last_watermark_value = None
-    if resolved_load_type == LOAD_TYPE_INCREMENTAL and WATERMARK_COLUMN:
-        try:
-            watermark_row = (
-                spark.table(WATERMARK_TABLE)
-                .select(COLUMN_WATERMARK_VALUE)
-                .limit(1)
-                .first()
-            )
-            last_watermark_value = watermark_row[COLUMN_WATERMARK_VALUE] if watermark_row else None
-        except Exception as watermark_error:
-            print(f"[STEP 3] Warning — Could not read watermark: {watermark_error}. Reading all rows.")
-
     bronze_df: DataFrame = read_bronze_table(
         source_table_name=BRONZE_TABLE_NAME,
         load_type=resolved_load_type,
-        watermark_column=WATERMARK_COLUMN or None,
-        last_watermark_value=last_watermark_value,
+        batch_id=batch_id,
     )
     source_row_count = bronze_df.count()
 

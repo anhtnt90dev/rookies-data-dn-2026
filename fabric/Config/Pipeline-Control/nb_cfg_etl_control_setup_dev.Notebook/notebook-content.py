@@ -102,7 +102,7 @@ def create_config_tables() -> None:
     CREATE TABLE IF NOT EXISTS cfg.next_run_mode (
         next_run_mode STRING,
         batch_id BIGINT,
-        session_id BIGINT,
+        session_id STRING,
         created_at TIMESTAMP,
         updated_at TIMESTAMP
     )
@@ -140,8 +140,8 @@ def insert_source_table_data() -> None:
          f"{MAPPING_PATH}/source-to-bronze/agent.json", f"{MAPPING_PATH}/bronze-to-silver/agent.json", 2, True),
 
         (3, "crm_system", "database", "insurance_providers", "dbo.insurance_providers", "table", None, "INCREMENTAL", "provider_code",
-         None, "updated_date", "bronze.insurance_provider", "silver.insurance_provider",
-         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/insurance_provider.json", 3, True),
+         None, "updated_date", "bronze.insurance_provider", "silver.provider",
+         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/provider.json", 3, True),
 
         (4, "crm_system", "database", "vehicle", "dbo.vehicle", "table", None, "INCREMENTAL", "vehicle_id",
          None, "updated_date", "bronze.vehicle", "silver.vehicle",
@@ -221,7 +221,7 @@ def insert_next_run_mode_data() -> None:
     schema = StructType([
         StructField("next_run_mode", StringType(), False),
         StructField("batch_id", LongType(), True),
-        StructField("session_id", LongType(), True),
+        StructField("session_id", StringType(), True),
     ])
 
     df = (

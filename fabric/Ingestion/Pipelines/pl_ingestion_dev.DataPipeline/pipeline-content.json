@@ -76,7 +76,9 @@
               "database": "lh_insurance_dev"
             },
             "schema": [],
-            "externalReferences": {},
+            "externalReferences": {
+              "connection": "f50845e3-5c9b-4a6b-8048-5c211eaf57e8"
+            },
             "annotations": []
           },
           "firstRowOnly": false
@@ -243,7 +245,9 @@
               "database": "lh_insurance_dev"
             },
             "schema": [],
-            "externalReferences": {},
+            "externalReferences": {
+              "connection": "f50845e3-5c9b-4a6b-8048-5c211eaf57e8"
+            },
             "annotations": []
           },
           "firstRowOnly": false

@@ -503,6 +503,23 @@ DIM_UNKNOWN_QUERIES = {
     """
 }
 
+DIM_KEY_COLUMNS = {
+    "gold.dim_date": "date_key",
+    "gold.dim_customer": "customer_key",
+    "gold.dim_agent": "agent_key",
+    "gold.dim_provider": "provider_key",
+    "gold.dim_vehicle": "vehicle_key",
+    "gold.dim_package": "package_key",
+    "gold.dim_coverage": "coverage_key",
+    "gold.dim_policy": "policy_key",
+    "gold.dim_quotation": "quotation_key",
+    "gold.dim_quotation_status": "quotation_status_key",
+    "gold.dim_policy_status": "policy_status_key",
+    "gold.dim_payment_status": "payment_status_key",
+    "gold.dim_payment_method": "payment_method_key",
+    "gold.dim_cancellation_reason": "cancellation_reason_key",
+}
+
 def insert_unknown_members() -> None:
     """
     Idempotently inserts a -1 Unknown member record in each dimension table
@@ -521,15 +538,18 @@ def insert_unknown_members() -> None:
         spark.sql(merge_sql)
         
         # Verify row exists
-        key_col_name = table_name.split(".")[-1] + "_key"
-        if table_name == "gold.dim_cancellation_reason":
-            key_col_name = "cancellation_reason_key"
+        key_col_name = DIM_KEY_COLUMNS.get(table_name)
+        if key_col_name is None:
+            raise ValueError(f"No configured surrogate key column for Unknown member verification: {table_name}")
+        if key_col_name not in spark.table(table_name).columns:
+            raise ValueError(f"Required key column '{key_col_name}' is missing from '{table_name}'.")
             
         check_df = spark.table(table_name).filter(col(key_col_name) == -1)
-        if check_df.count() == 1:
+        unknown_count = check_df.count()
+        if unknown_count == 1:
             print(f"[OK] Unknown member verified for '{table_name}'.")
         else:
-            print(f"[ERROR] Verification failed for '{table_name}'! Row count = {check_df.count()}")
+            raise ValueError(f"Verification failed for '{table_name}'! Row count = {unknown_count}")
             
     print("=========================================================================\n")
 

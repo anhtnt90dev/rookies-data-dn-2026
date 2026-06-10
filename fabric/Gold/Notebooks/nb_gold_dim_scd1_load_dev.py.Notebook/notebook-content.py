@@ -212,9 +212,15 @@ def run_all_scd1_dimensions() -> None:
     )
 
     # --- 4. dim_policy ---
-    policy_w = Window.partitionBy("policy_id").orderBy(col("updated_at").desc())
+    policy_df = spark.table("silver.policy")
+    if "last_updated_at" not in policy_df.columns:
+        raise ValueError("silver.policy must include last_updated_at for dim_policy ordering.")
+    # silver.policy DDL uses last_updated_at, not updated_at; use load/issue time only as tie-breakers.
+    policy_w = Window.partitionBy("policy_id").orderBy(
+        coalesce(col("last_updated_at"), col("_loaded_at"), col("issued_at")).desc_nulls_last()
+    )
     policy_src = (
-        spark.table("silver.policy")
+        policy_df
         .filter(col("policy_id").isNotNull() & (col("policy_id") != "UNKNOWN"))
         .withColumn("row_num", row_number().over(policy_w))
         .filter(col("row_num") == 1)

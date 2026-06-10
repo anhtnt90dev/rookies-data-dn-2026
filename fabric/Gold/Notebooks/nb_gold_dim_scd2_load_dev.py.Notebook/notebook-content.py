@@ -76,6 +76,7 @@ def load_scd2_dimension(
     target_with_hash = active_target.withColumn(hash_col_name, build_hash_expr([business_key_col] + tracked_cols))
 
     # 5. Join source and active target records
+    target_attribute_cols = list(dict.fromkeys(tracked_cols + type1_cols))
     joined_df = source_with_hash.join(
         target_with_hash.select(
             col(business_key_col).alias("t_" + business_key_col),
@@ -84,7 +85,7 @@ def load_scd2_dimension(
             col("effective_from").alias("t_effective_from"),
             col("effective_to").alias("t_effective_to"),
             col("is_current").alias("t_is_current"),
-            *[col(c).alias("t_" + c) for c in type1_cols]
+            *[col(c).alias("t_" + c) for c in target_attribute_cols]
         ),
         on=col(business_key_col) == col("t_" + business_key_col),
         how="left"
@@ -121,15 +122,16 @@ def load_scd2_dimension(
     )
 
     # Path C: Type 1 updates on active versions (Action = 'UPDATE_TYPE1')
-    type1_changed_cond = " OR ".join([
-        f"coalesce(source.{c}, '') != coalesce(target.t_{c}, '')"
-        for c in type1_cols
-    ]) if type1_cols else "false"
+    type1_changed_cond = lit(False)
+    for c in type1_cols:
+        type1_changed_cond = type1_changed_cond | (
+            coalesce(col(c).cast("string"), lit("")) != coalesce(col("t_" + c).cast("string"), lit(""))
+        )
 
     type1_rows = joined_df.filter(
         col("t_" + surrogate_key_col).isNotNull() & 
         (col(hash_col_name) == col("t_" + hash_col_name)) & 
-        expr(type1_changed_cond)
+        type1_changed_cond
     ).select(
         lit("UPDATE_TYPE1").alias("action_type"),
         col("t_" + surrogate_key_col).alias(surrogate_key_col),
@@ -211,6 +213,19 @@ def load_scd2_dimension(
     )
 
     merge_builder.execute()
+
+    duplicate_current_count = (
+        spark.table(target_table_name)
+        .where(col("is_current") == True)
+        .groupBy(business_key_col)
+        .count()
+        .where(col(business_key_col).isNotNull() & (col("count") > 1))
+        .limit(1)
+        .count()
+    )
+    if duplicate_current_count > 0:
+        raise ValueError(f"SCD2 current-row validation failed for {target_table_name}: duplicate current business keys found.")
+
     print(f"[SUCCESS] Ingested {target_table_name} successfully.\n")
 
 # METADATA ********************

@@ -23,8 +23,8 @@
 # CELL ********************
 
 # # DUMP FOR TEST
-# p_batch_id = 1
-# p_config_load_table = "{\"id\":3,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"insurance_providers\",\"source_location\":\"dbo.insurance_providers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"provider_code\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/insurance_provider.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/insurance_provider.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.insurance_provider\",\"silver_table_name\":\"silver.provider\",\"load_sequence\":3,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
+# p_batch_id = "BATCH_001"
+# p_config_load_table = "{\"id\":9,\"source_system\":\"payment_system\",\"source_type\":\"file\",\"source_name\":\"payment\",\"source_location\":\"Files/landing/payment_system/payment\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"payment_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/payment.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/payment.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.payment\",\"silver_table_name\":\"silver.payment\",\"load_sequence\":9,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
 # p_session_id="3a967666-924c-4c08-904d-7b734f4880cc"
 # p_pipeline_run_id="PL_01"
 
@@ -684,18 +684,6 @@ def _validate_is_not_empty(df: DataFrame, column_name: str, **_) -> F.Column:
         | (F.trim(F.col(column_name)) == "")
     )
 
-def _validate_is_unique(df: DataFrame, column_name: str, **_) -> F.Column:
-    """True when column value appears more than once in df (duplicate = violation)."""
-    count_col = f"__cnt_{column_name}"
-    counts = df.groupBy(column_name).agg(F.count("*").alias(count_col))
-    dup_values = [
-        row[column_name]
-        for row in counts.filter(F.col(count_col) > 1).select(column_name).collect()
-    ]
-    if not dup_values:
-        return F.lit(False)
-    return F.col(column_name).isin(dup_values)
-
 
 def _validate_max_length(df: DataFrame, column_name: str, max_length: int, **_) -> F.Column:
     """True when string length exceeds max_length (violation)."""
@@ -823,33 +811,6 @@ def _validate_data_type(df: DataFrame, column_name: str, type: str, **_) -> F.Co
     return F.col(column_name).cast(spark_type).isNull() & F.col(column_name).isNotNull()
 
 
-def _validate_foreign_key(
-    df: DataFrame,
-    column_name: str,
-    reference_table: str,
-    reference_column: str,
-    **_,
-) -> F.Column:
-    """
-    True when the value does NOT exist in reference_table.reference_column (violation).
-    Gracefully skips the check if the reference table cannot be read.
-    """
-    try:
-        ref_df: DataFrame = (
-            spark.table(reference_table)  # noqa: F821 — spark injected by Fabric
-            .select(F.col(reference_column).alias("__ref_key"))
-            .distinct()
-        )
-        valid_keys = {row["__ref_key"] for row in ref_df.collect()}
-        return ~F.col(column_name).isin(list(valid_keys))
-    except AnalysisException as analysis_error:
-        print(
-            f"[DQ] Warning — Could not read reference table '{reference_table}': "
-            f"{analysis_error}. Skipping FK check for '{column_name}'."
-        )
-        return F.lit(False)
-
-
 # METADATA ********************
 
 # META {
@@ -872,7 +833,7 @@ def log_invalid_batch_records(
     Each validation error becomes one row in the log table.
     """
 
-    if rejected_df.rdd.isEmpty():
+    if rejected_df.isEmpty():
         return
 
     log_df = (
@@ -959,7 +920,6 @@ def log_invalid_batch_records(
 VALIDATORS: dict[str, callable] = {
     "_validate_is_not_null": _validate_is_not_null,
     "_validate_is_not_empty": _validate_is_not_empty,
-    "_validate_is_unique": _validate_is_unique,
     "_validate_max_length": _validate_max_length,
     "_validate_regex": _validate_regex,
     "_validate_date_iso8601": _validate_date_iso8601,
@@ -968,7 +928,6 @@ VALIDATORS: dict[str, callable] = {
     "_validate_min_value": _validate_min_value,
     "_validate_accepted_values": _validate_accepted_values,
     "_validate_data_type": _validate_data_type,
-    "_validate_foreign_key": _validate_foreign_key,
 }
 
 

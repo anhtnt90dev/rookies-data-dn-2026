@@ -240,13 +240,13 @@ def insert_next_run_mode_data() -> None:
         StructField("session_id", StringType(), True),
     ])
 
-    df = (
+    next_run_df = (
         spark.createDataFrame(data, schema)
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
     )
 
-    df.write.format("delta").mode("overwrite").saveAsTable("cfg.next_run_mode")
+    next_run_df.write.format("delta").mode("overwrite").saveAsTable("cfg.next_run_mode")
 
 
 def insert_retry_policy_data() -> None:
@@ -274,13 +274,13 @@ def insert_retry_policy_data() -> None:
         StructField("is_active", BooleanType(), False),
     ])
 
-    df = (
+    retry_policy_df = (
         spark.createDataFrame(data, schema)
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
     )
 
-    df.write.format("delta").mode("overwrite").saveAsTable("cfg.retry_policy")
+    retry_policy_df.write.format("delta").mode("overwrite").saveAsTable("cfg.retry_policy")
 
 
 def insert_dim_fact_table_data() -> None:

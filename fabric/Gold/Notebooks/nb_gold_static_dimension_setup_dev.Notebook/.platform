@@ -1,19 +1,11 @@
-{
+﻿{
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Notebook",
-<<<<<<<< HEAD:fabric/Gold/Notebooks/nb_gold_static_dimension_setup_dev.Notebook/.platform
     "displayName": "nb_gold_static_dimension_setup_dev"
   },
   "config": {
     "version": "2.0",
     "logicalId": "04ed6b91-f2f0-8db2-4780-c98fc09470ef"
-========
-    "displayName": "nb_gold_fact_validate_dev"
-  },
-  "config": {
-    "version": "2.0",
-    "logicalId": "d39d4f93-e0a4-4bb0-b6ce-b9b4c114d8fe"
->>>>>>>> origin/dev:fabric/Gold/Notebooks/nb_gold_fact_validate_dev.Notebook/.platform
   }
 }

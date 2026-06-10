@@ -144,52 +144,6 @@
         ]
       },
       {
-        "type": "InvokePipeline",
-        "typeProperties": {
-          "parameters": {
-            "previous_session_id": {
-              "value": "@variables('previous_session_id')",
-              "type": "Expression"
-            },
-            "batch_id": {
-              "value": "@variables('batch_id')",
-              "type": "Expression"
-            },
-            "run_mode": {
-              "value": "@variables('run_mode')",
-              "type": "Expression"
-            },
-            "session_id": {
-              "value": "@variables('session_id')",
-              "type": "Expression"
-            }
-          },
-          "waitOnCompletion": true,
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "pipelineId": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
-          "operationType": "InvokeFabricPipeline"
-        },
-        "externalReferences": {
-          "connection": "de222b0e-d361-406f-9980-3dc5307b5169"
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "ingestion",
-        "dependsOn": [
-          {
-            "activity": "set_session_id_variable",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
         "type": "TridentNotebook",
         "typeProperties": {
           "notebookId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b",
@@ -338,6 +292,46 @@
         "dependsOn": [
           {
             "activity": "handle_mode",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "ExecutePipeline",
+        "typeProperties": {
+          "pipeline": {
+            "referenceName": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
+            "type": "PipelineReference"
+          },
+          "parameters": {
+            "session_id": {
+              "value": "@variables('session_id')",
+              "type": "Expression"
+            },
+            "batch_id": {
+              "value": "@variables('batch_id')",
+              "type": "Expression"
+            },
+            "run_mode": {
+              "value": "@variables('run_mode')",
+              "type": "Expression"
+            },
+            "previous_session_id": {
+              "value": "@variables('previous_session_id')",
+              "type": "Expression"
+            }
+          },
+          "waitOnCompletion": true
+        },
+        "policy": {
+          "secureInput": false
+        },
+        "name": "ingestion",
+        "dependsOn": [
+          {
+            "activity": "set_session_id_variable",
             "dependencyConditions": [
               "Succeeded"
             ]

@@ -67,13 +67,13 @@ def count_table_rows(table_name, batch_id=None, batch_column="_batch_id", use_ba
         raise Exception(f"Table not found: {table_name}")
 
     table_df = spark.table(table_name)
-    should_use_batch_filter = use_batch_filter and batch_id is not None and has_table_column(table_name, batch_column)
 
-    if should_use_batch_filter:
+    if use_batch_filter and batch_id is not None:
+        if not has_table_column(table_name, batch_column):
+            raise Exception(f"Batch column missing: table={table_name}, batch_column={batch_column}")
         table_df = table_df.where(F.col(batch_column) == F.lit(batch_id))
 
     return int(table_df.count())
-
 
 # METADATA ********************
 
@@ -88,13 +88,15 @@ def classify_count_error(error_message):
     lower_error_message = str(error_message).lower()
 
     if "table not found" in lower_error_message or "not found" in lower_error_message:
-        return ErrorType.CONFIG.value, False
+        return "TABLE_NOT_FOUND", ErrorType.CONFIG.value, False
+
+    if "batch column missing" in lower_error_message:
+        return "BATCH_COLUMN_MISSING", ErrorType.CONFIG.value, False
 
     if "permission" in lower_error_message or "connection" in lower_error_message or "timeout" in lower_error_message:
-        return ErrorType.SYSTEM.value, True
+        return "COUNT_SYSTEM_ERROR", ErrorType.SYSTEM.value, True
 
-    return ErrorType.UNKNOWN.value, False
-
+    return "COUNT_UNKNOWN_ERROR", ErrorType.UNKNOWN.value, False
 
 # METADATA ********************
 

@@ -174,6 +174,7 @@ except Exception as error:
 # MAGIC %%sql
 # MAGIC CREATE TABLE IF NOT EXISTS log.retry_log (
 # MAGIC     id STRING,
+# MAGIC     file_session_id STRING,
 # MAGIC     table_session_id STRING,
 # MAGIC     attempt_no INT,
 # MAGIC     layer STRING,
@@ -202,6 +203,7 @@ except Exception as error:
 # MAGIC %%sql
 # MAGIC CREATE TABLE IF NOT EXISTS log.invalid_record (
 # MAGIC     id STRING,
+# MAGIC     file_session_id STRING,
 # MAGIC     table_session_id STRING,
 # MAGIC     layer STRING,
 # MAGIC     target_table STRING,
@@ -215,6 +217,41 @@ except Exception as error:
 # MAGIC )
 # MAGIC USING DELTA;
 
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC CREATE TABLE IF NOT EXISTS log.audit_file_session (
+# MAGIC     id STRING,
+# MAGIC     session_id STRING,
+# MAGIC     table_session_id STRING,
+# MAGIC     source_table_id BIGINT,
+# MAGIC     batch_id BIGINT,
+# MAGIC     source_file STRING,
+# MAGIC     file_status STRING,
+# MAGIC     file_row_count INT,
+# MAGIC     processed_row_count INT,
+# MAGIC     rejected_row_count INT,
+# MAGIC     error_code STRING,
+# MAGIC     error_message STRING,
+# MAGIC     error_type STRING,
+# MAGIC     is_retryable BOOLEAN,
+# MAGIC     retry_count INT,
+# MAGIC     last_retry_at TIMESTAMP,
+# MAGIC     started_at TIMESTAMP,
+# MAGIC     completed_at TIMESTAMP,
+# MAGIC     duration_ms BIGINT,
+# MAGIC     created_at TIMESTAMP,
+# MAGIC     updated_at TIMESTAMP
+# MAGIC )
+# MAGIC USING DELTA;
 
 # METADATA ********************
 

@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "14b073f3-0eb9-4315-8d49-155c39392779",
+# META       "default_lakehouse": "561e17c5-1ddb-4ff5-8cf0-4979fe0f6a9c",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "21e1cea5-9786-4ce5-aa47-1d8255b69b82",
+# META       "default_lakehouse_workspace_id": "7cc49813-e700-4770-b90b-9613e48bb7df",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "14b073f3-0eb9-4315-8d49-155c39392779"
+# META           "id": "561e17c5-1ddb-4ff5-8cf0-4979fe0f6a9c"
 # META         }
 # META       ]
 # META     }
@@ -235,7 +235,7 @@ def insert_next_run_mode_data() -> None:
 
 def insert_dim_fact_table_data() -> None:
     data = [
-        (1, "dim_date", "DIM", None, 1, "date_key", True),
+        (1, "dim_date", "DIM", "nb_gold_static_dimension_setup_dev", 1, "date_key", True),
         (2, "dim_customer", "DIM", None, 2, "customer_id", True),
         (3, "dim_agent", "DIM", None, 3, "agent_id", True),
         (4, "dim_provider", "DIM", None, 4, "provider_code", True),

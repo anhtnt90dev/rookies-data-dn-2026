@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Notebook",
-    "displayName": "nb_bronze_gate_dev"
+    "displayName": "nb_gold_driver_flow_dev"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b"
+    "logicalId": "e67263fc-3aa0-4d6f-8a24-0b88d3f1845b"
   }
 }

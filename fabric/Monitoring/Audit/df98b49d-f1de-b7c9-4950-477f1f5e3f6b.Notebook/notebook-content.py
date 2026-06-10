@@ -261,3 +261,82 @@
 # META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT
+# MAGIC     s.batch_id,
+# MAGIC     s.pipeline_name,
+# MAGIC     s.pipeline_run_id,
+# MAGIC     f.source_table_id,
+# MAGIC     f.source_file,
+# MAGIC     f.file_status,
+# MAGIC     f.file_row_count,
+# MAGIC     f.processed_row_count,
+# MAGIC     f.rejected_row_count,
+# MAGIC     f.retry_count,
+# MAGIC     f.error_code,
+# MAGIC     f.error_message,
+# MAGIC     f.started_at,
+# MAGIC     f.completed_at
+# MAGIC FROM log.audit_file_session f
+# MAGIC LEFT JOIN log.audit_session s
+# MAGIC     ON f.session_id = s.id
+# MAGIC ORDER BY f.started_at DESC;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT
+# MAGIC     r.table_session_id,
+# MAGIC     r.file_session_id,
+# MAGIC     r.layer,
+# MAGIC     r.attempt_no,
+# MAGIC     r.status,
+# MAGIC     r.error_code,
+# MAGIC     r.error_type,
+# MAGIC     r.is_retryable,
+# MAGIC     r.error_message,
+# MAGIC     r.started_at,
+# MAGIC     r.ended_at
+# MAGIC FROM log.retry_log r
+# MAGIC ORDER BY r.started_at DESC;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT
+# MAGIC     table_session_id,
+# MAGIC     file_session_id,
+# MAGIC     layer,
+# MAGIC     target_table,
+# MAGIC     record_key,
+# MAGIC     error_column,
+# MAGIC     error_reason,
+# MAGIC     error_type,
+# MAGIC     is_retryable,
+# MAGIC     created_at
+# MAGIC FROM log.invalid_record
+# MAGIC ORDER BY created_at DESC;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }

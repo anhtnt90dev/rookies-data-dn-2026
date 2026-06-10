@@ -7,9 +7,9 @@
 | `Job_Config` | `cfg.source_table` | Stores source configuration and table-level ingestion metadata |
 | `Watermark` | `cfg.watermark` | Stores Source-to-Bronze ingestion checkpoints |
 | `Batch_Log` | `log.audit_session` | Stores batch/session-level execution status |
-| `Pipeline_Log` | `log.audit_table_session`, `log.audit_detail`, `log.audit_file_session` | `log.audit_table_session` stores table/layer execution status, `log.audit_detail` stores processing metrics and reconciliation details, and `log.audit_file_session` stores file-level ingestion status for file-based sources |
-| `Pipeline_Error` | `log.invalid_record` | Stores invalid records, rejected records, and data-quality validation failures |
-| N/A | `log.retry_log` | Stores retry history and retry attempt details |
+| `Pipeline_Log` | `log.audit_session`, `log.audit_table_session`, `log.audit_detail`, `log.audit_file_session` | Stores run/session, table/layer, detail/reconciliation, and file-level execution tracking |
+| `Pipeline_Error` | `log.invalid_record`, `log.audit_table_session.error_code`, `log.audit_table_session.error_message`, `log.audit_file_session.error_code`, `log.audit_file_session.error_message`, `log.retry_log` | Stores validation/data errors, operational failure details, and retry failure history |
+| Retry support | `log.retry_log`, `cfg.retry_policy` | Stores retry policy and retry attempt details for transient system failures |
 | N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context |
 | N/A | `cfg.dim_fact_table`, `cfg.source_dim_fact` | Stores Gold-layer table configuration and source-to-Gold mapping |
 
@@ -74,7 +74,20 @@ erDiagram
     cfg.next_run_mode {
         varchar next_run_mode
         bigint batch_id
-        bigint session_id
+        varchar session_id
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    cfg.retry_policy {
+        bigint id PK
+        varchar policy_name
+        int max_retry_count
+        int retry_delay_seconds
+        varchar backoff_strategy
+        varchar retryable_error_types
+        varchar non_retryable_error_types
+        boolean is_active
         timestamp created_at
         timestamp updated_at
     }
@@ -152,9 +165,27 @@ erDiagram
 |---|---|---|
 | `next_run_mode` | varchar(20) | Execution mode for the next pipeline run, such as NEW or RECOVERY |
 | `batch_id` | bigint | Batch identifier associated with the next pipeline run |
-| `session_id` | bigint | Session identifier associated with the next pipeline run |
+| `session_id` | varchar | Previous failed audit session UUID used for recovery lineage |
 | `created_at` | timestamp | Record creation timestamp |
 | `updated_at` | timestamp | Last update timestamp |
+
+### 1.6. `cfg.retry_policy`
+
+**Purpose:** Stores the retry policy used by audited pipeline processing.
+
+| Column | Data Type | Description |
+|---|---|---|
+| `id` | bigint | Unique retry policy identifier |
+| `policy_name` | varchar(100) | Policy name, such as default_transient_system_retry |
+| `max_retry_count` | int | Maximum number of retry attempts after the initial failed attempt |
+| `retry_delay_seconds` | int | Delay between retry attempts in seconds |
+| `backoff_strategy` | varchar(50) | Retry delay strategy, such as FIXED_DELAY |
+| `retryable_error_types` | varchar(255) | Comma-separated error types that can be retried |
+| `non_retryable_error_types` | varchar(255) | Comma-separated error types that must not be retried |
+| `is_active` | boolean | Indicates whether the policy is active |
+| `created_at` | timestamp | Record creation timestamp |
+| `updated_at` | timestamp | Last update timestamp |
+
 ---
 
 ## 2. Audit and Logging Tables
@@ -444,6 +475,8 @@ Retry is handled within the same `session_id` and `batch_id`.
 
 Each retry attempt is logged in `log.retry_log`.
 
+Retry limits and delay settings are configured in `cfg.retry_policy`. The default project policy uses a fixed delay for transient system errors and treats data, rule, configuration, and unknown errors as non-retryable unless a future approved policy changes that behavior.
+
 If the system error persists beyond the configured retry limit, recovery is required.
 
 If all retry attempts fail, the related table/layer is marked as `FAILED` in `log.audit_table_session`.
@@ -495,6 +528,30 @@ Records stored in `log.invalid_record` do not automatically trigger recovery pro
 After a batch is successfully completed, `cfg.next_run_mode` is updated to `NEW`.
 
 A new batch must not be started until the failed batch has been successfully recovered.
+
+### Framework Helper Scope
+
+The current framework helpers support US47 recovery simulation without integrating production Bronze, Silver, or Gold notebooks.
+
+| Capability | Framework Support | Production Integration Status |
+|---|---|---|
+| Batch/run context | `initialize_run_context()` reads `cfg.next_run_mode`, creates a new `log.audit_session`, creates a new `batch_id` for NEW, and reuses `batch_id` for RECOVERY | Ready for later orchestration integration |
+| Recovery required marker | `mark_recovery_required()` sets `cfg.next_run_mode` to RECOVERY for the failed `batch_id` | Does not store failed layer/table/file physically because `cfg.next_run_mode` has only mode, batch, and session fields |
+| Recovery reset | `reset_next_run_mode()` resets the singleton recovery context to NEW | Ready for later success path integration |
+| Table skip/resume | `should_process_table_layer()` and `get_recovery_table_plan()` inspect prior audit status for a batch/source/layer | Ready for later Bronze/Silver/Gold use |
+| File skip/resume | `should_process_file()` and `get_failed_or_missing_files()` inspect `log.audit_file_session` by `batch_id`, `source_table_id`, and `source_file` | Ready for later file ingestion use |
+| Invalid records | `log_invalid_record()` and `log_invalid_records_from_dataframe()` write to `log.invalid_record` | Real validation rules still need to call these helpers |
+| Retry | `run_with_retry()` reads `cfg.retry_policy`, retries retryable system errors, logs attempts, and marks table failures after exhaustion | Production notebooks still need to wrap real operations |
+
+`log.invalid_record` does not physically duplicate `batch_id`, `session_id`, or source entity. Those values remain traceable through this join path:
+
+```text
+log.invalid_record.table_session_id
+-> log.audit_table_session.id
+-> log.audit_table_session.batch_id / session_id / source_table_id / source_table_name
+```
+
+`cfg.next_run_mode.session_id` is defined as `STRING` to store the previous failed audit session UUID for recovery lineage. The framework relies on `batch_id` as the durable recovery key and creates a new audit `session_id` for each execution while maintaining lineage to the failed run.
 
 ### Example Recovery Flow
 

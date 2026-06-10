@@ -16,6 +16,7 @@
               "database": "lh_insurance_dev"
             },
             "schema": [],
+            "externalReferences": {},
             "annotations": []
           }
         },
@@ -166,6 +167,7 @@
           "pipelineId": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
           "operationType": "InvokeFabricPipeline"
         },
+        "externalReferences": {},
         "policy": {
           "timeout": "0.12:00:00",
           "retry": 0,

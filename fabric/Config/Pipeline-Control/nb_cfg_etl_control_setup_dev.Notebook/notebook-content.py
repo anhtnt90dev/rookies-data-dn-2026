@@ -102,7 +102,23 @@ def create_config_tables() -> None:
     CREATE TABLE IF NOT EXISTS cfg.next_run_mode (
         next_run_mode STRING,
         batch_id BIGINT,
-        session_id BIGINT,
+        session_id STRING,
+        created_at TIMESTAMP,
+        updated_at TIMESTAMP
+    )
+    USING DELTA
+    """)
+
+    spark.sql("""
+    CREATE TABLE IF NOT EXISTS cfg.retry_policy (
+        id BIGINT,
+        policy_name STRING,
+        max_retry_count INT,
+        retry_delay_seconds INT,
+        backoff_strategy STRING,
+        retryable_error_types STRING,
+        non_retryable_error_types STRING,
+        is_active BOOLEAN,
         created_at TIMESTAMP,
         updated_at TIMESTAMP
     )
@@ -140,8 +156,8 @@ def insert_source_table_data() -> None:
          f"{MAPPING_PATH}/source-to-bronze/agent.json", f"{MAPPING_PATH}/bronze-to-silver/agent.json", 2, True),
 
         (3, "crm_system", "database", "insurance_providers", "dbo.insurance_providers", "table", None, "INCREMENTAL", "provider_code",
-         None, "updated_date", "bronze.insurance_provider", "silver.insurance_provider",
-         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/insurance_provider.json", 3, True),
+         None, "updated_date", "bronze.insurance_provider", "silver.provider",
+         f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/provider.json", 3, True),
 
         (4, "crm_system", "database", "vehicle", "dbo.vehicle", "table", None, "INCREMENTAL", "vehicle_id",
          None, "updated_date", "bronze.vehicle", "silver.vehicle",
@@ -221,16 +237,50 @@ def insert_next_run_mode_data() -> None:
     schema = StructType([
         StructField("next_run_mode", StringType(), False),
         StructField("batch_id", LongType(), True),
-        StructField("session_id", LongType(), True),
+        StructField("session_id", StringType(), True),
     ])
 
-    df = (
+    next_run_df = (
         spark.createDataFrame(data, schema)
         .withColumn("created_at", F.current_timestamp())
         .withColumn("updated_at", F.current_timestamp())
     )
 
-    df.write.format("delta").mode("overwrite").saveAsTable("cfg.next_run_mode")
+    next_run_df.write.format("delta").mode("overwrite").saveAsTable("cfg.next_run_mode")
+
+
+def insert_retry_policy_data() -> None:
+    data = [
+        (
+            1,
+            "default_transient_system_retry",
+            2,
+            60,
+            "FIXED_DELAY",
+            "SYSTEM",
+            "DATA,RULE,CONFIG,UNKNOWN",
+            True,
+        )
+    ]
+
+    schema = StructType([
+        StructField("id", LongType(), False),
+        StructField("policy_name", StringType(), False),
+        StructField("max_retry_count", IntegerType(), False),
+        StructField("retry_delay_seconds", IntegerType(), False),
+        StructField("backoff_strategy", StringType(), False),
+        StructField("retryable_error_types", StringType(), False),
+        StructField("non_retryable_error_types", StringType(), False),
+        StructField("is_active", BooleanType(), False),
+    ])
+
+    retry_policy_df = (
+        spark.createDataFrame(data, schema)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+    )
+
+    retry_policy_df.write.format("delta").mode("overwrite").saveAsTable("cfg.retry_policy")
 
 
 def insert_dim_fact_table_data() -> None:
@@ -356,6 +406,7 @@ def insert_source_dim_fact_data() -> None:
 spark.sql("""TRUNCATE TABLE cfg.source_table""")
 spark.sql("""TRUNCATE TABLE cfg.next_run_mode""")
 spark.sql("""TRUNCATE TABLE cfg.watermark""")
+spark.sql("""TRUNCATE TABLE cfg.retry_policy""")
 spark.sql("""TRUNCATE TABLE cfg.source_dim_fact""")
 spark.sql("""TRUNCATE TABLE cfg.dim_fact_table""")
 
@@ -371,6 +422,7 @@ spark.sql("""TRUNCATE TABLE cfg.dim_fact_table""")
 insert_source_table_data()
 insert_watermark_data()
 insert_next_run_mode_data()
+insert_retry_policy_data()
 insert_dim_fact_table_data()
 insert_source_dim_fact_data()
 

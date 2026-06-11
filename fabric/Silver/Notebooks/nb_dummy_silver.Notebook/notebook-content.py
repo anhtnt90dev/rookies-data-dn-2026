@@ -372,9 +372,207 @@
 # CELL ********************
 
 # MAGIC %%sql
-# MAGIC SELECT COUNT(*) FROM silver.customer WHERE customer_id LIKE 'SCD_TEST_%';
-# MAGIC SELECT COUNT(*) FROM silver.quotation WHERE quotation_id LIKE 'SCD_TEST_%';
-# MAGIC SELECT COUNT(*) FROM silver.policy WHERE policy_id LIKE 'SCD_TEST_%';
+# MAGIC UPDATE silver.quotation
+# MAGIC SET quotation_expiry_at = TIMESTAMP '2026-03-15 23:59:59',
+# MAGIC     updated_at = TIMESTAMP '2026-01-15 09:00:00',
+# MAGIC     _batch_id = 'SCD_TEST_BATCH_002',
+# MAGIC     _loaded_at = CURRENT_TIMESTAMP()
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+# MAGIC 
+# MAGIC UPDATE silver.customer
+# MAGIC SET city = 'Nonthaburi',
+# MAGIC     district = 'Mueang Nonthaburi',
+# MAGIC     updated_at = TIMESTAMP '2026-01-15 09:10:00',
+# MAGIC     _batch_id = 'SCD_TEST_BATCH_002',
+# MAGIC     _loaded_at = CURRENT_TIMESTAMP()
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001';
+# MAGIC 
+# MAGIC UPDATE silver.agent
+# MAGIC SET region = 'East',
+# MAGIC     branch = 'Chonburi Branch',
+# MAGIC     manager_name = 'Manager B',
+# MAGIC     updated_at = TIMESTAMP '2026-01-15 09:20:00',
+# MAGIC     _batch_id = 'SCD_TEST_BATCH_002',
+# MAGIC     _loaded_at = CURRENT_TIMESTAMP()
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001';
+# MAGIC 
+# MAGIC UPDATE silver.provider
+# MAGIC SET provider_group = 'Group Beta',
+# MAGIC     is_active = false,
+# MAGIC     updated_at = TIMESTAMP '2026-01-15 09:30:00',
+# MAGIC     _batch_id = 'SCD_TEST_BATCH_002',
+# MAGIC     _loaded_at = CURRENT_TIMESTAMP()
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001';
+# MAGIC 
+# MAGIC UPDATE silver.vehicle
+# MAGIC SET vehicle_value = CAST(790000.00 AS DECIMAL(18,2)),
+# MAGIC     updated_at = TIMESTAMP '2026-01-15 09:40:00',
+# MAGIC     _batch_id = 'SCD_TEST_BATCH_002',
+# MAGIC     _loaded_at = CURRENT_TIMESTAMP()
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC -- SCD1: dim_quotation should keep one row and overwrite the attribute.
+# MAGIC SELECT quotation_id, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001'
+# MAGIC GROUP BY quotation_id;
+# MAGIC 
+# MAGIC SELECT quotation_id, quotation_expiry_date
+# MAGIC FROM gold.dim_quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+# MAGIC 
+# MAGIC -- SCD1 duplicate checks for test business keys.
+# MAGIC SELECT package_code, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_package
+# MAGIC WHERE package_code LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY package_code
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT coverage_type, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_coverage
+# MAGIC WHERE coverage_type LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY coverage_type
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT policy_id, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_policy
+# MAGIC WHERE policy_id LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY policy_id
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT quotation_status_code, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_quotation_status
+# MAGIC WHERE quotation_status_code LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY quotation_status_code
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT policy_status_code, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_policy_status
+# MAGIC WHERE policy_status_code LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY policy_status_code
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT payment_status_code, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_payment_status
+# MAGIC WHERE payment_status_code LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY payment_status_code
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT payment_method_code, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_payment_method
+# MAGIC WHERE payment_method_code LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY payment_method_code
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC SELECT cancellation_reason, COUNT(*) AS row_count
+# MAGIC FROM gold.dim_cancellation_reason
+# MAGIC WHERE cancellation_reason LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY cancellation_reason
+# MAGIC HAVING COUNT(*) > 1;
+# MAGIC 
+# MAGIC -- SCD2 summary checks.
+# MAGIC SELECT customer_id, COUNT(*) AS versions, SUM(CASE WHEN is_current THEN 1 ELSE 0 END) AS current_rows
+# MAGIC FROM gold.dim_customer
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001'
+# MAGIC GROUP BY customer_id;
+# MAGIC 
+# MAGIC SELECT agent_id, COUNT(*) AS versions, SUM(CASE WHEN is_current THEN 1 ELSE 0 END) AS current_rows
+# MAGIC FROM gold.dim_agent
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001'
+# MAGIC GROUP BY agent_id;
+# MAGIC 
+# MAGIC SELECT provider_code, COUNT(*) AS versions, SUM(CASE WHEN is_current THEN 1 ELSE 0 END) AS current_rows
+# MAGIC FROM gold.dim_provider
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001'
+# MAGIC GROUP BY provider_code;
+# MAGIC 
+# MAGIC SELECT vehicle_id, COUNT(*) AS versions, SUM(CASE WHEN is_current THEN 1 ELSE 0 END) AS current_rows
+# MAGIC FROM gold.dim_vehicle
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001'
+# MAGIC GROUP BY vehicle_id;
+# MAGIC 
+# MAGIC -- SCD2 current rows should show updated tracked attributes.
+# MAGIC SELECT customer_id, city, district, effective_from, effective_to, is_current
+# MAGIC FROM gold.dim_customer
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001'
+# MAGIC ORDER BY effective_from;
+# MAGIC 
+# MAGIC SELECT agent_id, region, branch, manager_name, effective_from, effective_to, is_current
+# MAGIC FROM gold.dim_agent
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001'
+# MAGIC ORDER BY effective_from;
+# MAGIC 
+# MAGIC SELECT provider_code, provider_group, active_flag, effective_from, effective_to, is_current
+# MAGIC FROM gold.dim_provider
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001'
+# MAGIC ORDER BY effective_from;
+# MAGIC 
+# MAGIC SELECT vehicle_id, vehicle_value, effective_from, effective_to, is_current
+# MAGIC FROM gold.dim_vehicle
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001'
+# MAGIC ORDER BY effective_from;
+# MAGIC 
+# MAGIC -- Old SCD2 rows should be closed.
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_customer
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001'
+# MAGIC   AND is_current = false
+# MAGIC   AND effective_to IS NOT NULL;
+# MAGIC 
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_agent
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001'
+# MAGIC   AND is_current = false
+# MAGIC   AND effective_to IS NOT NULL;
+# MAGIC 
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_provider
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001'
+# MAGIC   AND is_current = false
+# MAGIC   AND effective_to IS NOT NULL;
+# MAGIC 
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_vehicle
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001'
+# MAGIC   AND is_current = false
+# MAGIC   AND effective_to IS NOT NULL;
+# MAGIC 
+# MAGIC -- Unknown member checks.
+# MAGIC SELECT 'dim_customer' AS dimension_name, COUNT(*) AS unknown_count FROM gold.dim_customer WHERE customer_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_agent', COUNT(*) FROM gold.dim_agent WHERE agent_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_provider', COUNT(*) FROM gold.dim_provider WHERE provider_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_vehicle', COUNT(*) FROM gold.dim_vehicle WHERE vehicle_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_package', COUNT(*) FROM gold.dim_package WHERE package_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_coverage', COUNT(*) FROM gold.dim_coverage WHERE coverage_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_quotation', COUNT(*) FROM gold.dim_quotation WHERE quotation_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_policy', COUNT(*) FROM gold.dim_policy WHERE policy_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_quotation_status', COUNT(*) FROM gold.dim_quotation_status WHERE quotation_status_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_policy_status', COUNT(*) FROM gold.dim_policy_status WHERE policy_status_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_payment_status', COUNT(*) FROM gold.dim_payment_status WHERE payment_status_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_payment_method', COUNT(*) FROM gold.dim_payment_method WHERE payment_method_key = -1
+# MAGIC UNION ALL
+# MAGIC SELECT 'dim_cancellation_reason', COUNT(*) FROM gold.dim_cancellation_reason WHERE cancellation_reason_key = -1;
 
 # METADATA ********************
 

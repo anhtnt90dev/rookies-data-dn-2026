@@ -357,6 +357,304 @@ def build_fact_policy_dataframe(batch_id, pipeline_run_id: str, table_session_id
     }
 
 
+def build_fact_quotation_dataframe(batch_id, pipeline_run_id: str, table_session_id: str = None) -> Dict:
+    spec = get_fact_spec("fact_quotation")
+    src_df = filter_by_batch(spark.table(spec["source_table"]), batch_id)
+    source_row_count = int(src_df.count())
+    
+    if source_row_count == 0:
+        return {
+            "fact_df": empty_target_dataframe(spec["target_table"]),
+            "source_row_count": 0,
+            "rejected_row_count": 0,
+            "unresolved_lookup_count": 0
+        }
+        
+    latest_df = dedupe_latest(src_df, key_columns=["quotation_id"], order_columns=["updated_at", "_loaded_at", "quotation_at"])
+    
+    # Exclude missing business key rows
+    valid_df = latest_df.where(F.col("quotation_id").isNotNull() & (F.trim(F.col("quotation_id")) != F.lit("")))
+    rejected_row_count = source_row_count - valid_df.count()
+    
+    # Establish Converted Flag by checking policies
+    policies_df = spark.table("silver.policy").select("quotation_id").distinct()
+    
+    base_df = (
+        valid_df
+        .join(policies_df, on="quotation_id", how="left_outer")
+        .withColumn("converted_flag", F.when(policies_df.quotation_id.isNotNull(), F.lit(True)).otherwise(F.lit(False)))
+        .withColumn("__event_at", F.coalesce(F.col("quotation_at").cast("timestamp"), F.col("_loaded_at").cast("timestamp")))
+        .withColumn("quotation_date_key", date_key_expr("quotation_at"))
+        .withColumn("quotation_expiry_date_key", date_key_expr("quotation_expiry_at"))
+    )
+    
+    assert_fact_date_keys_exist(base_df, ["quotation_date_key", "quotation_expiry_date_key"], "gold.dim_date")
+    
+    # Resolve Keys
+    res_df = lookup_type1_key(base_df, "gold.dim_quotation", "quotation_id", "quotation_id", "quotation_key", "quotation_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_customer", "customer_id", "customer_id", "__event_at", "customer_key", "customer_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_agent", "agent_id", "agent_id", "__event_at", "agent_key", "agent_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_provider", "provider_code", "provider_code", "__event_at", "provider_key", "provider_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_package", "package_code", "package_code", "package_key", "package_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_quotation_status", "quotation_status", "quotation_status_code", "quotation_status_key", "quotation_status_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
+    
+    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    
+    fact_df = (
+        res_df
+        .withColumn("is_deleted", source_deleted_expr)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.coalesce(F.col("updated_at").cast("timestamp"), F.current_timestamp()))
+        .withColumn("pipeline_run_id", F.lit(pipeline_run_id))
+        .withColumn("deleted_at", F.when(F.col("is_deleted"), F.current_timestamp()).otherwise(F.lit(None).cast("timestamp")))
+        .withColumn("delete_batch_id", F.when(F.col("is_deleted"), F.lit(str(batch_id))).otherwise(F.lit(None).cast("string")))
+        .withColumn("premium_amount", F.coalesce(F.col("premium_amount"), F.lit(0)).cast("decimal(18,2)"))
+    )
+    
+    unresolved_lookup_count = log_unresolved_lookup_rows(
+        df=fact_df, table_session_id=table_session_id, target_table=spec["target_table"],
+        record_key_column="quotation_id", lookup_key_columns=list(spec["required_dimensions"].keys()), raw_columns=spec["source_required_columns"]
+    )
+    
+    return {
+        "fact_df": fact_df.select(*spec["target_required_columns"]),
+        "source_row_count": source_row_count,
+        "rejected_row_count": int(rejected_row_count),
+        "unresolved_lookup_count": int(unresolved_lookup_count)
+    }
+
+
+def build_fact_quotation_item_dataframe(batch_id, pipeline_run_id: str, table_session_id: str = None) -> Dict:
+    spec = get_fact_spec("fact_quotation_item")
+    src_df = filter_by_batch(spark.table(spec["source_table"]), batch_id)
+    source_row_count = int(src_df.count())
+    
+    if source_row_count == 0:
+        return {
+            "fact_df": empty_target_dataframe(spec["target_table"]),
+            "source_row_count": 0,
+            "rejected_row_count": 0,
+            "unresolved_lookup_count": 0
+        }
+        
+    latest_df = dedupe_latest(src_df, key_columns=["quotation_item_id"], order_columns=["_loaded_at"])
+    valid_df = latest_df.where(F.col("quotation_item_id").isNotNull() & (F.trim(F.col("quotation_item_id")) != F.lit("")))
+    rejected_row_count = source_row_count - valid_df.count()
+    
+    # Retrieve quotation header details
+    quotation_latest = dedupe_latest(spark.table("silver.quotation"), ["quotation_id"], ["updated_at", "_loaded_at"])
+    header_df = quotation_latest.select(
+        F.col("quotation_id").alias("__h_quotation_id"),
+        F.col("quotation_at").alias("quotation_at"),
+        F.col("customer_id").alias("customer_id"),
+        F.col("agent_id").alias("agent_id"),
+        F.col("provider_code").alias("provider_code"),
+        F.col("package_code").alias("package_code"),
+        F.col("quotation_status").alias("quotation_status")
+    )
+    
+    base_df = (
+        valid_df
+        .join(header_df, valid_df["quotation_id"] == header_df["__h_quotation_id"], "left")
+        .drop("__h_quotation_id")
+        .withColumn("__event_at", F.coalesce(F.col("quotation_at").cast("timestamp"), F.col("_loaded_at").cast("timestamp")))
+        .withColumn("quotation_date_key", date_key_expr("quotation_at"))
+    )
+    
+    assert_fact_date_keys_exist(base_df, ["quotation_date_key"], "gold.dim_date")
+    
+    # Resolve Keys
+    res_df = lookup_type1_key(base_df, "gold.dim_quotation", "quotation_id", "quotation_id", "quotation_key", "quotation_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_customer", "customer_id", "customer_id", "__event_at", "customer_key", "customer_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_agent", "agent_id", "agent_id", "__event_at", "agent_key", "agent_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_provider", "provider_code", "provider_code", "__event_at", "provider_key", "provider_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_package", "package_code", "package_code", "package_key", "package_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_quotation_status", "quotation_status", "quotation_status_code", "quotation_status_key", "quotation_status_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_coverage", "coverage_type", "coverage_type", "coverage_key", "coverage_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
+    
+    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    
+    fact_df = (
+        res_df
+        .withColumn("is_deleted", source_deleted_expr)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+        .withColumn("pipeline_run_id", F.lit(pipeline_run_id))
+        .withColumn("deleted_at", F.when(F.col("is_deleted"), F.current_timestamp()).otherwise(F.lit(None).cast("timestamp")))
+        .withColumn("delete_batch_id", F.when(F.col("is_deleted"), F.lit(str(batch_id))).otherwise(F.lit(None).cast("string")))
+        .withColumn("coverage_amount", F.coalesce(F.col("coverage_amount"), F.lit(0)).cast("decimal(18,2)"))
+        .withColumn("deductible_amount", F.coalesce(F.col("deductible_amount"), F.lit(0)).cast("decimal(18,2)"))
+    )
+    
+    unresolved_lookup_count = log_unresolved_lookup_rows(
+        df=fact_df, table_session_id=table_session_id, target_table=spec["target_table"],
+        record_key_column="quotation_item_id", lookup_key_columns=list(spec["required_dimensions"].keys()), raw_columns=spec["source_required_columns"]
+    )
+    
+    return {
+        "fact_df": fact_df.select(*spec["target_required_columns"]),
+        "source_row_count": source_row_count,
+        "rejected_row_count": int(rejected_row_count),
+        "unresolved_lookup_count": int(unresolved_lookup_count)
+    }
+
+
+def build_fact_payment_dataframe(batch_id, pipeline_run_id: str, table_session_id: str = None) -> Dict:
+    spec = get_fact_spec("fact_payment")
+    src_df = filter_by_batch(spark.table(spec["source_table"]), batch_id)
+    source_row_count = int(src_df.count())
+    
+    if source_row_count == 0:
+        return {
+            "fact_df": empty_target_dataframe(spec["target_table"]),
+            "source_row_count": 0,
+            "rejected_row_count": 0,
+            "unresolved_lookup_count": 0
+        }
+        
+    latest_df = dedupe_latest(src_df, key_columns=["payment_id"], order_columns=["_loaded_at"])
+    valid_df = latest_df.where(F.col("payment_id").isNotNull() & (F.trim(F.col("payment_id")) != F.lit("")))
+    rejected_row_count = source_row_count - valid_df.count()
+    
+    # Retrieve conformed policy contexts
+    policy_latest = dedupe_latest(spark.table("silver.policy"), ["policy_id"], ["last_updated_at", "_loaded_at"])
+    policy_context = policy_latest.select(
+        F.col("policy_id").alias("__p_policy_id"),
+        F.col("customer_id").alias("customer_id"),
+        F.col("provider_code").alias("provider_code"),
+        F.col("issued_at").alias("policy_issued_at")
+    )
+    
+    # Standardize payment method strings
+    standardized_df = (
+        valid_df
+        .withColumn("payment_method_code", 
+            F.expr("""
+                CASE 
+                    WHEN upper(payment_method) = 'BANK TRANSFER' THEN 'BANK_TRANSFER'
+                    WHEN upper(payment_method) = 'CREDIT CARD' THEN 'CREDIT_CARD'
+                    WHEN upper(payment_method) = 'E-WALLET' THEN 'E_WALLET'
+                    ELSE upper(replace(payment_method, ' ', '_'))
+                END
+            """)
+        )
+    )
+    
+    base_df = (
+        standardized_df
+        .join(policy_context, standardized_df["policy_id"] == policy_context["__p_policy_id"], "left")
+        .drop("__p_policy_id")
+        .withColumn("__event_at", F.coalesce(F.col("payment_at").cast("timestamp"), F.col("_loaded_at").cast("timestamp")))
+        .withColumn("payment_date_key", date_key_expr("payment_at"))
+        .withColumn("issued_date_key", date_key_expr("policy_issued_at"))
+    )
+    
+    assert_fact_date_keys_exist(base_df, ["payment_date_key", "issued_date_key"], "gold.dim_date")
+    
+    # Resolve Keys
+    res_df = lookup_type1_key(base_df, "gold.dim_policy", "policy_id", "policy_id", "policy_key", "policy_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_payment_status", "payment_status", "payment_status_code", "payment_status_key", "payment_status_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_payment_method", "payment_method_code", "payment_method_code", "payment_method_key", "payment_method_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_customer", "customer_id", "customer_id", "__event_at", "customer_key", "customer_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_provider", "provider_code", "provider_code", "__event_at", "provider_key", "provider_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
+    
+    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    
+    fact_df = (
+        res_df
+        .withColumn("is_deleted", source_deleted_expr)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+        .withColumn("pipeline_run_id", F.lit(pipeline_run_id))
+        .withColumn("deleted_at", F.when(F.col("is_deleted"), F.current_timestamp()).otherwise(F.lit(None).cast("timestamp")))
+        .withColumn("delete_batch_id", F.when(F.col("is_deleted"), F.lit(str(batch_id))).otherwise(F.lit(None).cast("string")))
+        .withColumn("payment_amount", F.coalesce(F.col("payment_amount"), F.lit(0)).cast("decimal(18,2)"))
+    )
+    
+    unresolved_lookup_count = log_unresolved_lookup_rows(
+        df=fact_df, table_session_id=table_session_id, target_table=spec["target_table"],
+        record_key_column="payment_id", lookup_key_columns=list(spec["required_dimensions"].keys()), raw_columns=spec["source_required_columns"]
+    )
+    
+    return {
+        "fact_df": fact_df.select(*spec["target_required_columns"]),
+        "source_row_count": source_row_count,
+        "rejected_row_count": int(rejected_row_count),
+        "unresolved_lookup_count": int(unresolved_lookup_count)
+    }
+
+
+def build_fact_cancellation_dataframe(batch_id, pipeline_run_id: str, table_session_id: str = None) -> Dict:
+    spec = get_fact_spec("fact_cancellation")
+    src_df = filter_by_batch(spark.table(spec["source_table"]), batch_id)
+    source_row_count = int(src_df.count())
+    
+    if source_row_count == 0:
+        return {
+            "fact_df": empty_target_dataframe(spec["target_table"]),
+            "source_row_count": 0,
+            "rejected_row_count": 0,
+            "unresolved_lookup_count": 0
+        }
+        
+    latest_df = dedupe_latest(src_df, key_columns=["cancellation_id"], order_columns=["_loaded_at"])
+    valid_df = latest_df.where(F.col("cancellation_id").isNotNull() & (F.trim(F.col("cancellation_id")) != F.lit("")))
+    rejected_row_count = source_row_count - valid_df.count()
+    
+    # Retrieve conformed policy contexts
+    policy_latest = dedupe_latest(spark.table("silver.policy"), ["policy_id"], ["last_updated_at", "_loaded_at"])
+    policy_context = policy_latest.select(
+        F.col("policy_id").alias("__p_policy_id"),
+        F.col("customer_id").alias("customer_id"),
+        F.col("provider_code").alias("provider_code")
+    )
+    
+    base_df = (
+        valid_df
+        .join(policy_context, valid_df["policy_id"] == policy_context["__p_policy_id"], "left")
+        .drop("__p_policy_id")
+        .withColumn("__event_at", F.coalesce(F.col("cancellation_at").cast("timestamp"), F.col("_loaded_at").cast("timestamp")))
+        .withColumn("cancellation_date_key", date_key_expr("cancellation_at"))
+    )
+    
+    assert_fact_date_keys_exist(base_df, ["cancellation_date_key"], "gold.dim_date")
+    
+    # Resolve Keys
+    res_df = lookup_type1_key(base_df, "gold.dim_policy", "policy_id", "policy_id", "policy_key", "policy_key")
+    res_df = lookup_type1_key(res_df, "gold.dim_cancellation_reason", "cancellation_reason", "cancellation_reason", "cancellation_reason_key", "cancellation_reason_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_customer", "customer_id", "customer_id", "__event_at", "customer_key", "customer_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_provider", "provider_code", "provider_code", "__event_at", "provider_key", "provider_key")
+    res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
+    
+    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    
+    fact_df = (
+        res_df
+        .withColumn("is_deleted", source_deleted_expr)
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+        .withColumn("pipeline_run_id", F.lit(pipeline_run_id))
+        .withColumn("deleted_at", F.when(F.col("is_deleted"), F.current_timestamp()).otherwise(F.lit(None).cast("timestamp")))
+        .withColumn("delete_batch_id", F.when(F.col("is_deleted"), F.lit(str(batch_id))).otherwise(F.lit(None).cast("string")))
+        .withColumn("refund_amount", F.coalesce(F.col("refund_amount"), F.lit(0)).cast("decimal(18,2)"))
+    )
+    
+    unresolved_lookup_count = log_unresolved_lookup_rows(
+        df=fact_df, table_session_id=table_session_id, target_table=spec["target_table"],
+        record_key_column="cancellation_id", lookup_key_columns=list(spec["required_dimensions"].keys()), raw_columns=spec["source_required_columns"]
+    )
+    
+    return {
+        "fact_df": fact_df.select(*spec["target_required_columns"]),
+        "source_row_count": source_row_count,
+        "rejected_row_count": int(rejected_row_count),
+        "unresolved_lookup_count": int(unresolved_lookup_count)
+    }
+
+
 # METADATA ********************
 
 # META {
@@ -376,8 +674,17 @@ def run_gold_fact_build(
     audit_session_id: str = None,
 ) -> Dict:
     fact_name = normalize_fact_name(fact_table)
-    if fact_name != "fact_policy":
-        raise NotImplementedError("This notebook currently implements the proven pattern for fact_policy only.")
+    
+    supported_builds = {
+        "fact_policy": build_fact_policy_dataframe,
+        "fact_quotation": build_fact_quotation_dataframe,
+        "fact_quotation_item": build_fact_quotation_item_dataframe,
+        "fact_payment": build_fact_payment_dataframe,
+        "fact_cancellation": build_fact_cancellation_dataframe,
+    }
+    
+    if fact_name not in supported_builds:
+        raise NotImplementedError(f"Build for fact table {fact_name} is not implemented.")
 
     spec = get_fact_spec(fact_name)
     pipeline_run_id = pipeline_run_id or make_manual_pipeline_run_id(pipeline_name)
@@ -408,7 +715,7 @@ def run_gold_fact_build(
             enable_audit=enable_audit,
         )
 
-        build_result = build_fact_policy_dataframe(
+        build_result = supported_builds[fact_name](
             batch_id=batch_id,
             pipeline_run_id=pipeline_run_id,
             table_session_id=table_session_id,
@@ -479,4 +786,3 @@ build_result = run_gold_fact_build(
 )
 
 print(build_result)
-

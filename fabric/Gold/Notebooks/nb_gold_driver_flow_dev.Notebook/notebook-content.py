@@ -63,7 +63,13 @@ if is_blank(p_batch_id):
 
 # CELL ********************
 
-SUPPORTED_FACT_TABLES = ["fact_policy"]
+SUPPORTED_FACT_TABLES = [
+    "fact_quotation",
+    "fact_quotation_item",
+    "fact_policy",
+    "fact_payment",
+    "fact_cancellation"
+]
 
 
 def selected_fact_tables(fact_table: str) -> List[str]:
@@ -74,7 +80,7 @@ def selected_fact_tables(fact_table: str) -> List[str]:
         supported = ", ".join(SUPPORTED_FACT_TABLES)
         raise NotImplementedError(
             f"Gold fact driver currently supports {supported}. "
-            f"Implement and validate fact_policy first before expanding to {fact_name}."
+            f"Implement and validate fact tables first before expanding to {fact_name}."
         )
     return [fact_name]
 

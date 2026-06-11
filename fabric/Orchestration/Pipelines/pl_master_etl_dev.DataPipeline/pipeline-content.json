@@ -400,6 +400,46 @@
             ]
           }
         ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "2f2bad2d-dbb4-90e0-4303-301a165160a0",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "handle_next_run_mode",
+        "description": "change to mode RECOVERY when silver fail",
+        "dependsOn": [
+          {
+            "activity": "ingestion_silver_layer",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
       }
     ],
     "variables": {

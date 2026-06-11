@@ -6,7 +6,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
+            "sqlReaderQuery": "select next_run_mode, batch_id,      session_id from cfg.next_run_mode",
             "partitionOption": "None",
             "queryTimeout": "02:00:00"
           },
@@ -328,7 +328,7 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "de222b0e-d361-406f-9980-3dc5307b5169"
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
         },
         "policy": {
           "timeout": "0.12:00:00",
@@ -341,6 +341,44 @@
         "dependsOn": [
           {
             "activity": "set_session_id_variable",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "InvokePipeline",
+        "typeProperties": {
+          "parameters": {
+            "p_session_id": {
+              "value": "@variables('session_id')",
+              "type": "Expression"
+            },
+            "p_batch_id": {
+              "value": "@variables('batch_id')",
+              "type": "Expression"
+            }
+          },
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "a64d14df-48c6-b8c8-4913-c0a9ca8766f5",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "ingestion_silver_layer",
+        "dependsOn": [
+          {
+            "activity": "bronze_gate",
             "dependencyConditions": [
               "Succeeded"
             ]

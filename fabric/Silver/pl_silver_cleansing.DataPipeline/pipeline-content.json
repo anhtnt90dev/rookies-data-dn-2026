@@ -4,8 +4,7 @@
       {
         "type": "ForEach",
         "typeProperties": {
-          "isSequential": false,
-          "batchCount": 2,
+          "isSequential": true,
           "items": {
             "value": "@activity('lk_get_tables_confg').output.value",
             "type": "Expression"
@@ -19,28 +18,28 @@
                 "parameters": {
                   "p_config_load_table": {
                     "value": {
-                      "value": "@string(item())",
+                      "value": "@coalesce(string(item()), '')",
                       "type": "Expression"
                     },
                     "type": "string"
                   },
                   "p_session_id": {
                     "value": {
-                      "value": "@pipeline().parameters.p_session_id",
+                      "value": "@coalesce(pipeline().parameters.p_session_id, '')",
                       "type": "Expression"
                     },
                     "type": "string"
                   },
                   "p_pipeline_run_id": {
                     "value": {
-                      "value": "@pipeline().Pipeline",
+                      "value": "@pipeline().RunId",
                       "type": "Expression"
                     },
                     "type": "string"
                   },
                   "p_batch_id": {
                     "value": {
-                      "value": "@pipeline().parameters.p_batch_id",
+                      "value": "@coalesce(pipeline().parameters.p_batch_id,'')",
                       "type": "Expression"
                     },
                     "type": "string"

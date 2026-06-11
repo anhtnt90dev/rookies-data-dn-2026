@@ -6,7 +6,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "select next_run_mode, batch_id,      session_id from cfg.next_run_mode",
+            "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
             "partitionOption": "None",
             "queryTimeout": "02:00:00"
           },

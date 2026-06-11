@@ -6,7 +6,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "select next_run_mode, batch_id,      session_id from cfg.next_run_mode",
+            "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
             "partitionOption": "None",
             "queryTimeout": "02:00:00"
           },
@@ -344,7 +344,7 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
+          "connection": "de222b0e-d361-406f-9980-3dc5307b5169"
         },
         "policy": {
           "timeout": "0.12:00:00",

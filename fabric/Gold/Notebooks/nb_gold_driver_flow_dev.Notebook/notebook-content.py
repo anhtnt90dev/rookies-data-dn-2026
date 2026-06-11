@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "b883e6d2-ee4b-4338-a694-4b81d338dd49",
+# META       "default_lakehouse": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "ddc0f61e-f221-421b-a87b-f80ffce2c8df",
+# META       "default_lakehouse_workspace_id": "a562f741-0da9-4508-be62-0c9caf763e5d",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "b883e6d2-ee4b-4338-a694-4b81d338dd49"
+# META           "id": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529"
 # META         }
 # META       ]
 # META     }
@@ -63,7 +63,13 @@ if is_blank(p_batch_id):
 
 # CELL ********************
 
-SUPPORTED_FACT_TABLES = ["fact_policy"]
+SUPPORTED_FACT_TABLES = [
+    "fact_quotation",
+    "fact_quotation_item",
+    "fact_policy",
+    "fact_payment",
+    "fact_cancellation"
+]
 
 
 def selected_fact_tables(fact_table: str) -> List[str]:
@@ -74,7 +80,7 @@ def selected_fact_tables(fact_table: str) -> List[str]:
         supported = ", ".join(SUPPORTED_FACT_TABLES)
         raise NotImplementedError(
             f"Gold fact driver currently supports {supported}. "
-            f"Implement and validate fact_policy first before expanding to {fact_name}."
+            f"Implement and validate fact tables first before expanding to {fact_name}."
         )
     return [fact_name]
 
@@ -87,6 +93,7 @@ def notebook_args(fact_table: str, session_id: str = None) -> Dict[str, str]:
         "p_batch_id": "" if is_blank(p_batch_id) else str(p_batch_id),
         "p_run_mode": p_run_mode,
         "p_enable_audit": "true" if as_bool(p_enable_audit, True) else "false",
+        "useRootDefaultLakehouse": True,
     }
     if not is_blank(session_id):
         args["p_audit_session_id"] = str(session_id)
@@ -100,8 +107,8 @@ def validation_args(fact_table: str) -> Dict[str, str]:
         "p_batch_id": "" if is_blank(p_batch_id) else str(p_batch_id),
         "p_enable_audit": "true" if as_bool(p_enable_audit, True) else "false",
         "p_fail_on_validation_error": "true",
+        "useRootDefaultLakehouse": True,
     }
-
 
 # METADATA ********************
 
@@ -128,7 +135,10 @@ def run_gold_driver_flow() -> Dict:
             )
 
         for fact_table in facts_to_run:
-            dependency_report = run_preflight_for_fact(fact_table, enable_audit=p_enable_audit)
+            dependency_report = run_preflight_for_fact(
+                fact_table,
+                enable_audit=p_enable_audit,
+            )
             print(f"Preflight passed for {fact_table}: {dependency_report}")
 
             build_result = mssparkutils.notebook.run(
@@ -161,11 +171,11 @@ def run_gold_driver_flow() -> Dict:
             "facts": results,
             "status": AuditStatus.SUCCESS.value,
         }
+
     except Exception:
         if as_bool(p_enable_audit, True) and not is_blank(session_id):
             finish_pipeline_session(session_id, AuditStatus.FAILED)
         raise
-
 
 # METADATA ********************
 
@@ -179,3 +189,10 @@ def run_gold_driver_flow() -> Dict:
 driver_result = run_gold_driver_flow()
 print(driver_result)
 
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }

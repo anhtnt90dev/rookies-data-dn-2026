@@ -33,17 +33,6 @@
               "reason_error": "quotation_id does not exist in silver.quotation"
             }
           ]
-        },
-        {
-          "name_func": "_validate_foreign_key",
-          "params": [
-            {
-              "key": "quotation_id",
-              "reference_table": "silver.quotation",
-              "reference_column": "quotation_id",
-              "reason_error": "quotation_id does not exist in silver.quotation"
-            }
-          ]
         }
       ]
     },

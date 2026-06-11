@@ -45,7 +45,7 @@ p_stop_on_failure = True
 
 # Keep True for first run in an empty/disposable dev Lakehouse.
 # WARNING: gold_create_tables may DROP/CREATE Gold tables depending on current notebook logic.
-p_run_gold_create_tables = True
+p_run_gold_create_tables = False
 
 p_batch_id = None
 p_run_mode = "NEW"

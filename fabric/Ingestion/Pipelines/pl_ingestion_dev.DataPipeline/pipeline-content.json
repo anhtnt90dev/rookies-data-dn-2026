@@ -30,7 +30,7 @@
             },
             "source_table_value": {
               "value": {
-                "value": "@string(activity('lkp_source_table1').output.value)",
+                "value": "@string(activity('lkp_source_table').output.value)",
                 "type": "Expression"
               },
               "type": "string"
@@ -54,7 +54,7 @@
         "name": "nb_insert_audit_table_session",
         "dependsOn": [
           {
-            "activity": "lkp_source_table1",
+            "activity": "lkp_source_table",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -66,7 +66,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "select id,\n          s.load_type,\n          s.source_name,\n          s.source_type,\n          s.watermark_column,\n          w.watermark_value\nfrom cfg.source_table s\njoin cfg.watermark w\non s.id = w.source_table_id\nwhere s.is_active = 1",
+            "sqlReaderQuery": "SELECT\n    s.id,\n    s.source_system,\n    s.source_type,\n    s.source_name,\n    s.source_format,\n    s.source_location,\n    s.load_type,\n    s.watermark_column,\n    s.source_to_bronze_mapping_path,\n    s.bronze_table_name,\n    s.load_sequence,\n    w.watermark_value\nFROM cfg.source_table s\nLEFT JOIN cfg.watermark w\n    ON s.id = w.source_table_id\nWHERE s.is_active = 1\nORDER BY s.load_sequence",
             "partitionOption": "None",
             "queryTimeout": "02:00:00"
           },
@@ -90,7 +90,7 @@
           "secureInput": false,
           "secureOutput": false
         },
-        "name": "lkp_source_table1",
+        "name": "lkp_source_table",
         "dependsOn": []
       },
       {
@@ -98,7 +98,7 @@
         "typeProperties": {
           "isSequential": true,
           "items": {
-            "value": "@activity('lkp_source_table2').output.value",
+            "value": "@activity('lkp_source_table').output.value",
             "type": "Expression"
           },
           "activities": [
@@ -178,13 +178,6 @@
                     },
                     "type": "string"
                   },
-                  "previouse_session_id": {
-                    "value": {
-                      "value": "@pipeline().parameters.previous_session_id",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  },
                   "run_mode": {
                     "value": {
                       "value": "@pipeline().parameters.run_mode",
@@ -221,45 +214,6 @@
           ]
         },
         "name": "foreach_source_table",
-        "dependsOn": [
-          {
-            "activity": "lkp_source_table2",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "Lookup",
-        "typeProperties": {
-          "source": {
-            "type": "AzureSqlSource",
-            "sqlReaderQuery": "select id,\r\n       source_system,\r\n       source_type,\r\n       source_name,\r\n       source_format,\r\n       source_location,\r\n       load_type,\r\n       watermark_column,\r\n       source_to_bronze_mapping_path,\r\n       bronze_table_name\r\nfrom cfg.source_table\r\nwhere is_active = 1\r\norder by load_sequence",
-            "partitionOption": "None",
-            "queryTimeout": "02:00:00"
-          },
-          "datasetSettings": {
-            "type": "AzureSqlTable",
-            "typeProperties": {
-              "database": "lh_insurance_dev"
-            },
-            "schema": [],
-            "externalReferences": {
-              "connection": "f50845e3-5c9b-4a6b-8048-5c211eaf57e8"
-            },
-            "annotations": []
-          },
-          "firstRowOnly": false
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "lkp_source_table2",
         "dependsOn": [
           {
             "activity": "nb_insert_audit_table_session",

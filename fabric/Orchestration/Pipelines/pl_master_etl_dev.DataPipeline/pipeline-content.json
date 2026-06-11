@@ -149,7 +149,7 @@
           "notebookId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b",
           "workspaceId": "00000000-0000-0000-0000-000000000000",
           "parameters": {
-            "session_": {
+            "session_id": {
               "value": {
                 "value": "@variables('session_id')",
                 "type": "Expression"
@@ -190,7 +190,23 @@
         "type": "TridentNotebook",
         "typeProperties": {
           "notebookId": "2f2bad2d-dbb4-90e0-4303-301a165160a0",
-          "workspaceId": "00000000-0000-0000-0000-000000000000"
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
         },
         "policy": {
           "timeout": "0.12:00:00",

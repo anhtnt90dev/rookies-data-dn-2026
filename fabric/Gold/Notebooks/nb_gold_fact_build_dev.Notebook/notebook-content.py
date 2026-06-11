@@ -399,7 +399,7 @@ def build_fact_quotation_dataframe(batch_id, pipeline_run_id: str, table_session
     res_df = lookup_type1_key(res_df, "gold.dim_quotation_status", "quotation_status", "quotation_status_code", "quotation_status_key", "quotation_status_key")
     res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
     
-    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    source_deleted_expr = F.lit(False)
     
     fact_df = (
         res_df
@@ -474,7 +474,7 @@ def build_fact_quotation_item_dataframe(batch_id, pipeline_run_id: str, table_se
     res_df = lookup_type1_key(res_df, "gold.dim_coverage", "coverage_type", "coverage_type", "coverage_key", "coverage_key")
     res_df = lookup_scd2_key(res_df, "gold.dim_vehicle", "customer_id", "customer_id", "__event_at", "vehicle_key", "vehicle_key")
     
-    source_deleted_expr = (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True)) | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D"))
+    source_deleted_expr = F.lit(False)
     
     fact_df = (
         res_df

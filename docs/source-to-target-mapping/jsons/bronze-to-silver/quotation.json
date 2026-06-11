@@ -4,43 +4,179 @@
   "columns": [
     {
       "target": "quotation_id",
-      "expression": "quotation_id"
+      "expression": "quotation_id",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "quotation_id",
+              "type": "string",
+              "reason_error": "quotation_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "customer_id",
-      "expression": "customer_id"
+      "expression": "customer_id",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "customer_id",
+              "type": "string",
+              "reason_error": "customer_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "agent_id",
-      "expression": "agent_id"
+      "expression": "agent_id",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "agent_id",
+              "type": "string",
+              "reason_error": "agent_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "provider_code",
-      "expression": "provider_code"
+      "expression": "provider_code",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "provider_code",
+              "type": "string",
+              "reason_error": "provider_code key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_at",
-      "expression": "quotation_date"
+      "expression": "quotation_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "quotation_at",
+              "reason_error": "quotation_at invalid data format"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_less_than",
+          "params": [
+            {
+              "key": "quotation_at",
+              "compare_column": "quotation_expiry_at",
+              "reason_error": "quotation_at must be less than quotation_expiry_at"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_status",
-      "expression": "quotation_status"
+      "expression": "quotation_status",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "quotation_status",
+              "reason_error": "quotation_status key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "package_code",
-      "expression": "package_code"
+      "expression": "package_code",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "package_code",
+              "reason_error": "package_code key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "premium_amount",
-      "expression": "premium_amount"
+      "expression": "premium_amount",
+      "validates": [
+        {
+          "name_func": "_validate_is_numeric",
+          "params": [
+            {
+              "key": "premium_amount",
+              "reason_error": "premium_amount should be numeric"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_min_value",
+          "params": [
+            {
+              "key": "premium_amount",
+              "type": "float",
+              "min_value": 0.0,
+              "inclusive": false,
+              "reason_error": "premium_amount must be greater than 0"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_expiry_at",
-      "expression": "quotation_expiry_date"
+      "expression": "quotation_expiry_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "quotation_expiry_at",
+              "reason_error": "quotation_expiry_at invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "created_at",
-      "expression": "created_date"
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_at",
+              "reason_error": "created_at invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "updated_at",
@@ -52,7 +188,8 @@
     },
     {
       "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "expression": "current_timestamp()",
+      "expression_type": "system"
     },
     {
       "target": "_source_system",

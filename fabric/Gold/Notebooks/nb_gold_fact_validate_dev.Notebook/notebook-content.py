@@ -287,10 +287,16 @@ def validate_fact_table_generic(fact_name: str, batch_id=None, pipeline_run_id: 
     # Reconcile values if amount column is configured
     amt_col = val_spec.get("amount_column")
     if amt_col and amt_col in source_df.columns and amt_col in target_df.columns:
+        has_is_deleted = "is_deleted" in source_df.columns
+        has_operation_type = "operation_type" in source_df.columns
+        
+        is_deleted_col = F.col("is_deleted") if has_is_deleted else F.lit(False)
+        op_type_col = F.col("operation_type") if has_operation_type else F.lit("")
+        
         source_with_delete_flag_df = source_df.withColumn(
             "__source_is_deleted",
-            (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True))
-            | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D")),
+            (F.coalesce(is_deleted_col, F.lit(False)) == F.lit(True))
+            | (F.upper(F.coalesce(op_type_col, F.lit(""))) == F.lit("D")),
         )
         source_amount = decimal_sum(
             source_with_delete_flag_df.where(~F.col("__source_is_deleted")),

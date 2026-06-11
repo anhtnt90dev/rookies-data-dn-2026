@@ -6,7 +6,18 @@
 # META   "kernel_info": {
 # META     "name": "synapse_pyspark"
 # META   },
-# META   "dependencies": {}
+# META   "dependencies": {
+# META     "lakehouse": {
+# META       "default_lakehouse": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529",
+# META       "default_lakehouse_name": "lh_insurance_dev",
+# META       "default_lakehouse_workspace_id": "a562f741-0da9-4508-be62-0c9caf763e5d",
+# META       "known_lakehouses": [
+# META         {
+# META           "id": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529"
+# META         }
+# META       ]
+# META     }
+# META   }
 # META }
 
 # CELL ********************
@@ -114,8 +125,8 @@ def load_scd2_dimension(
         lit("EXPIRE").alias("action_type"),
         col("t_" + surrogate_key_col).alias(surrogate_key_col),
         col(business_key_col),
-        *[col("t_" + c) for c in tracked_cols],
-        *[col("t_" + c) for c in type1_cols],
+        *[col("t_" + c).alias(c) for c in tracked_cols],
+        *[col("t_" + c).alias(c) for c in type1_cols],
         col("t_effective_from").alias("effective_from"),
         col("effective_from").alias("effective_to"), # expired at new version's effective_from
         lit(False).alias("is_current")

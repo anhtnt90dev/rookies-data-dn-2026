@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "b883e6d2-ee4b-4338-a694-4b81d338dd49",
+# META       "default_lakehouse": "14b073f3-0eb9-4315-8d49-155c39392779",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "ddc0f61e-f221-421b-a87b-f80ffce2c8df",
+# META       "default_lakehouse_workspace_id": "21e1cea5-9786-4ce5-aa47-1d8255b69b82",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "b883e6d2-ee4b-4338-a694-4b81d338dd49"
+# META           "id": "14b073f3-0eb9-4315-8d49-155c39392779"
 # META         }
 # META       ]
 # META     }
@@ -303,5 +303,32 @@
 
 # META {
 # META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+spark.sql("""TRUNCATE TABLE bronze.cancellation""")
+
+spark.sql("""TRUNCATE TABLE bronze.payment""")
+
+spark.sql("""TRUNCATE TABLE bronze.policy""")
+
+spark.sql("""TRUNCATE TABLE bronze.customer""")
+
+spark.sql("""TRUNCATE TABLE bronze.agent""")
+
+spark.sql("""TRUNCATE TABLE bronze.insurance_provider""")
+
+spark.sql("""TRUNCATE TABLE bronze.vehicle""")
+
+spark.sql("""TRUNCATE TABLE bronze.quotation""")
+
+spark.sql("""TRUNCATE TABLE bronze.quotation_item""")
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
 # META   "language_group": "synapse_pyspark"
 # META }

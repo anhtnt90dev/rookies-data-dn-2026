@@ -836,10 +836,6 @@ def log_invalid_batch_records(
     if rejected_df.isEmpty():
         return
 
-
-    pk_columns = [c.strip() for c in record_key_column.split(",")]
-    record_key_expr = F.concat_ws("|", *[F.col(c).cast("string") for c in pk_columns])
-
     log_df = (
         rejected_df
         # Split multiple validation errors
@@ -870,7 +866,7 @@ def log_invalid_batch_records(
 
             F.lit(target_table).alias("target_table"),
 
-            F.col(record_key_expr)
+            F.col(record_key_column)
                 .cast("string")
                 .alias("record_key"),
 

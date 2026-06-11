@@ -377,12 +377,12 @@ def build_fact_quotation_dataframe(batch_id, pipeline_run_id: str, table_session
     rejected_row_count = source_row_count - valid_df.count()
     
     # Establish Converted Flag by checking policies
-    policies_df = spark.table("silver.policy").select("quotation_id").distinct()
+    policies_df = spark.table("silver.policy").select("quotation_id").distinct().withColumn("__has_policy", F.lit(True))
     
     base_df = (
         valid_df
         .join(policies_df, on="quotation_id", how="left_outer")
-        .withColumn("converted_flag", F.when(policies_df.quotation_id.isNotNull(), F.lit(True)).otherwise(F.lit(False)))
+        .withColumn("converted_flag", F.coalesce(F.col("__has_policy"), F.lit(False)))
         .withColumn("__event_at", F.coalesce(F.col("quotation_at").cast("timestamp"), F.col("_loaded_at").cast("timestamp")))
         .withColumn("quotation_date_key", date_key_expr("quotation_at"))
         .withColumn("quotation_expiry_date_key", date_key_expr("quotation_expiry_at"))

@@ -1,11 +1,11 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
-    "type": "DataPipeline",
-    "displayName": "pl_landing_fabric_sql_db_ingest_dev"
+    "type": "Notebook",
+    "displayName": "nb_insert_audit_table_session_dev"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "133c8946-15f0-bbe6-479c-9049a3fa682b"
+    "logicalId": "774ca427-4337-b727-41ff-bf75d71b2fb5"
   }
 }

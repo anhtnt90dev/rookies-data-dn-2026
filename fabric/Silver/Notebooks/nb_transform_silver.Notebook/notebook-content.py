@@ -714,8 +714,12 @@ def _validate_date_iso8601(df: DataFrame, column_name: str, **_) -> F.Column:
     parsed_date = F.to_date(value, "yyyy-MM-dd")
 
     parsed_timestamp = F.coalesce(
+        # With timezone offset / Z
         F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ssX"),
-        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSX")
+        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSX"),
+        # Without timezone (local datetime, e.g. '2026-05-24T17:25:59.640')
+        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss"),
+        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS"),
     )
 
     return (

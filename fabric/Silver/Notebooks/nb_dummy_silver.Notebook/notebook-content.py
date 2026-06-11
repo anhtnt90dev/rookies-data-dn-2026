@@ -580,3 +580,262 @@
 # META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT COUNT(*) AS fact_policy_test_rows
+# MAGIC FROM gold.fact_policy
+# MAGIC WHERE policy_id LIKE 'SCD_TEST_%';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT policy_id, COUNT(*) AS row_count
+# MAGIC FROM gold.fact_policy
+# MAGIC WHERE policy_id LIKE 'SCD_TEST_%'
+# MAGIC GROUP BY policy_id
+# MAGIC HAVING COUNT(*) > 1;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM gold.fact_policy
+# MAGIC WHERE policy_id LIKE 'SCD_TEST_%'
+# MAGIC   AND (
+# MAGIC     customer_key = -1
+# MAGIC     OR provider_key = -1
+# MAGIC     OR agent_key = -1
+# MAGIC     OR package_key = -1
+# MAGIC     OR vehicle_key = -1
+# MAGIC     OR quotation_key = -1
+# MAGIC     OR policy_status_key = -1
+# MAGIC   );
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT COUNT(*) AS total_fact_policy_rows
+# MAGIC FROM gold.fact_policy;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC DESCRIBE gold.fact_policy;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM gold.fact_policy
+# MAGIC LIMIT 20;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM silver.policy
+# MAGIC WHERE policy_id = 'SCD_TEST_POLICY_001';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM silver.quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT policy_key, policy_id
+# MAGIC FROM gold.dim_policy
+# MAGIC WHERE policy_id = 'SCD_TEST_POLICY_001';
+# MAGIC 
+# MAGIC SELECT quotation_key, quotation_id
+# MAGIC FROM gold.dim_quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+# MAGIC 
+# MAGIC SELECT customer_key, customer_id, is_current
+# MAGIC FROM gold.dim_customer
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001';
+# MAGIC 
+# MAGIC SELECT provider_key, provider_code, is_current
+# MAGIC FROM gold.dim_provider
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001';
+# MAGIC 
+# MAGIC SELECT agent_key, agent_id, is_current
+# MAGIC FROM gold.dim_agent
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001';
+# MAGIC 
+# MAGIC SELECT package_key, package_code
+# MAGIC FROM gold.dim_package
+# MAGIC WHERE package_code = 'SCD_TEST_PACKAGE_BASIC';
+# MAGIC 
+# MAGIC SELECT vehicle_key, vehicle_id, is_current
+# MAGIC FROM gold.dim_vehicle
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001';
+# MAGIC 
+# MAGIC SELECT policy_status_key, policy_status_code
+# MAGIC FROM gold.dim_policy_status
+# MAGIC WHERE policy_status_code = 'ACTIVE';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC DESCRIBE gold.dim_date;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_date
+# MAGIC LIMIT 20;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT *
+# MAGIC FROM gold.dim_date
+# MAGIC WHERE full_date IN (
+# MAGIC   DATE '2026-01-10',
+# MAGIC   DATE '2027-01-09'
+# MAGIC );
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC SELECT COUNT(*) AS silver_policy_rows
+# MAGIC FROM silver.policy
+# MAGIC WHERE policy_id = 'SCD_TEST_POLICY_001';
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS silver_quotation_rows
+# MAGIC FROM silver.quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS dim_policy_rows
+# MAGIC FROM gold.dim_policy
+# MAGIC WHERE policy_id = 'SCD_TEST_POLICY_001';
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS dim_quotation_rows
+# MAGIC FROM gold.dim_quotation
+# MAGIC WHERE quotation_id = 'SCD_TEST_QUOTE_001';
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS current_customer_rows
+# MAGIC FROM gold.dim_customer
+# MAGIC WHERE customer_id = 'SCD_TEST_CUST_001'
+# MAGIC   AND is_current = true;
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS current_provider_rows
+# MAGIC FROM gold.dim_provider
+# MAGIC WHERE provider_code = 'SCD_TEST_PROVIDER_001'
+# MAGIC   AND is_current = true;
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS current_agent_rows
+# MAGIC FROM gold.dim_agent
+# MAGIC WHERE agent_id = 'SCD_TEST_AGENT_001'
+# MAGIC   AND is_current = true;
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS current_vehicle_rows
+# MAGIC FROM gold.dim_vehicle
+# MAGIC WHERE vehicle_id = 'SCD_TEST_VEH_001'
+# MAGIC   AND is_current = true;
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS package_rows
+# MAGIC FROM gold.dim_package
+# MAGIC WHERE package_code = 'SCD_TEST_PACKAGE_BASIC';
+# MAGIC 
+# MAGIC SELECT COUNT(*) AS policy_status_rows
+# MAGIC FROM gold.dim_policy_status
+# MAGIC WHERE policy_status_code = 'ACTIVE';
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }

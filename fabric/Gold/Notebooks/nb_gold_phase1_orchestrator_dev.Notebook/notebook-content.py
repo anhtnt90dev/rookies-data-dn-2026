@@ -38,7 +38,7 @@ import traceback
 # - BOOTSTRAP_ONLY: create cfg/log/gold tables + static dim setup only
 # - DIMENSIONS_ONLY: run static + SCD1 + SCD2 if Silver exists
 # - FULL_PHASE1: run setup/static/dimensions/fact_policy/validation where possible
-p_execution_mode = "DIMENSIONS_ONLY"
+p_execution_mode = "FULL_PHASE1"
 
 p_timeout_seconds = 3600
 p_stop_on_failure = True
@@ -47,7 +47,7 @@ p_stop_on_failure = True
 # WARNING: gold_create_tables may DROP/CREATE Gold tables depending on current notebook logic.
 p_run_gold_create_tables = False
 
-p_batch_id = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+p_batch_id = None
 p_run_mode = "NEW"
 p_layer = "GOLD"
 p_fact_table = "fact_policy"
@@ -263,13 +263,7 @@ if p_execution_mode == "FULL_PHASE1":
                 "notebook": "nb_gold_driver_flow_dev",
                 "required": False,
                 "type": "gold_fact",
-            },
-            {
-                "name": "gold_fact_validation",
-                "notebook": "nb_gold_fact_validate_dev",
-                "required": False,
-                "type": "gold_validation",
-            },
+            }
         ])
 
 print("\nExecution plan:")

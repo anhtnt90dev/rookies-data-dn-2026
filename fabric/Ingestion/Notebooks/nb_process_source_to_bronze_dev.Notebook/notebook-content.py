@@ -23,17 +23,18 @@
 # PARAMETERS CELL ********************
 
 source_table_id = ""
+source_system = ""
 source_type = ""
 source_name = ""
 source_location = ""
-source_format = ""
 load_type = ""
 watermark_column = ""
+source_to_bronze_mapping_path = ""
 bronze_table_name = ""
 batch_id = ""
 run_mode = ""
-mapping_path = ""
 session_id = ""
+source_format = ""
 
 # METADATA ********************
 
@@ -444,7 +445,22 @@ def get_relative_source_file(source_file: str) -> str:
 
     return source_file
 
-def read_dirty_json_file_or_folder(path: str):
+def read_dirty_json_file_or_folder(path: str, max_size_mb: int = 50):
+
+    file_size_bytes = sum(
+        file.size
+        for file in notebookutils.fs.ls(path)
+    )
+
+    file_size_mb = file_size_bytes / 1024 / 1024
+
+    if file_size_mb > max_size_mb:
+        raise ValueError(
+            f"Dirty JSON file exceeds the supported size limit "
+            f"({file_size_mb:.2f} MB > {max_size_mb} MB). "
+            f"Please provide a valid JSON file or preprocess the file before Bronze ingestion."
+        )
+
     content = "".join(
         row["value"]
         for row in spark.read.text(path).collect()
@@ -738,7 +754,7 @@ def process_file_source(mapping: dict, table_session_id: str, watermark_before):
 
         try:
             if source_format.lower() == "json":
-                source_df = read_dirty_json_file_or_folder(source_file)
+                source_df = read_dirty_json_file_or_folder(source_file, 50)
 
             elif source_format.lower() == "csv":
                 source_df = spark.read.option("header", "true").csv(source_file)

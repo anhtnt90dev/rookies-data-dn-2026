@@ -198,6 +198,421 @@ FACT_SPECS = {
             },
         },
     },
+    "fact_quotation": {
+        "target_table": "gold.fact_quotation",
+        "source_table": "silver.quotation",
+        "cfg_dim_fact_table_id": 15,
+        "upsert_key": "quotation_id",
+        "source_required_columns": [
+            "quotation_id",
+            "customer_id",
+            "agent_id",
+            "provider_code",
+            "package_code",
+            "quotation_status",
+            "premium_amount",
+            "quotation_at",
+            "quotation_expiry_at",
+            "_batch_id",
+            "_loaded_at",
+            "_source_system",
+        ],
+        "target_required_columns": [
+            "quotation_id",
+            "customer_id",
+            "agent_id",
+            "provider_code",
+            "quotation_key",
+            "customer_key",
+            "agent_key",
+            "provider_key",
+            "package_key",
+            "quotation_status_key",
+            "quotation_date_key",
+            "quotation_expiry_date_key",
+            "vehicle_key",
+            "premium_amount",
+            "converted_flag",
+            "created_at",
+            "updated_at",
+            "_batch_id",
+            "_source_system",
+            "pipeline_run_id",
+            "is_deleted",
+            "deleted_at",
+            "delete_batch_id",
+        ],
+        "required_dimensions": {
+            "gold.dim_date": {
+                "key_column": "date_key",
+                "required_columns": ["date_key", "full_date"],
+                "requires_unknown": False,
+                "scd2": False,
+            },
+            "gold.dim_quotation": {
+                "key_column": "quotation_key",
+                "business_column": "quotation_id",
+                "required_columns": ["quotation_key", "quotation_id"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_customer": {
+                "key_column": "customer_key",
+                "business_column": "customer_id",
+                "required_columns": ["customer_key", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_agent": {
+                "key_column": "agent_key",
+                "business_column": "agent_id",
+                "required_columns": ["agent_key", "agent_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_provider": {
+                "key_column": "provider_key",
+                "business_column": "provider_code",
+                "required_columns": ["provider_key", "provider_code", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_package": {
+                "key_column": "package_key",
+                "business_column": "package_code",
+                "required_columns": ["package_key", "package_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_quotation_status": {
+                "key_column": "quotation_status_key",
+                "business_column": "quotation_status_code",
+                "required_columns": ["quotation_status_key", "quotation_status_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_vehicle": {
+                "key_column": "vehicle_key",
+                "business_column": "customer_id",
+                "required_columns": ["vehicle_key", "vehicle_id", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+        },
+    },
+    "fact_quotation_item": {
+        "target_table": "gold.fact_quotation_item",
+        "source_table": "silver.quotation_item",
+        "context_tables": ["silver.quotation"],
+        "cfg_dim_fact_table_id": 16,
+        "upsert_key": "quotation_item_id",
+        "source_required_columns": [
+            "quotation_item_id",
+            "quotation_id",
+            "coverage_type",
+            "coverage_amount",
+            "deductible_amount",
+            "_batch_id",
+            "_loaded_at",
+            "_source_system",
+        ],
+        "context_required_columns": {
+            "silver.quotation": [
+                "quotation_id",
+                "agent_id",
+                "package_code",
+                "quotation_status",
+                "customer_id",
+                "provider_code",
+                "quotation_at",
+                "updated_at",
+                "_batch_id",
+                "_loaded_at",
+            ],
+        },
+        "target_required_columns": [
+            "quotation_item_id",
+            "quotation_id",
+            "quotation_key",
+            "quotation_date_key",
+            "customer_key",
+            "agent_key",
+            "provider_key",
+            "package_key",
+            "quotation_status_key",
+            "coverage_key",
+            "vehicle_key",
+            "coverage_amount",
+            "deductible_amount",
+            "created_at",
+            "updated_at",
+            "_batch_id",
+            "_source_system",
+            "pipeline_run_id",
+            "is_deleted",
+            "deleted_at",
+            "delete_batch_id",
+        ],
+        "required_dimensions": {
+            "gold.dim_date": {
+                "key_column": "date_key",
+                "required_columns": ["date_key", "full_date"],
+                "requires_unknown": False,
+                "scd2": False,
+            },
+            "gold.dim_quotation": {
+                "key_column": "quotation_key",
+                "business_column": "quotation_id",
+                "required_columns": ["quotation_key", "quotation_id"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_customer": {
+                "key_column": "customer_key",
+                "business_column": "customer_id",
+                "required_columns": ["customer_key", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_agent": {
+                "key_column": "agent_key",
+                "business_column": "agent_id",
+                "required_columns": ["agent_key", "agent_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_provider": {
+                "key_column": "provider_key",
+                "business_column": "provider_code",
+                "required_columns": ["provider_key", "provider_code", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_package": {
+                "key_column": "package_key",
+                "business_column": "package_code",
+                "required_columns": ["package_key", "package_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_quotation_status": {
+                "key_column": "quotation_status_key",
+                "business_column": "quotation_status_code",
+                "required_columns": ["quotation_status_key", "quotation_status_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_coverage": {
+                "key_column": "coverage_key",
+                "business_column": "coverage_type",
+                "required_columns": ["coverage_key", "coverage_type"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_vehicle": {
+                "key_column": "vehicle_key",
+                "business_column": "customer_id",
+                "required_columns": ["vehicle_key", "vehicle_id", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+        },
+    },
+    "fact_payment": {
+        "target_table": "gold.fact_payment",
+        "source_table": "silver.payment",
+        "context_tables": ["silver.policy"],
+        "cfg_dim_fact_table_id": 18,
+        "upsert_key": "payment_id",
+        "source_required_columns": [
+            "payment_id",
+            "policy_id",
+            "transaction_reference",
+            "payment_status",
+            "payment_method",
+            "payment_amount",
+            "payment_at",
+            "operation_type",
+            "is_deleted",
+            "_batch_id",
+            "_loaded_at",
+            "_source_system",
+        ],
+        "context_required_columns": {
+            "silver.policy": [
+                "policy_id",
+                "customer_id",
+                "provider_code",
+                "issued_at",
+                "last_updated_at",
+                "_batch_id",
+                "_loaded_at",
+            ],
+        },
+        "target_required_columns": [
+            "payment_id",
+            "policy_id",
+            "transaction_reference",
+            "policy_key",
+            "payment_status_key",
+            "payment_method_key",
+            "payment_date_key",
+            "issued_date_key",
+            "customer_key",
+            "provider_key",
+            "vehicle_key",
+            "payment_amount",
+            "created_at",
+            "updated_at",
+            "_batch_id",
+            "_source_system",
+            "pipeline_run_id",
+            "is_deleted",
+            "deleted_at",
+            "delete_batch_id",
+        ],
+        "required_dimensions": {
+            "gold.dim_date": {
+                "key_column": "date_key",
+                "required_columns": ["date_key", "full_date"],
+                "requires_unknown": False,
+                "scd2": False,
+            },
+            "gold.dim_policy": {
+                "key_column": "policy_key",
+                "business_column": "policy_id",
+                "required_columns": ["policy_key", "policy_id"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_payment_status": {
+                "key_column": "payment_status_key",
+                "business_column": "payment_status_code",
+                "required_columns": ["payment_status_key", "payment_status_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_payment_method": {
+                "key_column": "payment_method_key",
+                "business_column": "payment_method_code",
+                "required_columns": ["payment_method_key", "payment_method_code"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_customer": {
+                "key_column": "customer_key",
+                "business_column": "customer_id",
+                "required_columns": ["customer_key", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_provider": {
+                "key_column": "provider_key",
+                "business_column": "provider_code",
+                "required_columns": ["provider_key", "provider_code", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_vehicle": {
+                "key_column": "vehicle_key",
+                "business_column": "customer_id",
+                "required_columns": ["vehicle_key", "vehicle_id", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+        },
+    },
+    "fact_cancellation": {
+        "target_table": "gold.fact_cancellation",
+        "source_table": "silver.cancellation",
+        "context_tables": ["silver.policy"],
+        "cfg_dim_fact_table_id": 19,
+        "upsert_key": "cancellation_id",
+        "source_required_columns": [
+            "cancellation_id",
+            "policy_id",
+            "cancellation_reason",
+            "refund_amount",
+            "cancellation_at",
+            "operation_type",
+            "is_deleted",
+            "_batch_id",
+            "_loaded_at",
+            "_source_system",
+        ],
+        "context_required_columns": {
+            "silver.policy": [
+                "policy_id",
+                "customer_id",
+                "provider_code",
+                "last_updated_at",
+                "_batch_id",
+                "_loaded_at",
+            ],
+        },
+        "target_required_columns": [
+            "cancellation_id",
+            "policy_id",
+            "policy_key",
+            "cancellation_reason_key",
+            "cancellation_date_key",
+            "customer_key",
+            "provider_key",
+            "vehicle_key",
+            "refund_amount",
+            "created_at",
+            "updated_at",
+            "_batch_id",
+            "_source_system",
+            "pipeline_run_id",
+            "is_deleted",
+            "deleted_at",
+            "delete_batch_id",
+        ],
+        "required_dimensions": {
+            "gold.dim_date": {
+                "key_column": "date_key",
+                "required_columns": ["date_key", "full_date"],
+                "requires_unknown": False,
+                "scd2": False,
+            },
+            "gold.dim_policy": {
+                "key_column": "policy_key",
+                "business_column": "policy_id",
+                "required_columns": ["policy_key", "policy_id"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_cancellation_reason": {
+                "key_column": "cancellation_reason_key",
+                "business_column": "cancellation_reason",
+                "required_columns": ["cancellation_reason_key", "cancellation_reason"],
+                "requires_unknown": True,
+                "scd2": False,
+            },
+            "gold.dim_customer": {
+                "key_column": "customer_key",
+                "business_column": "customer_id",
+                "required_columns": ["customer_key", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_provider": {
+                "key_column": "provider_key",
+                "business_column": "provider_code",
+                "required_columns": ["provider_key", "provider_code", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+            "gold.dim_vehicle": {
+                "key_column": "vehicle_key",
+                "business_column": "customer_id",
+                "required_columns": ["vehicle_key", "vehicle_id", "customer_id", "effective_from", "effective_to", "is_current"],
+                "requires_unknown": True,
+                "scd2": True,
+            },
+        },
+    },
 }
 
 
@@ -323,6 +738,10 @@ def require_cfg_fact_row(fact_table: str) -> int:
     return int(rows[0]["id"])
 
 
+def get_table_dimensions_specs(fact_table: str) -> Dict:
+    return get_fact_spec(fact_table)["required_dimensions"]
+
+
 def get_cfg_fact_table_id(fact_table: str) -> int:
     if table_exists(CFG_DIM_FACT_TABLE):
         rows = (
@@ -346,9 +765,10 @@ def run_preflight_for_fact(fact_table: str = DEFAULT_FACT_TABLE, enable_audit: b
     checked["tables"].append(spec["source_table"])
     checked["columns"].append(spec["source_table"])
 
-    for context_table, required_columns in spec.get("context_required_columns", {}).items():
+    for context_table in spec.get("context_tables", []):
         require_table(context_table)
-        require_columns(context_table, required_columns)
+        req_cols = spec["context_required_columns"][context_table]
+        require_columns(context_table, req_cols)
         checked["tables"].append(context_table)
         checked["columns"].append(context_table)
 
@@ -359,7 +779,15 @@ def run_preflight_for_fact(fact_table: str = DEFAULT_FACT_TABLE, enable_audit: b
 
     for dimension_table, dimension_spec in spec["required_dimensions"].items():
         require_table(dimension_table)
-        require_columns(dimension_table, dimension_spec["required_columns"])
+        # Dynamic required columns check
+        dim_req = dimension_spec.get("required_columns")
+        if not dim_req:
+            dim_req = [dimension_spec["key_column"]]
+            if dimension_spec.get("business_column"):
+                dim_req.append(dimension_spec["business_column"])
+            if dimension_spec.get("scd2"):
+                dim_req.extend(["effective_from", "effective_to", "is_current"])
+        require_columns(dimension_table, dim_req)
         require_table_has_rows(dimension_table, dimension_table)
         if dimension_spec.get("requires_unknown"):
             require_unknown_member(dimension_table, dimension_spec["key_column"])
@@ -812,4 +1240,3 @@ def merge_fact_table(source_df: DataFrame, target_table: str, upsert_key: str) -
         "updated_row": updated_count,
         "deleted_row": deleted_count,
     }
-

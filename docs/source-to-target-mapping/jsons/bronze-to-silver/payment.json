@@ -42,12 +42,12 @@
       "expression_type": "primitive",
       "validates": [
         {
-          "name_func": "_validate_date_iso8601",
+          "name_func": "_validate_is_not_empty",
           "params": [
             {
               "key": "payment_at",
               "type": "string",
-              "reason_error": "payment_at is invalid iso8601 date"
+              "reason_error": "payment_at is null"
             }
           ]
         }

@@ -701,28 +701,38 @@ def _validate_date_iso8601(df: DataFrame, column_name: str, **_) -> F.Column:
     """
     True when value is NOT a valid ISO 8601 date/timestamp (violation).
 
+    Uses a regex match to avoid SparkUpgradeException thrown by Spark 3.0+
+    when timeParserPolicy=EXCEPTION (default) encounters leftover text after
+    a partial format match (e.g. to_date('2026-05-24T17:25:59.640', 'yyyy-MM-dd')
+    parses 10 chars then throws on the remaining 'T17:25:59.640').
+
     Valid examples:
       2025-06-08
+      2025-06-08T14:30:45
+      2025-06-08T14:30:45.640
       2025-06-08T14:30:45Z
       2025-06-08T14:30:45.123Z
       2025-06-08T14:30:45+07:00
       2025-06-08T14:30:45.123+07:00
     """
+    # Matches:
+    #   date-only             : 2025-06-08
+    #   local datetime        : 2025-06-08T14:30:45 or ...T14:30:45.640
+    #   datetime with tz      : ...Z  or  ...+07:00  or  ...-05:30
+    ISO8601_PATTERN = (
+        r"^\d{4}-\d{2}-\d{2}"                  # date part (required)
+        r"(T\d{2}:\d{2}:\d{2}"                 # time part  (optional)
+        r"(\.\d+)?"                             # fractional seconds (optional)
+        r"(Z|[+-]\d{2}:?\d{2})?"               # timezone (optional)
+        r")?$"
+    )
 
     value = F.col(column_name)
 
-    parsed_date = F.to_date(value, "yyyy-MM-dd")
+    is_valid = value.cast(StringType()).rlike(ISO8601_PATTERN)
 
-    parsed_timestamp = F.coalesce(
-        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ssX"),
-        F.to_timestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSX")
-    )
-
-    return (
-        value.isNotNull()
-        & parsed_date.isNull()
-        & parsed_timestamp.isNull()
-    )
+    # A row violates the rule when the value is present but NOT a valid format
+    return value.isNotNull() & ~is_valid
 
 def _validate_is_numeric(
     df: DataFrame,

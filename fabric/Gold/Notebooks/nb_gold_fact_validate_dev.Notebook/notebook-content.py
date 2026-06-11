@@ -56,24 +56,93 @@ if is_blank(p_batch_id):
 
 # CELL ********************
 
-FACT_POLICY_FK_VALIDATIONS = {
-    "policy_key": ("gold.dim_policy", "policy_key"),
-    "quotation_key": ("gold.dim_quotation", "quotation_key"),
-    "customer_key": ("gold.dim_customer", "customer_key"),
-    "provider_key": ("gold.dim_provider", "provider_key"),
-    "agent_key": ("gold.dim_agent", "agent_key"),
-    "package_key": ("gold.dim_package", "package_key"),
-    "policy_status_key": ("gold.dim_policy_status", "policy_status_key"),
-    "vehicle_key": ("gold.dim_vehicle", "vehicle_key"),
+# Specs for validating fact tables
+VALIDATION_SPECS = {
+    "fact_policy": {
+        "source_entity": "silver.policy",
+        "target_entity": "gold.fact_policy",
+        "key_column": "policy_id",
+        "date_keys": ["issued_date_key", "policy_start_date_key", "policy_end_date_key"],
+        "fk_validations": {
+            "policy_key": ("gold.dim_policy", "policy_key"),
+            "quotation_key": ("gold.dim_quotation", "quotation_key"),
+            "customer_key": ("gold.dim_customer", "customer_key"),
+            "provider_key": ("gold.dim_provider", "provider_key"),
+            "agent_key": ("gold.dim_agent", "agent_key"),
+            "package_key": ("gold.dim_package", "package_key"),
+            "policy_status_key": ("gold.dim_policy_status", "policy_status_key"),
+            "vehicle_key": ("gold.dim_vehicle", "vehicle_key"),
+        },
+        "amount_column": "premium_amount",
+        "source_dedupe_order": ["last_updated_at", "_loaded_at", "issued_at"],
+    },
+    "fact_quotation": {
+        "source_entity": "silver.quotation",
+        "target_entity": "gold.fact_quotation",
+        "key_column": "quotation_id",
+        "date_keys": ["quotation_date_key", "quotation_expiry_date_key"],
+        "fk_validations": {
+            "quotation_key": ("gold.dim_quotation", "quotation_key"),
+            "customer_key": ("gold.dim_customer", "customer_key"),
+            "agent_key": ("gold.dim_agent", "agent_key"),
+            "provider_key": ("gold.dim_provider", "provider_key"),
+            "package_key": ("gold.dim_package", "package_key"),
+            "quotation_status_key": ("gold.dim_quotation_status", "quotation_status_key"),
+            "vehicle_key": ("gold.dim_vehicle", "vehicle_key")
+        },
+        "amount_column": "premium_amount",
+        "source_dedupe_order": ["updated_at", "_loaded_at", "quotation_at"],
+    },
+    "fact_quotation_item": {
+        "source_entity": "silver.quotation_item",
+        "target_entity": "gold.fact_quotation_item",
+        "key_column": "quotation_item_id",
+        "date_keys": ["quotation_date_key"],
+        "fk_validations": {
+            "quotation_key": ("gold.dim_quotation", "quotation_key"),
+            "customer_key": ("gold.dim_customer", "customer_key"),
+            "agent_key": ("gold.dim_agent", "agent_key"),
+            "provider_key": ("gold.dim_provider", "provider_key"),
+            "package_key": ("gold.dim_package", "package_key"),
+            "quotation_status_key": ("gold.dim_quotation_status", "quotation_status_key"),
+            "coverage_key": ("gold.dim_coverage", "coverage_key"),
+            "vehicle_key": ("gold.dim_vehicle", "vehicle_key")
+        },
+        "amount_column": "coverage_amount",
+        "source_dedupe_order": ["_loaded_at"],
+    },
+    "fact_payment": {
+        "source_entity": "silver.payment",
+        "target_entity": "gold.fact_payment",
+        "key_column": "payment_id",
+        "date_keys": ["payment_date_key", "issued_date_key"],
+        "fk_validations": {
+            "policy_key": ("gold.dim_policy", "policy_key"),
+            "payment_status_key": ("gold.dim_payment_status", "payment_status_key"),
+            "payment_method_key": ("gold.dim_payment_method", "payment_method_key"),
+            "customer_key": ("gold.dim_customer", "customer_key"),
+            "provider_key": ("gold.dim_provider", "provider_key"),
+            "vehicle_key": ("gold.dim_vehicle", "vehicle_key")
+        },
+        "amount_column": "payment_amount",
+        "source_dedupe_order": ["_loaded_at"],
+    },
+    "fact_cancellation": {
+        "source_entity": "silver.cancellation",
+        "target_entity": "gold.fact_cancellation",
+        "key_column": "cancellation_id",
+        "date_keys": ["cancellation_date_key"],
+        "fk_validations": {
+            "policy_key": ("gold.dim_policy", "policy_key"),
+            "cancellation_reason_key": ("gold.dim_cancellation_reason", "cancellation_reason_key"),
+            "customer_key": ("gold.dim_customer", "customer_key"),
+            "provider_key": ("gold.dim_provider", "provider_key"),
+            "vehicle_key": ("gold.dim_vehicle", "vehicle_key")
+        },
+        "amount_column": "refund_amount",
+        "source_dedupe_order": ["_loaded_at"],
+    }
 }
-
-FACT_POLICY_DATE_KEY_COLUMNS = [
-    "issued_date_key",
-    "policy_start_date_key",
-    "policy_end_date_key",
-]
-
-FACT_POLICY_LOOKUP_KEY_COLUMNS = list(FACT_POLICY_FK_VALIDATIONS.keys())
 
 
 # METADATA ********************
@@ -100,16 +169,20 @@ def decimal_sum(df: DataFrame, column_name: str) -> float:
     return float(result or 0)
 
 
-def source_policy_for_validation(batch_id):
-    source_df = filter_by_batch(spark.table("silver.policy"), batch_id)
+def source_data_for_validation(fact_name: str, batch_id):
+    spec = VALIDATION_SPECS[fact_name]
+    source_df = filter_by_batch(spark.table(spec["source_entity"]), batch_id)
     if source_df.limit(1).count() == 0:
         return source_df
-    latest_df = dedupe_latest(source_df, ["policy_id"], ["last_updated_at", "_loaded_at", "issued_at"])
-    return latest_df.where(F.col("policy_id").isNotNull() & (F.trim(F.col("policy_id")) != F.lit("")))
+    
+    key_col = spec["key_column"]
+    latest_df = dedupe_latest(source_df, [key_col], spec["source_dedupe_order"])
+    return latest_df.where(F.col(key_col).isNotNull() & (F.trim(F.col(key_col)) != F.lit("")))
 
 
-def target_fact_policy_for_validation(batch_id):
-    return filter_by_batch(spark.table("gold.fact_policy"), batch_id)
+def target_fact_for_validation(fact_name: str, batch_id):
+    spec = VALIDATION_SPECS[fact_name]
+    return filter_by_batch(spark.table(spec["target_entity"]), batch_id)
 
 
 def validation_result_dataframe(results: List[Dict]) -> DataFrame:
@@ -129,15 +202,16 @@ def validation_result_dataframe(results: List[Dict]) -> DataFrame:
 
 # CELL ********************
 
-def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audit: bool = True) -> Dict:
-    spec = get_fact_spec("fact_policy")
+def validate_fact_table_generic(fact_name: str, batch_id=None, pipeline_run_id: str = None, enable_audit: bool = True) -> Dict:
+    spec = get_fact_spec(fact_name)
+    val_spec = VALIDATION_SPECS[fact_name]
     results = []
 
-    run_preflight_for_fact("fact_policy", enable_audit=enable_audit)
+    run_preflight_for_fact(fact_name, enable_audit=enable_audit)
     add_validation_result(results, "preflight_dependencies", "PASS", "all dependencies ready", "all dependencies ready")
 
-    source_df = source_policy_for_validation(batch_id)
-    target_df = target_fact_policy_for_validation(batch_id)
+    source_df = source_data_for_validation(fact_name, batch_id)
+    target_df = target_fact_for_validation(fact_name, batch_id)
 
     source_count = int(source_df.count())
     target_count = int(target_df.count())
@@ -147,36 +221,37 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
         "PASS" if source_count == target_count else "FAIL",
         source_count,
         target_count,
-        "Deduped, valid silver.policy rows compared with gold.fact_policy rows for the selected batch.",
+        f"Deduped, valid {val_spec['source_entity']} rows compared with {val_spec['target_entity']} rows for the selected batch.",
     )
 
-    null_policy_id_count = int(target_df.where(F.col("policy_id").isNull() | (F.trim(F.col("policy_id")) == F.lit(""))).count())
+    key_col = val_spec["key_column"]
+    null_key_count = int(target_df.where(F.col(key_col).isNull() | (F.trim(F.col(key_col)) == F.lit(""))).count())
     add_validation_result(
         results,
-        "policy_id_required",
-        "PASS" if null_policy_id_count == 0 else "FAIL",
+        f"{key_col}_required",
+        "PASS" if null_key_count == 0 else "FAIL",
         0,
-        null_policy_id_count,
-        "fact_policy must retain non-null policy_id as the degenerate identifier and merge key.",
+        null_key_count,
+        f"Fact table must retain non-null {key_col} as the degenerate identifier and merge key.",
     )
 
     duplicate_count = int(
         target_df
-        .groupBy("policy_id")
+        .groupBy(key_col)
         .count()
-        .where((F.col("policy_id").isNotNull()) & (F.col("count") > 1))
+        .where((F.col(key_col).isNotNull()) & (F.col("count") > 1))
         .count()
     )
     add_validation_result(
         results,
-        "no_duplicate_policy_id",
+        f"no_duplicate_{key_col}",
         "PASS" if duplicate_count == 0 else "FAIL",
         0,
         duplicate_count,
-        "Reruns must not create duplicate policy_id rows.",
+        f"Reruns must not create duplicate {key_col} rows.",
     )
 
-    missing_date_counts = count_missing_date_key_values(target_df, FACT_POLICY_DATE_KEY_COLUMNS, "gold.dim_date")
+    missing_date_counts = count_missing_date_key_values(target_df, val_spec["date_keys"], "gold.dim_date")
     for column_name, missing_count in missing_date_counts.items():
         add_validation_result(
             results,
@@ -187,7 +262,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
             f"{column_name} must be non-null and exist in gold.dim_date.date_key.",
         )
 
-    for fact_key_column, (dimension_table, dimension_key_column) in FACT_POLICY_FK_VALIDATIONS.items():
+    for fact_key_column, (dimension_table, dimension_key_column) in val_spec["fk_validations"].items():
         invalid_count = count_invalid_fk_values(target_df, fact_key_column, dimension_table, dimension_key_column)
         add_validation_result(
             results,
@@ -198,7 +273,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
             f"{fact_key_column} must exist in {dimension_table}.{dimension_key_column} or equal {UNKNOWN_KEY}.",
         )
 
-    unknown_counts = count_unknown_keys(target_df, FACT_POLICY_LOOKUP_KEY_COLUMNS)
+    unknown_counts = count_unknown_keys(target_df, val_spec["fk_validations"].keys())
     for key_column, unknown_count in unknown_counts.items():
         add_validation_result(
             results,
@@ -209,28 +284,37 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
             f"Rows assigned {UNKNOWN_KEY} because the dimension lookup was missing or invalid.",
         )
 
-    source_with_delete_flag_df = source_df.withColumn(
-        "__source_is_deleted",
-        (F.coalesce(F.col("is_deleted"), F.lit(False)) == F.lit(True))
-        | (F.upper(F.coalesce(F.col("operation_type"), F.lit(""))) == F.lit("D")),
-    )
-    source_premium_amount = decimal_sum(
-        source_with_delete_flag_df.where(~F.col("__source_is_deleted")),
-        "premium_amount",
-    )
-    target_premium_amount = decimal_sum(
-        target_df.where(~F.coalesce(F.col("is_deleted"), F.lit(False))),
-        "premium_amount",
-    )
-    premium_diff = round(abs(source_premium_amount - target_premium_amount), 2)
-    add_validation_result(
-        results,
-        "premium_amount_reconciliation",
-        "PASS" if premium_diff <= 0.01 else "FAIL",
-        round(source_premium_amount, 2),
-        round(target_premium_amount, 2),
-        "Non-deleted Silver premium_amount total should reconcile to non-deleted Gold premium_amount total.",
-    )
+    # Reconcile values if amount column is configured
+    amt_col = val_spec.get("amount_column")
+    if amt_col and amt_col in source_df.columns and amt_col in target_df.columns:
+        has_is_deleted = "is_deleted" in source_df.columns
+        has_operation_type = "operation_type" in source_df.columns
+        
+        is_deleted_col = F.col("is_deleted") if has_is_deleted else F.lit(False)
+        op_type_col = F.col("operation_type") if has_operation_type else F.lit("")
+        
+        source_with_delete_flag_df = source_df.withColumn(
+            "__source_is_deleted",
+            (F.coalesce(is_deleted_col, F.lit(False)) == F.lit(True))
+            | (F.upper(F.coalesce(op_type_col, F.lit(""))) == F.lit("D")),
+        )
+        source_amount = decimal_sum(
+            source_with_delete_flag_df.where(~F.col("__source_is_deleted")),
+            amt_col,
+        )
+        target_amount = decimal_sum(
+            target_df.where(~F.coalesce(F.col("is_deleted"), F.lit(False))),
+            amt_col,
+        )
+        amount_diff = round(abs(source_amount - target_amount), 2)
+        add_validation_result(
+            results,
+            f"{amt_col}_reconciliation",
+            "PASS" if amount_diff <= 0.01 else "FAIL",
+            round(source_amount, 2),
+            round(target_amount, 2),
+            f"Non-deleted Silver {amt_col} total should reconcile to non-deleted Gold {amt_col} total.",
+        )
 
     invalid_soft_delete_count = int(
         target_df
@@ -264,7 +348,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
         table_session_df = (
             spark.table(AUDIT_TABLE_SESSION_TABLE)
             .join(audit_session_df.select(F.col("id").alias("__session_id")), F.col("session_id") == F.col("__session_id"), "inner")
-            .where(F.col("source_table_id") == F.lit(get_cfg_fact_table_id("fact_policy")))
+            .where(F.col("source_table_id") == F.lit(get_cfg_fact_table_id(fact_name)))
         )
         audit_detail_count = int(
             spark.table(AUDIT_DETAIL_TABLE)
@@ -278,7 +362,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
             "PASS" if audit_detail_count >= 1 else "FAIL",
             ">=1",
             audit_detail_count,
-            "log.audit_detail must contain a Gold detail row for fact_policy.",
+            f"log.audit_detail must contain a Gold detail row for {fact_name}.",
         )
     else:
         add_validation_result(
@@ -297,7 +381,7 @@ def validate_fact_policy(batch_id=None, pipeline_run_id: str = None, enable_audi
     if failed_checks:
         failed_names = ", ".join([row["check_name"] for row in failed_checks])
         if p_fail_on_validation_error:
-            raise Exception(f"Gold fact validation failed for fact_policy: {failed_names}")
+            raise Exception(f"Gold fact validation failed for {fact_name}: {failed_names}")
 
     return {
         "fact_table": spec["target_table"],
@@ -324,9 +408,10 @@ def run_gold_fact_validation(
     enable_audit: bool = True,
 ) -> Dict:
     fact_name = normalize_fact_name(fact_table)
-    if fact_name != "fact_policy":
-        raise NotImplementedError("This notebook currently validates the proven pattern for fact_policy only.")
-    return validate_fact_policy(
+    if fact_name not in VALIDATION_SPECS:
+        raise NotImplementedError(f"Validation specs for {fact_name} are not implemented.")
+    return validate_fact_table_generic(
+        fact_name=fact_name,
         batch_id=batch_id,
         pipeline_run_id=pipeline_run_id,
         enable_audit=enable_audit,
@@ -350,4 +435,3 @@ validation_result = run_gold_fact_validation(
 )
 
 print(validation_result)
-

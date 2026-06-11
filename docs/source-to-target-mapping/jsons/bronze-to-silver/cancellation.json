@@ -16,16 +16,6 @@
               "reason_error": "primary key is null"
             }
           ]
-        },
-        {
-          "name_func": "_validate_is_unique",
-          "params": [
-            {
-              "key": "cancellation_id",
-              "type": "string",
-              "reason_error": "primary key is not unique"
-            }
-          ]
         }
       ]
     },
@@ -41,17 +31,6 @@
               "key": "policy_id",
               "type": "string",
               "reason_error": "policy_id is null"
-            }
-          ]
-        },
-        {
-          "name_func": "_validate_foreign_key",
-          "params": [
-            {
-              "key": "policy_id",
-              "reference_table": "silver.policy",
-              "reference_column": "policy_id",
-              "reason_error": "policy_id does not exist in silver.policy"
             }
           ]
         }

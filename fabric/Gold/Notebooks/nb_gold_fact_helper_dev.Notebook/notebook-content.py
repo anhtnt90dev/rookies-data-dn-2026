@@ -201,7 +201,7 @@ FACT_SPECS = {
     "fact_quotation": {
         "target_table": "gold.fact_quotation",
         "source_table": "silver.quotation",
-        "cfg_dim_fact_table_id": 18,
+        "cfg_dim_fact_table_id": 15,
         "upsert_key": "quotation_id",
         "source_required_columns": [
             "quotation_id",
@@ -304,7 +304,7 @@ FACT_SPECS = {
         "target_table": "gold.fact_quotation_item",
         "source_table": "silver.quotation_item",
         "context_tables": ["silver.quotation"],
-        "cfg_dim_fact_table_id": 19,
+        "cfg_dim_fact_table_id": 16,
         "upsert_key": "quotation_item_id",
         "source_required_columns": [
             "quotation_item_id",
@@ -422,7 +422,7 @@ FACT_SPECS = {
         "target_table": "gold.fact_payment",
         "source_table": "silver.payment",
         "context_tables": ["silver.policy"],
-        "cfg_dim_fact_table_id": 20,
+        "cfg_dim_fact_table_id": 18,
         "upsert_key": "payment_id",
         "source_required_columns": [
             "payment_id",
@@ -526,7 +526,7 @@ FACT_SPECS = {
         "target_table": "gold.fact_cancellation",
         "source_table": "silver.cancellation",
         "context_tables": ["silver.policy"],
-        "cfg_dim_fact_table_id": 21,
+        "cfg_dim_fact_table_id": 19,
         "upsert_key": "cancellation_id",
         "source_required_columns": [
             "cancellation_id",

@@ -64,7 +64,7 @@ To fulfill the requirements of the Gold Star Schema, the implementation was exec
 - **Objective**: Run the end-to-end ingestion flow safely from a single controller.
 - **Implementation**:
   - Created the pipeline orchestrator [nb_gold_orchestrator_dev](../../fabric/Gold/Notebooks/nb_gold_orchestrator_dev.Notebook/notebook-content.py) to execute notebooks sequentially with preflight checks and status auditing.
-  - Supported execution modes like `BOOTSTRAP_ONLY`, `DIMENSIONS_ONLY`, and `FULL_PHASE1`.
+  - Supported execution modes like `BOOTSTRAP_ONLY`, `DIMENSIONS_ONLY`, and `FULL_INGESTION`.
   - Documented instructions in the runbook [03-orchestrator-runbook.md](./03-orchestrator-runbook.md).
 
 ---

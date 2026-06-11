@@ -36,7 +36,7 @@ import traceback
 # Default execution mode:
 # - BOOTSTRAP_ONLY: Installs cfg/log/gold tables and loads static calendar & Unknown keys.
 # - DIMENSIONS_ONLY: Loads static metadata and executes SCD1 & SCD2 dimension pipelines.
-# - FULL_PHASE1: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
+# - FULL_INGESTION: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
 p_execution_mode = "BOOTSTRAP_ONLY"
 
 p_timeout_seconds = 3600
@@ -250,7 +250,7 @@ steps.append({
 })
 
 # Compile Dimension loaders if execution mode covers dimensions
-if p_execution_mode in {"DIMENSIONS_ONLY", "FULL_PHASE1"}:
+if p_execution_mode in {"DIMENSIONS_ONLY", "FULL_INGESTION"}:
     if missing_scd1:
         print("\nSkipping SCD1 because required Silver tables are missing.")
     else:
@@ -271,8 +271,8 @@ if p_execution_mode in {"DIMENSIONS_ONLY", "FULL_PHASE1"}:
             "type": "gold_dimension",
         })
 
-# Compile Fact loader driver flow if execution mode covers full phase 1
-if p_execution_mode == "FULL_PHASE1":
+# Compile Fact loader driver flow if execution mode covers full ingestion
+if p_execution_mode == "FULL_INGESTION":
     if missing_scd1 or missing_scd2 or missing_fact:
         print("\nSkipping fact driver/validation because Silver or Gold dependencies are missing.")
     else:

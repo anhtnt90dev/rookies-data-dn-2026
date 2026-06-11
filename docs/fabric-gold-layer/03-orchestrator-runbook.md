@@ -40,7 +40,7 @@ This mode does not run SCD1, SCD2, or facts because Silver source tables may not
 Use this when setup tables already exist and the Lakehouse has the required Silver data.
 
 ```python
-p_execution_mode = "FULL_PHASE1"
+p_execution_mode = "FULL_INGESTION"
 p_run_gold_create_tables = False
 ```
 

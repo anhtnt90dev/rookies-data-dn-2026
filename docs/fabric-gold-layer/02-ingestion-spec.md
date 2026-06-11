@@ -170,7 +170,7 @@ Create a Data Factory Pipeline. Place a **Notebook Activity** for Silver process
 
 ### B. Configure Parameters
 Click the `Run_Gold_Orchestrator` activity, open the **Settings** tab, and declare the following **Base parameters**:
-- `p_execution_mode` (String): `FULL_PHASE1`
+- `p_execution_mode` (String): `FULL_INGESTION`
 - `p_batch_id` (Expression): `@activity('Run_Silver_Ingestion').output.runOutputs.batch_id` (or bind to the pipeline parameter `@pipeline().parameters.PipelineBatchId`)
 - `p_run_mode` (String): `NEW`
 - `p_enable_audit` (String): `true`

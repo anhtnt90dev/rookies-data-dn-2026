@@ -4,19 +4,70 @@
   "columns": [
     {
       "target": "policy_id",
-      "expression": "policy_id"
+      "expression": "policy_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "policy_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "quotation_id",
-      "expression": "quotation_id"
+      "expression": "quotation_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "quotation_id",
+              "type": "string",
+              "reason_error": "quotation_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "customer_id",
-      "expression": "customer_id"
+      "expression": "customer_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "customer_id",
+              "type": "string",
+              "reason_error": "customer_id key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "provider_code",
-      "expression": "provider_code"
+      "expression": "provider_code",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "provider_code",
+              "reason_error": "provider_code key is null"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "policy_number",
@@ -24,19 +75,85 @@
     },
     {
       "target": "policy_start_date",
-      "expression": "policy_start_date"
+      "expression": "policy_start_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "policy_start_date",
+              "reason_error": "policy_start_date invalid data format"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_less_than",
+          "params": [
+            {
+              "key": "policy_start_date",
+              "compare_column": "policy_end_date",
+              "reason_error": "policy_start_date must be less than policy_end_date"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "policy_end_date",
-      "expression": "policy_end_date"
+      "expression": "policy_end_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "policy_end_date",
+              "reason_error": "policy_end_date invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "policy_status",
-      "expression": "policy_status"
+      "expression": "policy_status",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "policy_status",
+              "reason_error": "policy_status key is empty"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "premium_amount",
-      "expression": "premium_amount"
+      "expression": "premium_amount",
+      "validates": [
+        {
+          "name_func": "_validate_is_numeric",
+          "params": [
+            {
+              "key": "premium_amount",
+              "reason_error": "premium_amount must be greater than 0"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_min_value",
+          "params": [
+            {
+              "key": "premium_amount",
+              "type": "float",
+              "min_value": 0.0,
+              "inclusive": false,
+              "reason_error": "premium_amount must be greater than 0"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "operation_type",
@@ -44,7 +161,7 @@
     },
     {
       "target": "is_deleted",
-      "expression": "_operation_type"
+      "expression": "CASE WHEN _operation_type = 'D' THEN TRUE ELSE FALSE END"
     },
     {
       "target": "issued_at",
@@ -52,7 +169,27 @@
     },
     {
       "target": "last_updated_at",
-      "expression": "last_updated_at"
+      "expression": "last_updated_at",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "last_updated_at",
+              "reason_error": "last_updated_at key is empty"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "last_updated_at",
+              "reason_error": "last_updated_at key invalid date format"
+            }
+          ]
+        }
+      ]
     },
     {
       "target": "_batch_id",
@@ -60,7 +197,8 @@
     },
     {
       "target": "_loaded_at",
-      "expression": "_loaded_at"
+      "expression": "current_timestamp()",
+      "expression_type": "system"
     },
     {
       "target": "_source_system",

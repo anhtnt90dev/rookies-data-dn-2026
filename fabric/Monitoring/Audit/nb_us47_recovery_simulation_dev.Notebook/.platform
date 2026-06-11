@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_us47_recovery_simulation_dev",
+    "description": "Dev simulation for US47 batch context, retry, invalid-record, file recovery, and recovery run helpers."
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "31c6eb02-01b7-4609-b297-72093a34ce7d"
+  }
+}

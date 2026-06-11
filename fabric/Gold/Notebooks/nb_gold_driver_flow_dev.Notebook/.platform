@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_gold_driver_flow_dev"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "e67263fc-3aa0-4d6f-8a24-0b88d3f1845b"
+  }
+}

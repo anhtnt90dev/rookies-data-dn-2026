@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529",
+# META       "default_lakehouse": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "a562f741-0da9-4508-be62-0c9caf763e5d",
+# META       "default_lakehouse_workspace_id": "cba514ff-c21c-439e-8107-a08eaa64b6b6",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "2c8fc794-e72d-4c37-8b73-1adf7e8c1529"
+# META           "id": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0"
 # META         }
 # META       ]
 # META     }
@@ -38,19 +38,19 @@ import traceback
 # - BOOTSTRAP_ONLY: create cfg/log/gold tables + static dim setup only
 # - DIMENSIONS_ONLY: run static + SCD1 + SCD2 if Silver exists
 # - FULL_PHASE1: run setup/static/dimensions/fact_policy/validation where possible
-p_execution_mode = "BOOTSTRAP_ONLY"
+p_execution_mode = "FULL_PHASE1"
 
 p_timeout_seconds = 3600
 p_stop_on_failure = True
 
 # Keep True for first run in an empty/disposable dev Lakehouse.
 # WARNING: gold_create_tables may DROP/CREATE Gold tables depending on current notebook logic.
-p_run_gold_create_tables = False
+p_run_gold_create_tables = True
 
-p_batch_id = None
+p_batch_id = 1001
 p_run_mode = "NEW"
 p_layer = "GOLD"
-p_fact_table = "fact_policy"
+p_fact_table = "ALL"
 p_enable_audit = True
 
 common_args = {

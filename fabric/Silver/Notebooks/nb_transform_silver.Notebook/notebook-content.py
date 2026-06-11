@@ -1647,7 +1647,7 @@ finally:
     print(" Writing audit log")
     print("=" * 70)
 
-    is_final_step: bool = True  # Silver is the last layer for this notebook
+    is_final_step: bool = False  # Silver is the middle step for pipeline
 
     try:
         if table_session_id:

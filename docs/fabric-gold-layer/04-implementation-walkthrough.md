@@ -33,7 +33,7 @@ To fulfill the requirements of the Gold Star Schema, the implementation was exec
   - Configured and executed ingestion for all 9 Type 1 dimensions:
     - `dim_package` (distinct package codes from `silver.quotation`)
     - `dim_coverage` (distinct coverage types from `silver.quotation_item`)
-    - `dim_quotation` (quotation header keys and expiry dates)
+    - `dim_quotation` (quotations header keys and expiry dates)
     - `dim_policy` (policy business keys)
     - `dim_quotation_status`, `dim_policy_status`, `dim_payment_status` (distinct status codes)
     - `dim_payment_method` (distinct conformed method codes like `BANK_TRANSFER`, `CREDIT_CARD`, `E_WALLET`)
@@ -63,9 +63,9 @@ To fulfill the requirements of the Gold Star Schema, the implementation was exec
 ### Step 6: Sequenced Pipeline Orchestration
 - **Objective**: Run the end-to-end ingestion flow safely from a single controller.
 - **Implementation**:
-  - Created the pipeline orchestrator [nb_gold_phase1_orchestrator_dev](../../fabric/Gold/Notebooks/nb_gold_phase1_orchestrator_dev.Notebook/notebook-content.py) to execute notebooks sequentially with preflight checks and status auditing.
+  - Created the pipeline orchestrator [nb_gold_orchestrator_dev](../../fabric/Gold/Notebooks/nb_gold_orchestrator_dev.Notebook/notebook-content.py) to execute notebooks sequentially with preflight checks and status auditing.
   - Supported execution modes like `BOOTSTRAP_ONLY`, `DIMENSIONS_ONLY`, and `FULL_PHASE1`.
-  - Documented instructions in the runbook [gold-phase1-orchestrator-runbook.md](../../architecture/team-1/gold-phase1-orchestrator-runbook.md).
+  - Documented instructions in the runbook [03-orchestrator-runbook.md](./03-orchestrator-runbook.md).
 
 ---
 
@@ -80,8 +80,8 @@ Comparing `feature/us-33-implement-ingest-data-gold-layer` to the target `dev` b
 | **[NEW]** | [nb_gold_static_dimension_setup_dev](../../fabric/Gold/Notebooks/nb_gold_static_dimension_setup_dev.Notebook/notebook-content.py) | Gold / Setup | Creates date dimensions and idempotently populates conformed `-1` Unknown member records. |
 | **[NEW]** | [nb_gold_dim_scd1_load_dev.py](../../fabric/Gold/Notebooks/nb_gold_dim_scd1_load_dev.py.Notebook/notebook-content.py) | Gold / Dimension | Implements the generic `load_scd1_dimension` logic and runs ingestion for all 9 SCD Type 1 tables. |
 | **[NEW]** | [nb_gold_dim_scd2_load_dev.py](../../fabric/Gold/Notebooks/nb_gold_dim_scd2_load_dev.py.Notebook/notebook-content.py) | Gold / Dimension | Implements the hybrid `load_scd2_dimension` logic and runs ingestion for the 4 SCD Type 2 tables. |
-| **[NEW]** | [nb_gold_phase1_orchestrator_dev](../../fabric/Gold/Notebooks/nb_gold_phase1_orchestrator_dev.Notebook/notebook-content.py) | Gold / Orchestration | Sequential controller for orchestrating setup, SCD1, SCD2, driver flow and validations. |
-| **[NEW]** | [gold-phase1-orchestrator-runbook.md](../../architecture/team-1/gold-phase1-orchestrator-runbook.md) | Documentation | Runbook instructions, execution modes, validation SQL queries, and commit guidance. |
+| **[NEW]** | [nb_gold_orchestrator_dev](../../fabric/Gold/Notebooks/nb_gold_orchestrator_dev.Notebook/notebook-content.py) | Gold / Orchestration | Sequential controller for orchestrating setup, SCD1, SCD2, driver flow and validations. |
+| **[NEW]** | [03-orchestrator-runbook.md](./03-orchestrator-runbook.md) | Documentation | Runbook instructions, execution modes, validation SQL queries, and commit guidance. |
 | **[MODIFY]**| [nb_gold_driver_flow_dev](../../fabric/Gold/Notebooks/nb_gold_driver_flow_dev.Notebook/notebook-content.py) | Gold / Orchestration | Added `useRootDefaultLakehouse` parameter mapping and resolved minor formatting issues. |
 | **[MODIFY]**| `docs/source-to-target-mapping/jsons/...` | Config / Mapping | Updated default source-to-target mapping JSON configs to match the Gold structure. |
 | **[MODIFY]**| [nb_cfg_etl_control_setup_dev](../../fabric/Config/Pipeline-Control/nb_cfg_etl_control_setup_dev.Notebook/notebook-content.py) | Config / Control | Adjusted setup configuration parameters to support conformed Gold metadata columns. |
@@ -100,4 +100,4 @@ Comparing `feature/us-33-implement-ingest-data-gold-layer` to the target `dev` b
 
 3. **Safe Orchestration**:
    - **On `dev` branch**: Developers had to trigger individual notebooks manually in specific sequences to prevent dependency failures.
-   - **On current feature branch**: The introduction of `nb_gold_phase1_orchestrator_dev` allows automated sequential execution with preflight guards, skipping steps gracefully if prerequisites are missing.
+   - **On current feature branch**: The introduction of `nb_gold_orchestrator_dev` allows automated sequential execution with preflight guards, skipping steps gracefully if prerequisites are missing.

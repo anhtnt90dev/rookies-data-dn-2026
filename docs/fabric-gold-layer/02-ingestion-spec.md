@@ -1,6 +1,6 @@
 # Microsoft Fabric Gold Layer Ingestion Documentation
 
-This document serves as the technical reference and integration guide for the **Gold Layer Ingestion Process** under **US-33: Gold Layer Ingestion*. It outlines the architecture, the implementation details of all 14 dimensions and 5 fact tables, the validation framework, and instructions on how to integrate the Gold ingestion pipeline with the preceding Silver layer in Microsoft Fabric.
+This document serves as the technical reference and integration guide for the **Gold Layer Ingestion Process** under **US-33: Gold Layer Ingestion**. It outlines the architecture, the implementation details of all 14 dimensions and 5 fact tables, the validation framework, and instructions on how to integrate the Gold ingestion pipeline with the preceding Silver layer in Microsoft Fabric.
 
 ---
 
@@ -131,7 +131,7 @@ The Gold ingestion process consists of 9 conformed PySpark Notebooks situated in
 
 ## 3. End-to-End Execution Sequence
 
-All notebooks are orchestrated safely and sequentially from the central orchestrator notebook: **`nb_gold_phase1_orchestrator_dev`**.
+All notebooks are orchestrated safely and sequentially from the central orchestrator notebook: **`nb_gold_orchestrator_dev`**.
 
 ```text
 [Preflight Guards]
@@ -159,12 +159,12 @@ All notebooks are orchestrated safely and sequentially from the central orchestr
 To link the Silver layer to the Gold layer smoothly within Fabric Data Factory:
 
 ### A. Establish Success Constraints
-Create a Data Factory Pipeline. Place a **Notebook Activity** for Silver processing (e.g., `nb_transform_silver`) and connect its **On Success (green wire)** connector directly to a Notebook Activity pointing to **`nb_gold_phase1_orchestrator_dev`**.
+Create a Data Factory Pipeline. Place a **Notebook Activity** for Silver processing (e.g., `nb_transform_silver`) and connect its **On Success (green wire)** connector directly to a Notebook Activity pointing to **`nb_gold_orchestrator_dev`**.
 
 ```text
 +------------------------+              (On Success)             +----------------------------------+
 |  Run_Silver_Ingestion  |──────────────────────────────────────>|       Run_Gold_Orchestrator      |
-| (nb_transform_silver)  |                                       | (nb_gold_phase1_orchestrator_dev)|
+| (nb_transform_silver)  |                                       |   (nb_gold_orchestrator_dev)     |
 +------------------------+                                       +----------------------------------+
 ```
 

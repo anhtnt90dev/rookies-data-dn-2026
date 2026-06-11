@@ -22,37 +22,40 @@
 
 # CELL ********************
 
-# Fabric notebook: nb_gold_phase1_orchestrator_dev
-# Purpose: Run Gold Phase 1 safely from one notebook, sequentially, with preflight guards.
+# Fabric notebook: nb_gold_orchestrator_dev
+# Purpose: Run Gold Layer Ingestion safely from one notebook, sequentially, with preflight guards.
 
 from datetime import datetime, timezone
 import json
 import traceback
 
 # =============================================================================
-# PARAMETERS
+# INPUT PARAMETERS
 # =============================================================================
 
-# Use BOOTSTRAP_ONLY first if Lakehouse is empty.
-# Options:
-# - BOOTSTRAP_ONLY: create cfg/log/gold tables + static dim setup only
-# - DIMENSIONS_ONLY: run static + SCD1 + SCD2 if Silver exists
-# - FULL_PHASE1: run setup/static/dimensions/fact_policy/validation where possible
+# Default execution mode:
+# - BOOTSTRAP_ONLY: Installs cfg/log/gold tables and loads static calendar & Unknown keys.
+# - DIMENSIONS_ONLY: Loads static metadata and executes SCD1 & SCD2 dimension pipelines.
+# - FULL_PHASE1: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
 p_execution_mode = "FULL_PHASE1"
 
 p_timeout_seconds = 3600
 p_stop_on_failure = True
 
-# Keep True for first run in an empty/disposable dev Lakehouse.
-# WARNING: gold_create_tables may DROP/CREATE Gold tables depending on current notebook logic.
-p_run_gold_create_tables = True
+# DDL execution controller:
+# - Set True only during the first execution in a fresh disposable Lakehouse.
+# - WARNING: nb_gold_create_tables_dev contains DROP TABLE statements. Keep False under normal operations.
+p_run_gold_create_tables = False
 
 p_batch_id = 1001
 p_run_mode = "NEW"
 p_layer = "GOLD"
+
+# Target fact table execution filter (defaults to "ALL" to load all 5 fact tables)
 p_fact_table = "ALL"
 p_enable_audit = True
 
+# Arguments payload passed to child notebooks during execution
 common_args = {
     "p_batch_id": p_batch_id,
     "p_run_mode": p_run_mode,
@@ -62,6 +65,7 @@ common_args = {
     "useRootDefaultLakehouse": True,
 }
 
+# Resolve Fabric/Synapse notebook execution handler
 try:
     nb = notebookutils.notebook
 except NameError:
@@ -69,9 +73,10 @@ except NameError:
 
 
 # =============================================================================
-# HELPERS
+# UTILITY HELPERS
 # =============================================================================
 
+# Check if a Delta table exists in the target Lakehouse
 def table_exists(table_name: str) -> bool:
     try:
         return bool(spark.catalog.tableExists(table_name))
@@ -83,10 +88,12 @@ def table_exists(table_name: str) -> bool:
             return False
 
 
+# Filter a list of tables and return the ones that are missing
 def missing_tables(table_names):
     return [table_name for table_name in table_names if not table_exists(table_name)]
 
 
+# Run a child notebook step, capture exception details, and track status
 def run_step(step, step_no, total_steps):
     step_start = datetime.now(timezone.utc)
 
@@ -99,6 +106,7 @@ def run_step(step, step_no, total_steps):
     print("=" * 100)
 
     try:
+        # Execute the notebook asynchronously with timeout and common argument values
         exit_value = nb.run(
             step["notebook"],
             int(step.get("timeout_seconds", p_timeout_seconds)),
@@ -147,9 +155,10 @@ def run_step(step, step_no, total_steps):
 
 
 # =============================================================================
-# PREFLIGHT
+# PREFLIGHT GUARDS & DEPENDENCY CHECKS
 # =============================================================================
 
+# Source Silver tables required for SCD Type 1 Ingestion
 REQUIRED_SILVER_FOR_SCD1 = [
     "silver.quotation",
     "silver.quotation_item",
@@ -158,6 +167,7 @@ REQUIRED_SILVER_FOR_SCD1 = [
     "silver.cancellation",
 ]
 
+# Source Silver tables required for SCD Type 2 Ingestion
 REQUIRED_SILVER_FOR_SCD2 = [
     "silver.customer",
     "silver.agent",
@@ -165,6 +175,10 @@ REQUIRED_SILVER_FOR_SCD2 = [
     "silver.vehicle",
 ]
 
+# GOLD SCHEMA DDL PROXY CHECK:
+# Since all Gold tables are created in a single batch script (nb_gold_create_tables_dev),
+# checking this representative list of conformed dimensions and fact_policy serves as a proxy.
+# If these exist, we assume the DDL notebook was successfully executed.
 REQUIRED_GOLD_FOR_FACT_POLICY = [
     "gold.dim_date",
     "gold.dim_policy",
@@ -178,12 +192,13 @@ REQUIRED_GOLD_FOR_FACT_POLICY = [
     "gold.fact_policy",
 ]
 
+# Execute missing table scans
 missing_scd1 = missing_tables(REQUIRED_SILVER_FOR_SCD1)
 missing_scd2 = missing_tables(REQUIRED_SILVER_FOR_SCD2)
 missing_fact = missing_tables(REQUIRED_GOLD_FOR_FACT_POLICY)
 
 print("=" * 100)
-print("Gold Phase 1 Orchestrator Preflight")
+print("Gold Orchestrator Preflight")
 print("=" * 100)
 print(f"Execution mode: {p_execution_mode}")
 print(f"Batch ID: {p_batch_id}")
@@ -196,12 +211,12 @@ print(f"Missing fact_policy Gold dependencies: {missing_fact}")
 
 
 # =============================================================================
-# BUILD SAFE EXECUTION PLAN
+# EXECUTION PLAN BUILDER
 # =============================================================================
 
 steps = []
 
-# Always safe setup candidates.
+# SETUP STEPS: Always executed to load ETL control configurations and prepare log database
 steps.extend([
     {
         "name": "config_control_setup",
@@ -217,6 +232,7 @@ steps.extend([
     },
 ])
 
+# Recreate Gold layer target DDL structures if run_gold_create_tables is enabled
 if p_run_gold_create_tables:
     steps.append({
         "name": "gold_create_tables",
@@ -225,6 +241,7 @@ if p_run_gold_create_tables:
         "type": "setup",
     })
 
+# Always run static dimension setup (Loding Calendar & -1 Unknown rows)
 steps.append({
     "name": "gold_static_dimension_setup",
     "notebook": "nb_gold_static_dimension_setup_dev",
@@ -232,6 +249,7 @@ steps.append({
     "type": "gold_static",
 })
 
+# Compile Dimension loaders if execution mode covers dimensions
 if p_execution_mode in {"DIMENSIONS_ONLY", "FULL_PHASE1"}:
     if missing_scd1:
         print("\nSkipping SCD1 because required Silver tables are missing.")
@@ -253,6 +271,7 @@ if p_execution_mode in {"DIMENSIONS_ONLY", "FULL_PHASE1"}:
             "type": "gold_dimension",
         })
 
+# Compile Fact loader driver flow if execution mode covers full phase 1
 if p_execution_mode == "FULL_PHASE1":
     if missing_scd1 or missing_scd2 or missing_fact:
         print("\nSkipping fact driver/validation because Silver or Gold dependencies are missing.")
@@ -278,9 +297,11 @@ for index, step in enumerate(steps, start=1):
 results = []
 
 for index, step in enumerate(steps, start=1):
+    # Execute each step
     result = run_step(step, index, len(steps))
     results.append(result)
 
+    # Check if the current step failed and whether we need to stop the orchestration flow
     failed = result["status"] == "FAILED"
     must_stop = failed and (p_stop_on_failure or result["required"])
 
@@ -290,7 +311,7 @@ for index, step in enumerate(steps, start=1):
 
 
 # =============================================================================
-# SUMMARY
+# SUMMARY REPORT
 # =============================================================================
 
 failed = [r for r in results if r["status"] == "FAILED"]
@@ -310,7 +331,7 @@ summary = {
 }
 
 print("\n" + "=" * 100)
-print("Gold Phase 1 Orchestrator Summary")
+print("Gold Orchestrator Summary")
 print("=" * 100)
 
 for r in results:
@@ -324,13 +345,14 @@ for r in results:
 print("\nJSON summary:")
 print(json.dumps(summary, indent=2))
 
+# If any step failed and flow was interrupted, raise exception to alert the orchestrating Data Factory pipeline
 if failed:
     raise Exception(
-        f"Gold Phase 1 orchestration failed at step "
+        f"Gold orchestration failed at step "
         f"{failed[0]['step']}: {failed[0]['name']} -> {failed[0]['notebook']}"
     )
 
-print("\nGold Phase 1 orchestration completed successfully.")
+print("\nGold orchestration completed successfully.")
 
 # METADATA ********************
 

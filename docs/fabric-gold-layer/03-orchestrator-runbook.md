@@ -1,8 +1,8 @@
-# Gold Phase 1 Orchestrator Runbook
+# Gold Orchestrator Runbook
 
 ## Purpose
 
-`nb_gold_phase1_orchestrator_dev` is a temporary Phase 1 orchestration notebook for the Gold ingestion integration work.
+`nb_gold_orchestrator_dev` is an orchestration notebook for the Gold ingestion integration work.
 
 It runs the Gold setup/dimension/fact notebooks sequentially so that testing does not depend on manual notebook order or leftover notebook session state. It is intentionally sequential and does not use parallel execution.
 
@@ -35,7 +35,7 @@ Expected behavior:
 
 This mode does not run SCD1, SCD2, or facts because Silver source tables may not exist yet.
 
-### 2. Normal Phase 1 flow
+### 2. Normal Ingestion flow
 
 Use this when setup tables already exist and the Lakehouse has the required Silver data.
 
@@ -163,7 +163,7 @@ HAVING COUNT(*) > 1;
 
 ## Current limitations
 
-- This notebook is a Phase 1 test/orchestration helper, not the final production Fabric pipeline.
+- This notebook is a test/orchestration helper, not the final production Fabric pipeline.
 - It runs notebooks sequentially to reduce free-capacity pressure.
 - It does not solve full Bronze/Silver/Gold orchestration yet.
 - It should not be used to repeatedly run destructive DDL against shared Lakehouse data.
@@ -173,8 +173,8 @@ HAVING COUNT(*) > 1;
 
 Recommended commit scope:
 
-- `fabric/Gold/Notebooks/nb_gold_phase1_orchestrator_dev.Notebook/.platform`
-- `fabric/Gold/Notebooks/nb_gold_phase1_orchestrator_dev.Notebook/notebook-content.py`
-- `docs/architecture/team-1/gold-phase1-orchestrator-runbook.md`
+- `fabric/Gold/Notebooks/nb_gold_orchestrator_dev.Notebook/.platform`
+- `fabric/Gold/Notebooks/nb_gold_orchestrator_dev.Notebook/notebook-content.py`
+- `docs/gold-layer/03-orchestrator-runbook.md`
 
 Avoid committing Fabric-generated Lakehouse attachment metadata or unrelated blank workspace changes.

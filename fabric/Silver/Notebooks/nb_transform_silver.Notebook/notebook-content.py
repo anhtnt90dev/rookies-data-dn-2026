@@ -701,11 +701,6 @@ def _validate_date_iso8601(df: DataFrame, column_name: str, **_) -> F.Column:
     """
     True when value is NOT a valid ISO 8601 date/timestamp (violation).
 
-    Uses a regex match to avoid SparkUpgradeException thrown by Spark 3.0+
-    when timeParserPolicy=EXCEPTION (default) encounters leftover text after
-    a partial format match (e.g. to_date('2026-05-24T17:25:59.640', 'yyyy-MM-dd')
-    parses 10 chars then throws on the remaining 'T17:25:59.640').
-
     Valid examples:
       2025-06-08
       2025-06-08T14:30:45
@@ -714,24 +709,21 @@ def _validate_date_iso8601(df: DataFrame, column_name: str, **_) -> F.Column:
       2025-06-08T14:30:45.123Z
       2025-06-08T14:30:45+07:00
       2025-06-08T14:30:45.123+07:00
+      2026-06-01 10:20:00          ← SQL/Spark default format
+      2026-06-01 10:20:00.123      ← SQL with fractional seconds
     """
-    # Matches:
-    #   date-only             : 2025-06-08
-    #   local datetime        : 2025-06-08T14:30:45 or ...T14:30:45.640
-    #   datetime with tz      : ...Z  or  ...+07:00  or  ...-05:30
     ISO8601_PATTERN = (
-        r"^\d{4}-\d{2}-\d{2}"                  # date part (required)
-        r"(T\d{2}:\d{2}:\d{2}"                 # time part  (optional)
-        r"(\.\d+)?"                             # fractional seconds (optional)
-        r"(Z|[+-]\d{2}:?\d{2})?"               # timezone (optional)
+        r"^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])"  # YYYY-MM-DD
+        r"(?:[T ]"                                              # separator: T (ISO 8601) or space (SQL)
+        r"(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d"                  # HH:MM:SS
+        r"(?:\.\d{1,9})?"                                       # .fractional (optional)
+        r"(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?"               # timezone (optional)
         r")?$"
     )
 
     value = F.col(column_name)
-
     is_valid = value.cast(StringType()).rlike(ISO8601_PATTERN)
 
-    # A row violates the rule when the value is present but NOT a valid format
     return value.isNotNull() & ~is_valid
 
 def _validate_is_numeric(
@@ -1066,6 +1058,7 @@ def run_dq_validation(
                     input_df, column_name, **validator_kwargs
                 )
 
+
                 # Emit reason_error only when this specific rule fires
                 reason_when_clauses.append(
                     F.when(
@@ -1151,6 +1144,17 @@ def run_dq_validation(
         f"| valid={valid_row_count:,} "
         f"| rejected={rejected_row_count:,}"
     )
+
+    # After df_rejected is created
+    error_rows = (
+        df_rejected
+        .select(column_name, DQ_FAILURE_REASON_COLUMN)
+        .limit(20)  # limit to avoid huge console dumps
+        .collect()
+    )
+
+    for row in error_rows:
+        print(f"[DQ] Column='{column_name}' | Reason='{row[DQ_FAILURE_REASON_COLUMN]}' | Value='{row[column_name]}'")
 
     return df_valid, df_rejected, rejected_row_count
 

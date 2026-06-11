@@ -37,7 +37,7 @@ import traceback
 # - BOOTSTRAP_ONLY: Installs cfg/log/gold tables and loads static calendar & Unknown keys.
 # - DIMENSIONS_ONLY: Loads static metadata and executes SCD1 & SCD2 dimension pipelines.
 # - FULL_PHASE1: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
-p_execution_mode = "FULL_PHASE1"
+p_execution_mode = "BOOTSTRAP_ONLY"
 
 p_timeout_seconds = 3600
 p_stop_on_failure = True

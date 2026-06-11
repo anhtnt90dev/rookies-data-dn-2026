@@ -11,51 +11,26 @@ rookies-data-dn-2026/
 ├── .gitignore
 ├── README.md
 │
+├── architecture/                     # System architecture design & diagrams
+│   ├── README.md                     # Architecture guide index
+│   ├── data-quality/                 # Data quality and validation specs
+│   ├── diagrams/                     # Mermaid diagram source files
+│   ├── exports/                      # Exported diagram images (PNG)
+│   ├── team-1/                       # Logging, workflow, and Gold ingestion designs
+│   └── team-2/                       # Fabric workspace accessibility design
+│
 ├── config/
 │   └── .gitkeep
 │
 ├── docs/
-│   ├── architecture/
-│   │   ├── data-quality/
-│   │   ├── team-1/
-│   │   └── team-2/
-│   │
 │   ├── business-process/
-│   │   ├── diagram/
-│   │   │   └── business_measure_kpi/
-│   │   ├── diagrams/
-│   │   └── docs/
-│   │
 │   ├── data-modeling/
-│   │   ├── dimensional-design/
-│   │   └── facts/
-│   │
 │   ├── final-deliverables/
-│   ├── kpi-measure/
 │   ├── project-management/
 │   ├── source-to-target-mapping/
 │   └── standards/
-│       ├── git/
-│       │   ├── README.md
-│       │   └── processing-guide/
-│       │       ├── 00-promotion-workflow.md
-│       │       ├── 01-branching-and-commit-conventions.md
-│       │       ├── 02-naming-convention-and-structure.md
-│       │       ├── 03-pull-request-process.md
-│       │       └── 04-conflict-resolution.md
-│       │
-│       ├── naming_convention.md
-│       └── workspace_fabric_structure.md
 │
-├── fabric/
-│   ├── Bronze/
-│   ├── Config/
-│   ├── Gold/
-│   ├── Lakehouse/
-│   ├── Monitoring/
-│   ├── Pipelines/
-│   ├── Silver/
-│   └── Source/
+├── fabric/                           # Microsoft Fabric Git integration artifacts (managed by Fabric workspace)
 │
 ├── sql/
 │   ├── etl-control/
@@ -79,16 +54,21 @@ Stores configuration templates and environment-independent setup files.
 - > [!CAUTION]
   > Never commit credentials, passwords, access keys, or personal access tokens (PATs) here.
 
+### `architecture/`
+Stores system architecture blueprints, technical designs, diagrams, and logs strategies.
+- `architecture/data-quality/`: Data quality and validation strategies.
+- `architecture/diagrams/`: Mermaid source files.
+- `architecture/exports/`: Exported diagram images (PNG).
+- `architecture/team-1/` & `architecture/team-2/`: Team-specific architectural designs.
+
 ### `docs/`
 Serves as the central repository for all project documentation.
 
 | Sub-directory | Contents & Purpose |
 | :--- | :--- |
-| `docs/architecture/` | Technical blueprints, infrastructure layouts, security designs, and layer responsibilities. |
 | `docs/business-process/` | BPMN diagrams, sequence diagrams, business rules, and status mapping documents. |
 | `docs/data-modeling/` | Star schema designs, dimension definitions, fact table schemas, and ERDs. |
 | `docs/final-deliverables/` | Stakeholder-reviewed, final versioned artifacts and presentations. |
-| `docs/kpi-measure/` | Business metric logic and KPI mathematical definitions. |
 | `docs/project-management/` | Sprint planning documents, retrospective notes, and team guidelines. |
 | `docs/source-to-target-mapping/`| Column-level mapping files from landing zones to Bronze, Silver, and Gold. |
 | `docs/standards/` | Global project standards, workspace layouts, naming systems, and Git guides. |
@@ -133,8 +113,8 @@ For all files, folders, and documentation created directly in Git:
 
 For naming standards inside SQL warehouses, PySpark code, or Fabric Workspace layout, refer to the specialized standards documents:
 
-- **Python & SQL Object Naming**: Refer to [naming_convention.md](../naming_convention.md) (covers classes, variables, database schemas, tables, columns, constraints).
-- **Microsoft Fabric Item & Tables Layout**: Refer to [workspace_fabric_structure.md](../workspace_fabric_structure.md) (covers Lakehouse folders, Delta table naming, and system logging tables).
+- **Python & SQL Object Naming**: Refer to [naming-convention.md](../../fabric-rules/naming-convention.md) (covers classes, variables, database schemas, tables, columns, constraints).
+- **Microsoft Fabric Item & Tables Layout**: Refer to [workspace-fabric-structure.md](../../fabric-rules/workspace-fabric-structure.md) (covers Lakehouse folders, Delta table naming, and system logging tables).
 
 ---
 

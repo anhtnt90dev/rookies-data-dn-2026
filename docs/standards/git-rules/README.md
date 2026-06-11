@@ -14,4 +14,4 @@ This directory contains the standards, guidelines, and processes defined for sou
 | **Branching & Commits** | [01-branching-and-commit-conventions.md](processing-guide/01-branching-and-commit-conventions.md) | Branch naming strategy and conventional commit message format. |
 | **Pull Request (PR) Process** | [03-pull-request-process.md](processing-guide/03-pull-request-process.md) | PR sizing, template, reviewer checklists, approvals, and merge methods. |
 | **Promotion Workflow** | [00-promotion-workflow.md](processing-guide/00-promotion-workflow.md) | Feature → dev → release → main flow environments. |
-| **Conflict Resolution** | [conflict-resolution.md](processing-guide/conflict-resolution.md) | Procedures for resolving merge conflicts, including Jupyter notebooks. |
+| **Conflict Resolution** | [04-conflict-resolution.md](processing-guide/04-conflict-resolution.md) | Procedures for resolving merge conflicts, including Jupyter notebooks. |

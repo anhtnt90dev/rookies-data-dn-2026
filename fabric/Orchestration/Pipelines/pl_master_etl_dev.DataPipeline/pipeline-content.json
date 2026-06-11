@@ -259,7 +259,10 @@
         "type": "SetVariable",
         "typeProperties": {
           "variableName": "run_mode",
-          "value": "@json(activity('handle_mode').output.result.exitValue).run_mode"
+          "value": {
+            "value": "@json(activity('handle_mode').output.result.exitValue).run_mode",
+            "type": "Expression"
+          }
         },
         "policy": {
           "secureInput": false,
@@ -299,12 +302,8 @@
         ]
       },
       {
-        "type": "ExecutePipeline",
+        "type": "InvokePipeline",
         "typeProperties": {
-          "pipeline": {
-            "referenceName": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
-            "type": "PipelineReference"
-          },
           "parameters": {
             "session_id": {
               "value": "@variables('session_id')",
@@ -323,10 +322,20 @@
               "type": "Expression"
             }
           },
-          "waitOnCompletion": true
+          "waitOnCompletion": true,
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "pipelineId": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
+          "operationType": "InvokeFabricPipeline"
+        },
+        "externalReferences": {
+          "connection": "de222b0e-d361-406f-9980-3dc5307b5169"
         },
         "policy": {
-          "secureInput": false
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
         },
         "name": "ingestion",
         "dependsOn": [

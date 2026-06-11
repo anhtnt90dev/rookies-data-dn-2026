@@ -50,6 +50,16 @@
               "reason_error": "payment_at is null"
             }
           ]
+        },
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "payment_at",
+              "type": "string",
+              "reason_error": "payment_at is invalid iso8601 date"
+            }
+          ]
         }
       ]
     },

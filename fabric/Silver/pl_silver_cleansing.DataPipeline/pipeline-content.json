@@ -1,0 +1,124 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 2,
+          "items": {
+            "value": "@activity('lk_get_tables_confg').output.value",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "9462e5b9-9e8b-9126-47a2-e4a943650751",
+                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                "parameters": {
+                  "p_config_load_table": {
+                    "value": {
+                      "value": "@string(item())",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_session_id": {
+                    "value": {
+                      "value": "@pipeline().parameters.p_session_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().Pipeline",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_batch_id": {
+                    "value": {
+                      "value": "@pipeline().parameters.p_batch_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                }
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "nb_transform",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "for_each_table_config",
+        "dependsOn": [
+          {
+            "activity": "lk_get_tables_confg",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "LakehouseTableSource"
+          },
+          "datasetSettings": {
+            "type": "LakehouseTable",
+            "typeProperties": {
+              "schema": "cfg",
+              "table": "source_table"
+            },
+            "schema": [],
+            "linkedService": {
+              "name": "lh_insurance_dev",
+              "properties": {
+                "type": "Lakehouse",
+                "typeProperties": {
+                  "artifactId": "e2adb411-3221-a686-42b5-cbe3442aa4c8",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000",
+                  "rootFolder": "Tables"
+                },
+                "annotations": []
+              }
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "lk_get_tables_confg",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "p_session_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_session_id"
+      },
+      "p_batch_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_batch_id"
+      }
+    },
+    "concurrency": 3
+  }
+}

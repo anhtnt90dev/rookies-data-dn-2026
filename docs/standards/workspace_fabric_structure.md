@@ -172,6 +172,7 @@ lh_insurance_dev/Tables/
     ├── source_table
     ├── watermark
     ├── next_run_mode
+    ├── retry_policy
     ├── dim_fact_table
     └── source_dim_fact
 ```
@@ -189,6 +190,7 @@ To ensure consistency across architecture designs and physical implementations, 
 | `Pipeline_Error` | `log.invalid_record` | Stores records that fail validation, schema compliance, or transformation rules. |
 | N/A | `log.retry_log` | Stores retry attempt details and transient execution errors. |
 | N/A | `cfg.next_run_mode` | Stores the next execution mode and recovery context. |
+| N/A | `cfg.retry_policy` | Stores configurable retry limits, delay/backoff strategy, and retryable/non-retryable error types. |
 | N/A | `cfg.dim_fact_table` | Stores Gold-layer table configuration. |
 | N/A | `cfg.source_dim_fact` | Defines the relationship mapping between source tables and Gold tables. |
 

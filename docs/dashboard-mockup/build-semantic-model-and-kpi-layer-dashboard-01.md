@@ -16,7 +16,7 @@ Please review the semantic model, KPI calculations, business logic, and dashboar
 
 **Dashboard Link:**
 
-> [[Insert Power BI Service URL here](https://app.fabric.microsoft.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/32d63b0a-71af-48b9-bba0-1e06005f30ca/3e2db8c8ab637c29d407?experience=power-bi)]
+> [[Power BI Service report - Dashboard 01](https://app.fabric.microsoft.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/32d63b0a-71af-48b9-bba0-1e06005f30ca/3e2db8c8ab637c29d407?experience=power-bi)]
 
 ### Main Components
 
@@ -89,11 +89,11 @@ Please review the following areas:
 
 ### Semantic Model Relationship
 
-> [Insert Semantic Model Relationship Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/data-modeling/dimensional-design/05-powerbi-relationship-design.md)
+> [Semantic model relationship design](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/data-modeling/dimensional-design/05-powerbi-relationship-design.md)
 
 ### KPI Measures Documentation
 
-> [Insert KPI Measures DB1 Documentation Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/business-process/diagram/business-measure-kpi/define-business-measures-and-kpis-db1.md)
+> [KPI measures DB1 documentation](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/business-process/diagram/business-measure-kpi/define-business-measures-and-kpis-db1.md)
 
 ---
 

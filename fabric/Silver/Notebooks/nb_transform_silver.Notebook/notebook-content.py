@@ -1148,13 +1148,23 @@ def run_dq_validation(
     # After df_rejected is created
     error_rows = (
         df_rejected
-        .select(column_name, DQ_FAILURE_REASON_COLUMN)
-        .limit(20)  # limit to avoid huge console dumps
+        .select(DQ_FAILURE_REASON_COLUMN)
+        .limit(20)
         .collect()
     )
 
     for row in error_rows:
-        print(f"[DQ] Column='{column_name}' | Reason='{row[DQ_FAILURE_REASON_COLUMN]}' | Value='{row[column_name]}'")
+        reason_str: str = row[DQ_FAILURE_REASON_COLUMN] or ""
+        # Each segment is "column_name::reason_error"; extract unique column names
+        failed_columns = [
+            segment.split("::")[0].strip()
+            for segment in reason_str.split(" | ")
+            if "::" in segment
+        ]
+        print(
+            f"[DQ] Failed columns={failed_columns} "
+            f"| Reason='{reason_str}'"
+        )
 
     return df_valid, df_rejected, rejected_row_count
 
@@ -1647,7 +1657,7 @@ finally:
     print(" Writing audit log")
     print("=" * 70)
 
-    is_final_step: bool = True  # Silver is the last layer for this notebook
+    is_final_step: bool = False  # Silver is the middle step for pipeline
 
     try:
         if table_session_id:

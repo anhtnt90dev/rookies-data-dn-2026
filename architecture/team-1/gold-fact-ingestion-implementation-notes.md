@@ -102,12 +102,48 @@ Run these tests in Microsoft Fabric against controlled tables or a disposable te
 | Schema mismatch | Drop or rename a required source/target column in test | Preflight fails before write |
 | Soft delete | `silver.policy.is_deleted=true` or `operation_type='D'` | Target row remains, `is_deleted=true`, `deleted_at` and `delete_batch_id` populated |
 
-## Execution order
+## Gold setup vs batch execution
 
-1. Run dimension ingestion tasks and confirm required dimensions are populated.
-2. Confirm `cfg` and `log` tables exist.
-3. Run `nb_gold_driver_flow_dev` with `p_fact_table='fact_policy'`.
-4. Review `nb_gold_fact_validate_dev` output.
-5. Review `log.invalid_record` for any `-1` lookup assignments.
-6. Rerun the same batch to confirm idempotency.
-7. Add the next fact only after the current fact passes.
+Phase 1 keeps setup/prerequisite work separate from the normal Gold batch run. Destructive DDL is a setup action and should not be part of a normal recurring batch unless the run is intentionally rebuilding a disposable environment.
+
+Setup/prerequisite notebooks and scripts:
+
+- Config/control setup: create and seed `cfg.dim_fact_table` before audited fact execution.
+- Audit/log setup: create `log.audit_session`, `log.audit_table_session`, `log.audit_detail`, and `log.invalid_record` before audited fact execution.
+- Gold DDL/schema setup: run `sql/lakehouse/create_gold_tables.sql` or `fabric/Gold/Notebooks/nb_gold_create_tables_dev.Notebook` only for initial setup or rebuild.
+- Gold static dimension setup: run `fabric/Gold/Notebooks/nb_gold_static_dimension_setup_dev.Notebook` after Gold DDL to generate `gold.dim_date` and rerun-safe `-1` Unknown members.
+
+Normal Gold run notebooks:
+
+- `fabric/Gold/Notebooks/nb_gold_dim_scd1_load_dev.py.Notebook`: runnable SCD Type 1 dimension batch.
+- `fabric/Gold/Notebooks/nb_gold_dim_scd2_load_dev.py.Notebook`: runnable SCD Type 2 dimension batch.
+- `fabric/Gold/Notebooks/nb_gold_driver_flow_dev.Notebook`: normal fact driver for currently supported facts.
+- `fabric/Gold/Notebooks/nb_gold_fact_build_dev.Notebook`: batch fact build notebook for `fact_policy`.
+- `fabric/Gold/Notebooks/nb_gold_fact_validate_dev.Notebook`: validation notebook for `fact_policy`.
+- `fabric/Gold/Notebooks/nb_gold_fact_helper_dev.Notebook`: helper notebook, not intended to be run as the main batch entry point.
+
+## Gold execution order
+
+Until a full Fabric pipeline is wired for the whole Gold layer, run these steps manually in Fabric in this order:
+
+1. Config/control setup prerequisite: create and seed `cfg.dim_fact_table`.
+2. Audit/log setup prerequisite: create `log` audit and invalid-record tables if audited fact execution is enabled.
+3. Gold DDL/schema prerequisite: create the `gold` schema and Gold tables.
+4. Gold static dimensions and Unknown members: run `nb_gold_static_dimension_setup_dev`.
+5. SCD Type 1 dimension load: run `nb_gold_dim_scd1_load_dev.py`.
+6. SCD Type 2 dimension load: run `nb_gold_dim_scd2_load_dev.py`.
+7. Supported Gold fact ingestion: run `nb_gold_driver_flow_dev` with `p_fact_table='fact_policy'` or `ALL`. At this checkpoint, `ALL` means `fact_policy` only.
+8. Gold validation: review `nb_gold_fact_validate_dev` output for `fact_policy`.
+9. Monitoring/audit proof: review audit tables and `log.invalid_record` for the same `pipeline_run_id`.
+
+Runnable now:
+
+- Static dimension setup after Gold DDL exists.
+- SCD Type 1 dimensions after Silver source tables exist.
+- SCD Type 2 dimensions after Silver source tables exist.
+- `fact_policy` preflight, build, driver, and validation after config, audit, Gold DDL, static dimensions, and dimension loads have completed.
+
+Partial or deferred:
+
+- `fact_quotation`, `fact_quotation_item`, `fact_payment`, and `fact_cancellation` have DDL and mapping documentation but no production-like build notebook in this phase.
+- Full retry, recovery orchestration, and whole-Gold pipeline orchestration remain deferred.

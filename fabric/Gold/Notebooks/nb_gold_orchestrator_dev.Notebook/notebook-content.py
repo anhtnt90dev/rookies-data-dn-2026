@@ -50,6 +50,7 @@ p_run_gold_create_tables = False
 p_batch_id = 1001
 p_run_mode = "NEW"
 p_layer = "GOLD"
+p_pipeline_run_id = ""
 
 # Target fact table execution filter (defaults to "ALL" to load all 5 fact tables)
 p_fact_table = "ALL"
@@ -63,6 +64,7 @@ common_args = {
     "p_fact_table": p_fact_table,
     "p_enable_audit": str(p_enable_audit).lower(),
     "useRootDefaultLakehouse": True,
+    "p_pipeline_run_id": p_pipeline_run_id,
 }
 
 # Resolve Fabric/Synapse notebook execution handler

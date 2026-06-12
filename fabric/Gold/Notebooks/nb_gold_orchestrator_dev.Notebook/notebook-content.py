@@ -8,16 +8,58 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0",
+# META       "default_lakehouse": "126c09a8-79bf-4e16-9e56-5e7c93311e29",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "cba514ff-c21c-439e-8107-a08eaa64b6b6",
+# META       "default_lakehouse_workspace_id": "6358469d-5cd2-48a3-8d0f-c9583b40d1fa",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0"
+# META           "id": "126c09a8-79bf-4e16-9e56-5e7c93311e29"
 # META         }
 # META       ]
 # META     }
 # META   }
+# META }
+
+# PARAMETERS CELL ********************
+
+p_batch_id = ""
+p_pipeline_run_id = ""
+
+# Default execution mode:
+# - BOOTSTRAP_ONLY: Installs cfg/log/gold tables and loads static calendar & Unknown keys.
+# - DIMENSIONS_ONLY: Loads static metadata and executes SCD1 & SCD2 dimension pipelines.
+# - FULL_INGESTION: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
+p_execution_mode = ""
+
+p_run_gold_create_tables = ""
+
+p_run_mode = ""
+p_layer = ""
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+p_session_id = "065cc1a9-c2f7-41e7-97f5-1841bc28de88"
+p_batch_id = "20260612054325"
+p_pipeline_run_id = "86714724-c497-4425-9fad-88735c17ba71"
+p_execution_mode = "FULL_INGESTION"
+p_run_gold_create_tables = "false"
+p_run_mode = "NEW"
+p_layer = "GOLD"
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
 # META }
 
 # CELL ********************
@@ -33,11 +75,8 @@ import traceback
 # INPUT PARAMETERS
 # =============================================================================
 
-# Default execution mode:
-# - BOOTSTRAP_ONLY: Installs cfg/log/gold tables and loads static calendar & Unknown keys.
-# - DIMENSIONS_ONLY: Loads static metadata and executes SCD1 & SCD2 dimension pipelines.
-# - FULL_INGESTION: Executes the entire flow from Setup -> Dimension -> Fact Ingestion -> Validation.
-p_execution_mode = "BOOTSTRAP_ONLY"
+
+
 
 p_timeout_seconds = 3600
 p_stop_on_failure = True
@@ -45,12 +84,12 @@ p_stop_on_failure = True
 # DDL execution controller:
 # - Set True only during the first execution in a fresh disposable Lakehouse.
 # - WARNING: nb_gold_create_tables_dev contains DROP TABLE statements. Keep False under normal operations.
-p_run_gold_create_tables = False
 
-p_batch_id = 1001
+
+
 p_run_mode = "NEW"
 p_layer = "GOLD"
-p_pipeline_run_id = ""
+
 
 # Target fact table execution filter (defaults to "ALL" to load all 5 fact tables)
 p_fact_table = "ALL"

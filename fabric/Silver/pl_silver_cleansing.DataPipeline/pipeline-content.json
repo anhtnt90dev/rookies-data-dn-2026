@@ -4,7 +4,8 @@
       {
         "type": "ForEach",
         "typeProperties": {
-          "isSequential": true,
+          "isSequential": false,
+          "batchCount": 2,
           "items": {
             "value": "@activity('lk_get_tables_confg').output.value",
             "type": "Expression"

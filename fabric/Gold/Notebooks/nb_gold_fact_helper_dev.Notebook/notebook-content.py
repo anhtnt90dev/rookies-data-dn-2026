@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "b883e6d2-ee4b-4338-a694-4b81d338dd49",
+# META       "default_lakehouse": "126c09a8-79bf-4e16-9e56-5e7c93311e29",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "ddc0f61e-f221-421b-a87b-f80ffce2c8df",
+# META       "default_lakehouse_workspace_id": "6358469d-5cd2-48a3-8d0f-c9583b40d1fa",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "b883e6d2-ee4b-4338-a694-4b81d338dd49"
+# META           "id": "126c09a8-79bf-4e16-9e56-5e7c93311e29"
 # META         }
 # META       ]
 # META     }
@@ -1240,3 +1240,10 @@ def merge_fact_table(source_df: DataFrame, target_table: str, upsert_key: str) -
         "updated_row": updated_count,
         "deleted_row": deleted_count,
     }
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }

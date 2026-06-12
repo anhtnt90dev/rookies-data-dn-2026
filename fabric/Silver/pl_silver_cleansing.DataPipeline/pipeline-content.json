@@ -4,8 +4,7 @@
       {
         "type": "ForEach",
         "typeProperties": {
-          "isSequential": false,
-          "batchCount": 2,
+          "isSequential": true,
           "items": {
             "value": "@activity('lk_get_tables_confg').output.value",
             "type": "Expression"
@@ -117,6 +116,14 @@
       "p_batch_id": {
         "type": "string",
         "defaultValue": "@pipeline().parameters.p_batch_id"
+      },
+      "p_run_mode": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_run_mode"
+      },
+      "p_pervious_session_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_pervious_session_id"
       }
     },
     "concurrency": 3

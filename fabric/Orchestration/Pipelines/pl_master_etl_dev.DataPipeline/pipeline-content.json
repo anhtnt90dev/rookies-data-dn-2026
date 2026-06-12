@@ -344,14 +344,18 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
+          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
+          "retry": 2,
+          "retryIntervalInSeconds": 60,
           "secureInput": false,
-          "secureOutput": false
+          "secureOutput": false,
+          "retryConditions": {
+            "type": "Expression",
+            "value": "@contains(activity('ingestion').Error.FailureType, 'SystemError')"
+          }
         },
         "name": "ingestion",
         "dependsOn": [
@@ -382,14 +386,18 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
+          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
+          "retry": 2,
+          "retryIntervalInSeconds": 60,
           "secureInput": false,
-          "secureOutput": false
+          "secureOutput": false,
+          "retryConditions": {
+            "type": "Expression",
+            "value": "@contains(activity('ingestion_silver_layer').Error.FailureType, 'SystemError')"
+          }
         },
         "name": "ingestion_silver_layer",
         "dependsOn": [
@@ -435,6 +443,111 @@
         "dependsOn": [
           {
             "activity": "ingestion_silver_layer",
+            "dependencyConditions": [
+              "Failed"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "d94930d2-02f7-b53d-4dd1-8b15f939f6e3",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "p_session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_execution_mode": {
+              "value": "FULL_INGESTION",
+              "type": "string"
+            },
+            "p_run_gold_create_tables": {
+              "value": "false",
+              "type": "string"
+            },
+            "p_run_mode": {
+              "value": {
+                "value": "@variables('run_mode')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_layer": {
+              "value": "GOLD",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "ingestion_gold_layer",
+        "dependsOn": [
+          {
+            "activity": "ingestion_silver_layer",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "e7f23a4b-90f1-4c12-bd78-65b1cd24ef56",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "handle_failed_gold",
+        "description": "change to mode RECOVERY when gold fail",
+        "dependsOn": [
+          {
+            "activity": "ingestion_gold_layer",
             "dependencyConditions": [
               "Failed"
             ]

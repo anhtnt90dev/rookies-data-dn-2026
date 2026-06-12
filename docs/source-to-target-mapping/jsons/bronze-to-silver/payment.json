@@ -101,6 +101,15 @@
       "expression_type": "primitive",
       "validates": [
         {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "payment_amount",
+              "reason_error": "payment_amount is empty"
+            }
+          ]
+        },
+        {
           "name_func": "_validate_is_numeric",
           "params": [
             {

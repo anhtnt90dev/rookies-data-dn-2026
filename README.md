@@ -35,6 +35,7 @@ rookies-data-dn-2026/
 │   ├── business-process/             # Business workflow analysis
 │   ├── data-modeling/                # Star schema designs & table definitions
 │   ├── final-deliverables/           # Reviewed deliverables for submissions
+│   ├── presentation/                 # Presentation slides and sprint deliverables
 │   ├── project-management/           # Sprint boards and team agreements
 │   ├── source-to-target-mapping/     # Source column mappings to Bronze/Silver/Gold
 │   └── standards/                    # Global team development guidelines

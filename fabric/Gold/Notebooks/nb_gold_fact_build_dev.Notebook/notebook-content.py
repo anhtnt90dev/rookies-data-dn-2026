@@ -786,10 +786,3 @@ build_result = run_gold_fact_build(
 )
 
 print(build_result)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }

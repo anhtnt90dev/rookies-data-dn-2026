@@ -435,10 +435,3 @@ validation_result = run_gold_fact_validation(
 )
 
 print(validation_result)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }

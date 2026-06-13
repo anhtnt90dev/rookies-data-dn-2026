@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides the resources required for reviewing the **Quotation Conversion & Sales Analytics Dashboard**, including the Power BI Service report, Semantic Model, and KPI Measures.
+This document provides the resources required for reviewing the **Policy & Payment Operations Analytics Dashboard**, including the Power BI Service report, Semantic Model, and KPI Measures.
 
 ### Development Status
 
@@ -16,7 +16,7 @@ Please review the semantic model, KPI calculations, business logic, and dashboar
 
 **Dashboard Link:**
 
-> [\[Insert Power BI Service URL here\]](https://app.powerbi.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/92070815-9831-44df-affb-ecd0c38482e3?ctid=039815dd-00ae-48d7-adbb-090e93dcbc01&pbi_source=linkShare)
+> [\[Power BI Service URL here\]](https://app.powerbi.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/92070815-9831-44df-affb-ecd0c38482e3?ctid=039815dd-00ae-48d7-adbb-090e93dcbc01&pbi_source=linkShare)
 
 ### Main Components
 
@@ -30,7 +30,7 @@ Please review the semantic model, KPI calculations, business logic, and dashboar
 
 ## Semantic Model
 
-The semantic model has been developed and reviewed to support the reporting requirements for the Quotation Conversion & Sales Analytics Dashboard.
+The semantic model has been developed and reviewed to support the reporting requirements for the Policy & Payment Operations Analytics Dashboard.
 
 ### Model Coverage
 
@@ -91,11 +91,11 @@ Please review the following areas:
 
 ### Semantic Model Relationship
 
-> [[Insert Semantic Model Relationship Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/data-modeling/dimensional-design/05-powerbi-relationship-design.md)]
+> [[Semantic Model Relationship Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/data-modeling/dimensional-design/05-powerbi-relationship-design.md)]
 
 ### KPI Measures Documentation
 
-> [[Insert KPI Measures DB2 Documentation Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/business-process/diagram/business-measure-kpi/define-business-measures-and-kpis-db2.md)]
+> [[KPI Measures DB2 Documentation Link](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/business-process/diagram/business-measure-kpi/define-business-measures-and-kpis-db2.md)]
 
 ---
 

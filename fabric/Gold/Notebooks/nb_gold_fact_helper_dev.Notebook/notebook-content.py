@@ -1240,10 +1240,3 @@ def merge_fact_table(source_df: DataFrame, target_table: str, upsert_key: str) -
         "updated_row": updated_count,
         "deleted_row": deleted_count,
     }
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }

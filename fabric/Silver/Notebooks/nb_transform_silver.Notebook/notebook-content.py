@@ -27,6 +27,7 @@
 # p_config_load_table = "{\"id\":9,\"source_system\":\"payment_system\",\"source_type\":\"file\",\"source_name\":\"payment\",\"source_location\":\"Files/landing/payment_system/payment\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"INCREMENTAL\",\"primary_key\":\"payment_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/payment.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/payment.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.payment\",\"silver_table_name\":\"silver.payment\",\"load_sequence\":9,\"is_active\":true,\"created_at\":\"2026-06-07T14:44:47.158114\",\"updated_at\":\"2026-06-07T14:44:47.158114\"}"
 # p_session_id="3a967666-924c-4c08-904d-7b734f4880cc"
 # p_pipeline_run_id="PL_01"
+# p_run_mode="NEW"
 
 # METADATA ********************
 
@@ -93,6 +94,7 @@ run_env: str = "dev"
 # Override load type at runtime: 'full' | 'incremental' | '' (use cfg value)
 force_load_type: str = "incremental"
 
+current_run_mode=p_run_mode
 
 # METADATA ********************
 
@@ -596,61 +598,6 @@ def deduplicate_within_batch(input_df: DataFrame, primary_key_columns: list[str]
         f"(removed {pre_count - post_count:,} duplicate(s)) on keys={primary_key_columns}"
     )
     return deduped_df
-
-
-def deduplicate_against_silver(
-    incoming_df: DataFrame,
-    silver_table_name: str,
-    primary_key_columns: list[str],
-) -> DataFrame:
-    """
-    Compare incoming batch hashes against existing Silver records to skip
-    rows whose data has not changed.
-
-    If the Silver table does not exist yet, all incoming rows are treated as new.
-
-    Parameters
-    ----------
-    incoming_df : DataFrame
-        Batch DataFrame with '__row_hash' column.
-    silver_table_name : str
-        Fully qualified Silver table name.
-    primary_key_columns : list[str]
-        Join keys used to match existing Silver rows.
-
-    Returns
-    -------
-    DataFrame
-        Subset of incoming_df where the row hash differs from Silver
-        (i.e. genuinely new or changed records).
-    """
-    try:
-        silver_hash_df: DataFrame = spark.table(silver_table_name).select(
-            *primary_key_columns, "__row_hash"
-        )
-    except AnalysisException:
-        print(
-            f"[DEDUP] Silver table '{silver_table_name}' not found. "
-            "All incoming rows treated as new (first load)."
-        )
-        return incoming_df
-
-    # Left anti join on PK + hash — only rows not already in Silver pass through
-    join_condition = [
-        incoming_df[pk] == silver_hash_df[pk] for pk in primary_key_columns
-    ] + [incoming_df["__row_hash"] == silver_hash_df["__row_hash"]]
-
-    changed_df: DataFrame = incoming_df.join(
-        silver_hash_df, on=join_condition, how="left_anti"
-    )
-
-    pre_count: int = incoming_df.count()
-    changed_count: int = changed_df.count()
-    print(
-        f"[DEDUP] Silver hash comparison: {pre_count:,} incoming → {changed_count:,} changed "
-        f"(skipped {pre_count - changed_count:,} unchanged record(s))"
-    )
-    return changed_df
 
 # METADATA ********************
 
@@ -1552,19 +1499,7 @@ try:
         primary_key_columns=PRIMARY_KEY_COLUMNS,
     )
 
-    # Skip records already in Silver with the same hash (no data change)
-    # Only applies to incremental loads — full load always overwrites
-    if resolved_load_type == LOAD_TYPE_INCREMENTAL:
-        deduped_final_df: DataFrame = deduplicate_against_silver(
-            incoming_df=deduped_batch_df,
-            silver_table_name=SILVER_TABLE_NAME,
-            primary_key_columns=PRIMARY_KEY_COLUMNS,
-        )
-    else:
-        deduped_final_df = deduped_batch_df
-
-    # Drop the internal hash column before writing to Silver
-    mapped_silver_df_final: DataFrame = deduped_final_df.drop("__row_hash")
+    mapped_silver_df_final: DataFrame = deduped_batch_df.drop("__row_hash")
 
     # -----------------------------------------------------------------------
     # STEP 5 — Data Quality (DQ) Validation

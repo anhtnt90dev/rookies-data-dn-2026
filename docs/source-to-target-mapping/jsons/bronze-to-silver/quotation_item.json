@@ -56,24 +56,6 @@
       "expression": "coverage_amount",
       "validates": [
         {
-          "name_func": "_validate_is_not_empty",
-          "params": [
-            {
-              "key": "coverage_amount",
-              "reason_error": "coverage_amount key is empty"
-            }
-          ]
-        },
-        {
-          "name_func": "_validate_is_numeric",
-          "params": [
-            {
-              "key": "coverage_amount",
-              "reason_error": "coverage_amount should be numeric"
-            }
-          ]
-        },
-        {
           "name_func": "_validate_min_value",
           "params": [
             {

@@ -20,15 +20,10 @@
 # META   }
 # META }
 
-# CELL ********************
+# PARAMETERS CELL ********************
 
-# Driver flow for pipeline audit logging validation.
-# Run this notebook after attaching the target Lakehouse.
-try:
-    notebook_runner = notebookutils.notebook
-except NameError:
-    from notebookutils import notebook as notebook_runner
-
+session_id = ""
+batch_id = ""
 
 # METADATA ********************
 
@@ -39,10 +34,41 @@ except NameError:
 
 # CELL ********************
 
-notebook_runner.run("nb_audit_pipeline_log_dev", 300)
-notebook_runner.run("nb_audit_row_count_simulation_setup_dev", 300)
-notebook_runner.run("nb_audit_row_count_simulation_run_dev", 300)
-notebook_runner.run("nb_etl_monitoring_report_dev", 300)
+batch_id = int(batch_id)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+error_message = "Gold layer failed. Pipeline will run in RECOVERY mode next time."
+
+safe_error = error_message.replace("'", "''")
+
+spark.sql(f"""
+    UPDATE cfg.next_run_mode
+    SET next_run_mode = 'RECOVERY',
+        batch_id = {batch_id},
+        session_id = '{session_id}',
+        updated_at = current_timestamp()
+    """
+)
+
+spark.sql(f"""
+UPDATE log.audit_session
+SET session_status = 'FAILED',
+    error_code = 'GOLD_LAYER_FAILED',
+    error_message = '{safe_error}',
+    session_finished = current_timestamp(),
+    updated_at = current_timestamp()
+WHERE id = '{session_id}'
+""")
+
+raise Exception(error_message)
 
 # METADATA ********************
 

@@ -344,18 +344,14 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 2,
-          "retryIntervalInSeconds": 60,
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
           "secureInput": false,
-          "secureOutput": false,
-          "retryConditions": {
-            "type": "Expression",
-            "value": "@contains(activity('ingestion').Error.FailureType, 'SystemError')"
-          }
+          "secureOutput": false
         },
         "name": "ingestion",
         "dependsOn": [
@@ -386,18 +382,14 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 2,
-          "retryIntervalInSeconds": 60,
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
           "secureInput": false,
-          "secureOutput": false,
-          "retryConditions": {
-            "type": "Expression",
-            "value": "@contains(activity('ingestion_silver_layer').Error.FailureType, 'SystemError')"
-          }
+          "secureOutput": false
         },
         "name": "ingestion_silver_layer",
         "dependsOn": [
@@ -482,17 +474,6 @@
             },
             "p_run_gold_create_tables": {
               "value": "false",
-              "type": "string"
-            },
-            "p_run_mode": {
-              "value": {
-                "value": "@variables('run_mode')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "p_layer": {
-              "value": "GOLD",
               "type": "string"
             }
           }

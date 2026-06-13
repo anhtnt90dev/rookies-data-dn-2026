@@ -1,0 +1,81 @@
+flowchart TD
+    START([Start Invoke Pipeline]) --> LOAD_CONFIG
+
+    subgraph CONFIG["Step 1 · Load configuration"]
+        LOAD_CONFIG["Load mapping JSON<br/>(MAPPING_PATH)"]
+        LOAD_CONFIG --> PARSE_COLUMNS["Parse column mappings<br/>& validation rules"]
+    end
+
+    PARSE_COLUMNS --> READ_BRONZE
+
+    subgraph BRONZE["Step 2 · Read Bronze source"]
+        READ_BRONZE["Read Bronze table<br/>(full load or incremental)"]
+        READ_BRONZE --> COUNT_SRC["Record source_row_count"]
+    end
+
+    COUNT_SRC --> TRANSFORM
+
+    subgraph TRANSFORM_SG["Step 3 · Apply column transformations"]
+        TRANSFORM["Rename & cast columns<br/>per mapping config"]
+    end
+
+    TRANSFORM --> DEDUP
+
+    subgraph DEDUP["Step 4 · Deduplication"]
+        COMPUTE_HASH["Compute row hash<br/>(exclude _loaded_at)"]
+        COMPUTE_HASH --> DEDUP_BATCH["Deduplicate within batch<br/>(keep latest by _loaded_at)"]
+        DEDUP_BATCH --> DROP_HASH["Drop __row_hash column"]
+    end
+
+    DROP_HASH --> DQ
+
+    subgraph DQ["Step 5 · Data quality validation"]
+        DEFINE_RULES["Define Data Quality rules"]
+        DEFINE_RULES --> RUN_DQ["Run Data Validation engine"]
+        RUN_DQ --> SPLIT{Any rows<br/>rejected?}
+        SPLIT -->|Yes| QUARANTINE["Write rejected rows<br/>to quarantine table"]
+        QUARANTINE --> LOG_INVALID["Log invalid batch records<br/>(table_session_id, layer, key)"]
+        LOG_INVALID --> ALL_REJECTED{All rows<br/>rejected?}
+        ALL_REJECTED -->|Yes| WARN["Set status = WARNING<br/>target_row_count = 0<br/>Skip MERGE"]
+        SPLIT -->|No| WRITE
+        ALL_REJECTED -->|No| WRITE
+    end
+
+    subgraph WRITE_SG["Step 6 · Write to Silver"]
+        WRITE{"Load type?"}
+        WRITE -->|FULL| FULL_LOAD["write_silver_full_load<br/>(overwrite entire table)"]
+        WRITE -->|INCREMENTAL| MERGE["write_silver_merge<br/>(MERGE INTO Delta<br/>on primary key columns)"]
+        FULL_LOAD --> STATS["Collect write stats<br/>(inserted, updated rows)"]
+        MERGE --> STATS
+        STATS --> SUCCESS["Set status = SUCCESS"]
+    end
+
+    WARN --> AUDIT
+    SUCCESS --> AUDIT
+
+    subgraph AUDIT["Step 7 · Write audit log "]
+
+        FINISH["<b>Log Table Load Information</b><br/>· status<br/>· source_row_count<br/>· inserted/updated/rejected<br/>· error_message<br/>· is_retryable"]
+    end
+
+    subgraph ERROR["Error handler (on any exception)"]
+        CATCH["Capture traceback<br/>Set status = FAILED<br/>Log pipeline error"]
+    end
+
+    AUDIT --> RERAISE{status<br/>= FAILED?}
+    RERAISE -->|Yes| RAISE["raise RuntimeError"]
+    RERAISE -->|No| END([complete])
+
+    START -.->|exception| CATCH
+    CATCH --> AUDIT
+
+    classDef default fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    classDef decision fill:#FAEEDA,stroke:#854F0B,color:#633806
+    classDef error fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+    classDef success fill:#EAF3DE,stroke:#3B6D11,color:#27500A
+    classDef terminal fill:#EEEDFE,stroke:#534AB7,color:#3C3489
+
+    class SPLIT,ALL_REJECTED,WRITE,RERAISE decision
+    class CATCH,QUARANTINE,LOG_INVALID,RAISE error
+    class SUCCESS,STATS success
+    class START,END terminal

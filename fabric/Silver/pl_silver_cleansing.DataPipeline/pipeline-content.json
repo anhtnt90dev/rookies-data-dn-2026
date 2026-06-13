@@ -4,10 +4,9 @@
       {
         "type": "ForEach",
         "typeProperties": {
-          "isSequential": false,
-          "batchCount": 2,
+          "isSequential": true,
           "items": {
-            "value": "@activity('lk_get_tables_confg').output.value",
+            "value": "@json(activity('nb_lookup_tables_ingestion').output.result.exitValue)",
             "type": "Expression"
           },
           "activities": [
@@ -19,21 +18,21 @@
                 "parameters": {
                   "p_config_load_table": {
                     "value": {
-                      "value": "@coalesce(string(item()), '')",
+                      "value": "@coalesce(string(item()),'')",
                       "type": "Expression"
                     },
                     "type": "string"
                   },
                   "p_session_id": {
                     "value": {
-                      "value": "@coalesce(pipeline().parameters.p_session_id, '')",
+                      "value": "@coalesce(pipeline().parameters.p_session_id,'')",
                       "type": "Expression"
                     },
                     "type": "string"
                   },
                   "p_pipeline_run_id": {
                     "value": {
-                      "value": "@pipeline().RunId",
+                      "value": "@pipeline().Pipeline",
                       "type": "Expression"
                     },
                     "type": "string"
@@ -62,7 +61,7 @@
         "name": "for_each_table_config",
         "dependsOn": [
           {
-            "activity": "lk_get_tables_confg",
+            "activity": "nb_lookup_tables_ingestion",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -70,33 +69,26 @@
         ]
       },
       {
-        "type": "Lookup",
+        "type": "TridentNotebook",
         "typeProperties": {
-          "source": {
-            "type": "LakehouseTableSource"
-          },
-          "datasetSettings": {
-            "type": "LakehouseTable",
-            "typeProperties": {
-              "schema": "cfg",
-              "table": "source_table"
+          "notebookId": "a937b4d2-58fc-a340-47d7-83ec231d30bd",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "p_previous_session_id": {
+              "value": {
+                "value": "@pipeline().parameters.p_previous_session_id",
+                "type": "Expression"
+              },
+              "type": "string"
             },
-            "schema": [],
-            "linkedService": {
-              "name": "lh_insurance_dev",
-              "properties": {
-                "type": "Lakehouse",
-                "typeProperties": {
-                  "artifactId": "e2adb411-3221-a686-42b5-cbe3442aa4c8",
-                  "workspaceId": "00000000-0000-0000-0000-000000000000",
-                  "rootFolder": "Tables"
-                },
-                "annotations": []
-              }
-            },
-            "annotations": []
-          },
-          "firstRowOnly": false
+            "p_run_mode": {
+              "value": {
+                "value": "@pipeline().parameters.p_run_mode",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
         },
         "policy": {
           "timeout": "0.12:00:00",
@@ -105,7 +97,7 @@
           "secureInput": false,
           "secureOutput": false
         },
-        "name": "lk_get_tables_confg",
+        "name": "nb_lookup_tables_ingestion",
         "dependsOn": []
       }
     ],
@@ -117,8 +109,15 @@
       "p_batch_id": {
         "type": "string",
         "defaultValue": "@pipeline().parameters.p_batch_id"
+      },
+      "p_run_mode": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_run_mode"
+      },
+      "p_previous_session_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_previous_session_id"
       }
-    },
-    "concurrency": 3
+    }
   }
 }

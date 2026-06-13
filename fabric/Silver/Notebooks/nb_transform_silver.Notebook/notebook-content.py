@@ -8,19 +8,19 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "126c09a8-79bf-4e16-9e56-5e7c93311e29",
+# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "6358469d-5cd2-48a3-8d0f-c9583b40d1fa",
+# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "126c09a8-79bf-4e16-9e56-5e7c93311e29"
+# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
 # META         }
 # META       ]
 # META     }
 # META   }
 # META }
 
-# CELL ********************
+# PARAMETERS CELL ********************
 
 # # DUMP FOR TEST
 # p_batch_id = "BATCH_001"
@@ -77,7 +77,7 @@ from delta.tables import DeltaTable
 # ##  PARAMETERS
 # Parameters injected by Fabric Pipeline. Edit defaults for local development only.
 
-# PARAMETERS CELL ********************
+# CELL ********************
 
 # ---------------------------------------------------------------------------
 # FABRIC NOTEBOOK PARAMETERS
@@ -265,76 +265,6 @@ def load_mapping_json(mapping_path: str) -> dict:
         f"| columns={len(mapping['columns'])}"
     )
     return mapping
-
-
-def get_next_run_mode(current_batch_id: int) -> dict:
-    """
-    Read the single-row control table cfg.next_run_mode to determine
-    whether this is a NEW run or a RECOVERY run.
-
-    Parameters
-    ----------
-    current_batch_id : int
-        The batch_id passed as a notebook parameter.
-
-    Returns
-    -------
-    dict
-        Row from cfg.next_run_mode as a dictionary.
-    """
-    run_mode_df = spark.table(NEXT_RUN_MODE_TABLE).limit(1)
-
-    if run_mode_df.count() == 0:
-        print(f"[RUN_MODE] '{NEXT_RUN_MODE_TABLE}' is empty. Defaulting to NEW run.")
-        return {"run_mode": RUN_MODE_NEW, "batch_id": current_batch_id}
-
-    run_mode_row: dict = run_mode_df.first().asDict()
-    print(
-        f"[RUN_MODE] run_mode={run_mode_row.get('run_mode')} "
-        f"| batch_id={run_mode_row.get('batch_id')}"
-    )
-    return run_mode_row
-
-
-def get_failed_tables_from_previous_run(previous_batch_id: int) -> list[str]:
-    """
-    In RECOVERY mode, fetch the list of silver table names that failed
-    in the previous pipeline run using the audit_table_session table.
-
-    Parameters
-    ----------
-    previous_batch_id : int
-        The batch_id of the failed run to recover from.
-
-    Returns
-    -------
-    list[str]
-        List of target_table_name values that need to be retried.
-    """
-    try:
-        failed_tables_df = (
-            spark.table(AUDIT_TABLE_SESSION)
-            .filter(
-                (F.col("batch_id") == previous_batch_id)
-                & (F.col("layer") == LAYER_SILVER)
-                & (F.col("status") == STATUS_FAILED)
-            )
-            .select("target_table_name")
-        )
-        failed_table_names: list[str] = [
-            row["target_table_name"] for row in failed_tables_df.collect()
-        ]
-        print(
-            f"[RECOVERY] Found {len(failed_table_names)} failed Silver table(s) "
-            f"from batch_id={previous_batch_id}: {failed_table_names}"
-        )
-        return failed_table_names
-    except AnalysisException as analysis_error:
-        print(
-            f"[RECOVERY] Warning — Could not query audit table: {analysis_error}. "
-            "Proceeding as NEW run."
-        )
-        return []
 
 # METADATA ********************
 
@@ -1351,17 +1281,6 @@ resolved_load_type: str = (
 )
 
 print(f"[STEP 1] Resolved load_type={resolved_load_type}")
-
-# Determine run mode for incremental loads (NEW vs RECOVERY)
-run_mode_info: dict = get_next_run_mode(batch_id)
-current_run_mode: str = run_mode_info.get("run_mode", RUN_MODE_NEW)
-previous_batch_id: int = run_mode_info.get("batch_id", batch_id)
-
-# In RECOVERY mode, check which Silver tables failed in the previous run
-failed_silver_tables_to_retry: list[str] = []
-if current_run_mode == RUN_MODE_RECOVERY and resolved_load_type == LOAD_TYPE_INCREMENTAL:
-    print(f"[STEP 1] RECOVERY mode detected for batch_id={previous_batch_id}")
-    failed_silver_tables_to_retry = get_failed_tables_from_previous_run(previous_batch_id)
 
 # Core config values used across all subsequent steps
 BRONZE_TABLE_NAME: str = config_row["bronze_table_name"]

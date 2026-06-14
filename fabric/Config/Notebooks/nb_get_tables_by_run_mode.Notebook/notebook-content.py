@@ -115,14 +115,9 @@ def get_source_columns(alias="s"):
 
 def dataframe_to_records(df):
     """
-    Convert Spark DataFrame to Python list of dict.
+    Convert  DataFrame to Python list of dict.
     """
-    return (
-        df
-        .toPandas()
-        .to_dict("records")
-    )
-
+    return [row.asDict() for row in df.collect()]
 
 def get_new_run_mode():
     """

@@ -114,9 +114,9 @@
         "type": "string",
         "defaultValue": "@pipeline().parameters.p_run_mode"
       },
-      "p_previous_session_id": {
+      "p_pervious_session_id": {
         "type": "string",
-        "defaultValue": "@pipeline().parameters.p_previous_session_id"
+        "defaultValue": "@pipeline().parameters.p_pervious_session_id"
       }
     }
   }

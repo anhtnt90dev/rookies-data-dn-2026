@@ -106,8 +106,8 @@
           "name_func": "_validate_is_not_empty",
           "params": [
             {
-              "key": "premium_amount",
-              "reason_error": "premium_amount key is empty"
+              "key": "policy_end_date",
+              "reason_error": "policy_end_date key is empty"
             }
           ]
         },

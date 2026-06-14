@@ -280,7 +280,7 @@ validate_fact_table(
 validate_fact_table(
     table_name="gold.fact_quotation_item",
     dim_fact_table_id=16,
-    grain_cols=["quotation_id", "coverage_type"], # logic check using coverage_type on silver side as business key
+    grain_cols=["quotation_id", "coverage_key"], # logic check using coverage_key on gold side as business key
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
         "customer_key": "gold.dim_customer",

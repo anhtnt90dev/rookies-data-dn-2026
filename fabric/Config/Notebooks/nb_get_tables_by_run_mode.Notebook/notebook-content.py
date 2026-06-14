@@ -132,6 +132,7 @@ def get_new_run_mode():
     df = (
         spark.table("cfg.source_table")
         .alias("s")
+        .filter(F.col("s.is_active") == True)
         .select(*get_source_columns("s"))
         .orderBy("load_sequence")
     )

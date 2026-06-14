@@ -6,10 +6,10 @@ This document defines the high-level architecture, team responsibilities, and no
 
 ## 1. Collaboration & Medallion Context
 
-The data pipeline follows a standard Medallion Architecture, built via team collaboration:
-*   **Bronze Layer (Ingestion & Schema Guard)**: Designed by Member A. Handles source extraction, incremental loading, watermark tracking, and file-level logging.
-*   **Silver Layer (Validation & Conforming)**: Designed by Member B. Cleans, deduplicates, enforces validation rules, and conforms data into clean Silver tables.
-*   **Gold Layer (Reporting-Ready Star Schema)**: Redesigned and implemented by the Senior Data Engineer. Ingests conformed dimensions (SCD1 and SCD2) and point-in-time conformed Fact tables optimized for business intelligence reporting.
+The data pipeline follows a standard Medallion Architecture:
+*   **Bronze Layer (Ingestion & Schema Guard)**: Handles source extraction, incremental loading, watermark tracking, and file-level logging.
+*   **Silver Layer (Validation & Conforming)**: Cleans, deduplicates, enforces validation rules, and conforms data into clean Silver tables.
+*   **Gold Layer (Reporting-Ready Star Schema)**: Ingests conformed dimensions (SCD1 and SCD2) and point-in-time conformed Fact tables optimized for reporting and analytics.
 
 ### Architectural Constraint (Strict Isolation)
 > [!IMPORTANT]
@@ -28,19 +28,19 @@ The Gold Layer acts as the final target in the sequential data pipeline. The log
 graph TD
     subgraph Landing Zone
         Src[(Source Database / Files)]
-    </td>
+    end
     
-    subgraph Bronze Layer [Member A]
+    subgraph Bronze Layer
         BrzTable[(Bronze Delta Tables)]
         Src -->|Ingestion & Watermark| BrzTable
     end
 
-    subgraph Silver Layer [Member B]
+    subgraph Silver Layer
         SlvTable[(Silver Delta Tables)]
         BrzTable -->|Transform & Clean| SlvTable
     end
 
-    subgraph Gold Layer [Senior DE]
+    subgraph Gold Layer
         direction TB
         G_Date[(dim_date)]
         G_SCD1[(SCD1 Dimensions)]

@@ -44,48 +44,51 @@ graph TD
     CheckUnknown -- No --> InsertUnknown[Insert Unknown Row -1]
     CheckUnknown -- Yes --> ReadSource[Read Clean Silver Tables]
     InsertUnknown --> ReadSource
-    ReadSource --> HashCheck[Compute MD5 Hash of Tracked Columns]
-    HashCheck --> MergeOp{Delta Merge Into Target}
+    ReadSource --> MergeOp{Delta Merge Into Target}
     
-    MergeOp -->|When Matched & Hash Mismatches| UpdateInPlace[Update Attributes In-Place]
-    MergeOp -->|When Matched & Hash Matches| BypassWrite[Bypass Write / Do Nothing]
+    MergeOp -->|When Matched & Attributes Differ| UpdateInPlace[Update Attributes In-Place]
+    MergeOp -->|When Matched & Attributes Match| BypassWrite[Bypass Write / Do Nothing]
     MergeOp -->|When Not Matched| GenerateSK[Generate Surrogate Key]
     
     GenerateSK --> InsertRow[Insert New Dimension Row]
     UpdateInPlace & InsertRow & BypassWrite --> End([SCD1 Completed])
 ```
 
-### 3.1. Delta Merge Query Specification
-The update operation runs as a Delta Lake merge statement:
-```sql
-MERGE INTO gold.dim_quotation AS target
-USING (
-    -- Incoming deduplicated Silver data
-    SELECT quotation_id, CAST(quotation_expiry_at AS DATE) AS quotation_expiry_date
-    FROM silver.quotation
-) AS source
-ON target.quotation_id = source.quotation_id
-WHEN MATCHED AND target.quotation_expiry_date <> source.quotation_expiry_date THEN
-    UPDATE SET 
-        target.quotation_expiry_date = source.quotation_expiry_date,
-        target.updated_at = current_timestamp()
-WHEN NOT MATCHED THEN
-    INSERT (quotation_key, quotation_id, quotation_expiry_date, created_at, updated_at)
-    VALUES (
-        next_surrogate_key(), -- Generated ID
-        source.quotation_id, 
-        source.quotation_expiry_date, 
-        current_timestamp(), 
-        current_timestamp()
-    )
+### 3.1. Delta Merge PySpark Specification
+The update operation runs as a Delta Lake merge statement implemented in PySpark. Below is the merge operation used for `dim_quotation` (the only SCD1 dimension with descriptive attributes to update):
+
+```python
+delta_table = DeltaTable.forName(spark, "gold.dim_quotation")
+match_cond = "target.quotation_id = source.quotation_id"
+
+delta_table.alias("target").merge(
+    final_merge_df.alias("source"),
+    match_cond
+).whenMatchedUpdate(
+    condition="COALESCE(target.quotation_expiry_date, '') != COALESCE(source.quotation_expiry_date, '')",
+    set={
+        "quotation_expiry_date": "source.quotation_expiry_date",
+        "updated_at": "current_timestamp()"
+    }
+).whenNotMatchedInsert(
+    values={
+        "quotation_key": "source.quotation_key",
+        "quotation_id": "source.quotation_id",
+        "quotation_expiry_date": "source.quotation_expiry_date",
+        "created_at": "current_timestamp()",
+        "updated_at": "current_timestamp()"
+    }
+).execute()
 ```
+
+For SCD1 tables with no descriptive attributes besides the business key (such as `dim_package`, `dim_coverage`, `dim_policy`, and status dimensions), the merge does not perform any update on match, only inserting new keys when not matched.
 
 ---
 
 ## 4. Idempotency & Rerun Behavior (No-Change Scenario)
 
 To guarantee that pipeline reruns or recovery runs do not corrupt data or insert duplicates, the ingestion notebooks enforce strict idempotency:
-*   **No Changes**: If the business key already exists in the target SCD1 table and the incoming attributes are identical, the `WHEN MATCHED AND target.row_hash <> source.hash_val` condition evaluates to `false`. No updates or inserts occur for that record.
+*   **No Changes**: If the business key already exists in the target SCD1 table and the incoming attributes are identical, the merge match condition evaluates to no update (as no changes are found). No updates or inserts occur for that record.
 *   **Batch Reruns**: If a batch is re-run, only keys with actual modified values are updated in-place. All other keys remain untouched, resulting in 0 bytes written for unmodified records.
 
 ---

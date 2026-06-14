@@ -68,70 +68,58 @@ During fact ingestion, if a source quotation record is flagged as deleted (`is_d
 *   `delete_batch_id = <current_batch_id>`
 *   Measure columns (such as `premium_amount`) are set to `0.00` to prevent skewing active summary calculations in reporting layers.
 
-### Ingestion SQL Pattern
-```sql
-MERGE INTO gold.fact_quotation AS target
-USING (
-    SELECT 
-        q.quotation_id,
-        q.quotation_at,
-        q.quotation_expiry_at,
-        q.customer_id,
-        q.agent_id,
-        q.provider_code,
-        q.package_code,
-        q.quotation_status,
-        q.premium_amount,
-        q._source_system,
-        q._batch_id,
-        CASE WHEN p.quotation_id IS NOT NULL THEN true ELSE false END AS converted_flag
-    FROM silver.quotation q
-    LEFT JOIN silver.policy p ON q.quotation_id = p.quotation_id
-) AS source
-ON target.quotation_id = source.quotation_id
-WHEN MATCHED AND (
-    target.quotation_date_key <> COALESCE(CAST(DATE_FORMAT(source.quotation_at, 'yyyyMMdd') AS INT), -1) OR
-    target.quotation_expiry_date_key <> COALESCE(CAST(DATE_FORMAT(source.quotation_expiry_at, 'yyyyMMdd') AS INT), -1) OR
-    target.customer_key <> COALESCE((SELECT customer_key FROM gold.dim_customer WHERE customer_id = source.customer_id AND source.quotation_at BETWEEN effective_from AND effective_to), -1) OR
-    target.agent_key <> COALESCE((SELECT agent_key FROM gold.dim_agent WHERE agent_id = source.agent_id AND source.quotation_at BETWEEN effective_from AND effective_to), -1) OR
-    target.provider_key <> COALESCE((SELECT provider_key FROM gold.dim_provider WHERE provider_code = source.provider_code AND source.quotation_at BETWEEN effective_from AND effective_to), -1) OR
-    target.package_key <> COALESCE((SELECT package_key FROM gold.dim_package WHERE package_code = source.package_code), -1) OR
-    target.quotation_status_key <> COALESCE((SELECT quotation_status_key FROM gold.dim_quotation_status WHERE quotation_status_code = source.quotation_status), -1) OR
-    target.vehicle_key <> COALESCE((
-        SELECT v.vehicle_key 
-        FROM silver.vehicle sv
-        INNER JOIN gold.dim_vehicle v ON sv.vehicle_id = v.vehicle_id
-        WHERE sv.customer_id = source.customer_id 
-          AND source.quotation_at BETWEEN v.effective_from AND v.effective_to
-        LIMIT 1
-    ), -1) OR
-    target.premium_amount <> COALESCE(source.premium_amount, 0) OR
-    target.converted_flag <> source.converted_flag
-) THEN
-    UPDATE SET 
-        target.quotation_key = COALESCE((SELECT quotation_key FROM gold.dim_quotation WHERE quotation_id = source.quotation_id), -1),
-        target.quotation_date_key = COALESCE(CAST(DATE_FORMAT(source.quotation_at, 'yyyyMMdd') AS INT), -1),
-        target.quotation_expiry_date_key = COALESCE(CAST(DATE_FORMAT(source.quotation_expiry_at, 'yyyyMMdd') AS INT), -1),
-        target.customer_key = COALESCE((SELECT customer_key FROM gold.dim_customer WHERE customer_id = source.customer_id AND source.quotation_at BETWEEN effective_from AND effective_to), -1),
-        target.agent_key = COALESCE((SELECT agent_key FROM gold.dim_agent WHERE agent_id = source.agent_id AND source.quotation_at BETWEEN effective_from AND effective_to), -1),
-        target.provider_key = COALESCE((SELECT provider_key FROM gold.dim_provider WHERE provider_code = source.provider_code AND source.quotation_at BETWEEN effective_from AND effective_to), -1),
-        target.package_key = COALESCE((SELECT package_key FROM gold.dim_package WHERE package_code = source.package_code), -1),
-        target.quotation_status_key = COALESCE((SELECT quotation_status_key FROM gold.dim_quotation_status WHERE quotation_status_code = source.quotation_status), -1),
-        target.vehicle_key = COALESCE((
-            SELECT v.vehicle_key 
-            FROM silver.vehicle sv
-            INNER JOIN gold.dim_vehicle v ON sv.vehicle_id = v.vehicle_id
-            WHERE sv.customer_id = source.customer_id 
-              AND source.quotation_at BETWEEN v.effective_from AND v.effective_to
-            LIMIT 1
-        ), -1),
-        target.premium_amount = COALESCE(source.premium_amount, 0),
-        target.converted_flag = source.converted_flag,
-        target.updated_at = current_timestamp()
+### Ingestion PySpark Implementation Details
+To implement this logic, the ingestion notebook performs the following Spark SQL / Dataframe API operations:
+
+1. **Read Incoming Batch**: Filters `silver.quotation` by the current `batch_id`.
+2. **Resolve Converted Flag**: Left joins with `silver.policy` (distinct on `quotation_id`) to derive `converted_flag = has_policy IS NOT NULL`.
+3. **Resolve Vehicle ID**: Left joins with `silver.vehicle` (deduplicated by `customer_id`) to resolve the business `vehicle_id` associated with the customer (using a 1-to-1 customer-to-vehicle assumption).
+4. **Resolve Dimension Keys**: Left joins with the conformed dimension tables:
+   - For **SCD1** dimensions (`dim_quotation`, `dim_package`, `dim_quotation_status`), joins are on business keys.
+   - For **SCD2** dimensions (`dim_customer`, `dim_agent`, `dim_provider`, `dim_vehicle`), point-in-time joins are used (checking that the transaction's event timestamp `quotation_at` falls between `effective_from` and `effective_to` of the dimension record).
+   - If a join fails to resolve, the surrogate key falls back to `-1` (using PySpark `coalesce` or `F.lit(-1)`).
+5. **Convert Date Keys**: Formats dates (`quotation_at`, `quotation_expiry_at`) into `YYYYMMDD` integer keys using `F.date_format(col, 'yyyyMMdd').cast(IntegerType())` or fallback `-1`.
+
+### Implementation PySpark Merge Pattern
+The conformed dataframe is merged into the target Delta table unconditionally on match using the PySpark Delta Table API:
+
+```python
+delta_table = DeltaTable.forName(spark, "gold.fact_quotation")
+
+delta_table.alias("target").merge(
+    final_df.alias("source"),
+    "target.quotation_id = source.quotation_id"
+).whenMatchedUpdate(
+    set={
+        "customer_id": "source.customer_id",
+        "agent_id": "source.agent_id",
+        "provider_code": "source.provider_code",
+        "quotation_key": "source.quotation_key",
+        "customer_key": "source.customer_key",
+        "agent_key": "source.agent_key",
+        "provider_key": "source.provider_key",
+        "package_key": "source.package_key",
+        "quotation_status_key": "source.quotation_status_key",
+        "quotation_date_key": "source.quotation_date_key",
+        "quotation_expiry_date_key": "source.quotation_expiry_date_key",
+        "vehicle_key": "source.vehicle_key",
+        "premium_amount": "source.premium_amount",
+        "converted_flag": "source.converted_flag",
+        "updated_at": "current_timestamp()",
+        "_batch_id": "source._batch_id",
+        "_source_system": "source._source_system",
+        "pipeline_run_id": "source.pipeline_run_id",
+        "is_deleted": "source.is_deleted",
+        "deleted_at": "source.deleted_at",
+        "delete_batch_id": "source.delete_batch_id"
+    }
+).whenNotMatchedInsertAll().execute()
+```
+
 ---
 
 ## 5. Idempotency & Rerun Behavior (No-Change Scenario)
 
-*   **No Changes**: If the quotation records in the incoming Silver batch are identical to the target (meaning conformed keys, measures, and flags are unchanged), the Delta MERGE condition evaluates to `false`. **No update operations are performed, and no data is written to disk**, saving execution time and resources.
-*   **Batch Reruns**: If a batch is re-run (e.g. during a recovery execution), the MERGE statement matches on `quotation_id` and only updates records where values have actually changed. No duplicate entries are created.
+*   **Idempotent Updates**: In recovery runs or batch reruns, the MERGE statement matches on `quotation_id`. Records are updated with conformed dimension surrogate keys matching the active batch state. No duplicate records are inserted, ensuring that the fact grain remains strictly unique.
+*   **Active Audits**: All metrics and counts are validated post-ingestion by `nb_gold_validate_reconciliation_dev` to ensure data completeness and consistency before finishing the run.
 

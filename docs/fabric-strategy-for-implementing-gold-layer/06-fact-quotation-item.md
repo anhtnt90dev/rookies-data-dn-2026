@@ -62,20 +62,57 @@ The conformed keys for `gold.fact_quotation_item` are resolved as follows:
 
 ---
 
-## 4. Ingestion Strategy & Soft Deletes
+## 4. Ingestion Strategy & PySpark Implementation Details
 
-*   **Upsert Key**: The combination of `quotation_id` and `coverage_type` forms the unique grain of this fact table.
-*   **Soft Deletes**: If the item's `is_deleted` column is `true` or if its parent quotation is flagged as soft-deleted, metadata columns are updated:
-    *   `is_deleted = true`
-    *   `deleted_at = current_timestamp()`
-    *   `delete_batch_id = <current_batch_id>`
-    *   Measure values (`coverage_amount`, `deductible_amount`) are updated to `0.00` to prevent active reporting skew.
+To build the fact table conformed rows, the notebook performs the following:
+
+1. **Read Incoming Batch**: Filters `silver.quotation_item` by the current `batch_id`.
+2. **Resolve Parent Context**: Inner joins with `silver.quotation` on `quotation_id` to retrieve parent fields: `customer_id`, `agent_id`, `provider_code`, `quotation_at`, `quotation_status`, `package_code`.
+3. **Resolve Vehicle ID**: Left joins with `silver.vehicle` (deduplicated by `customer_id`) on `customer_id` (from parent context) to obtain `vehicle_id` (using the 1-to-1 assumption).
+4. **Resolve Dimension Keys**: Left joins with conformed dimensions:
+   - For **SCD1** dimensions (`dim_quotation`, `dim_package`, `dim_coverage`, `dim_quotation_status`), joins are on business keys.
+   - For **SCD2** dimensions (`dim_customer`, `dim_agent`, `dim_provider`, `dim_vehicle`), point-in-time joins check that the parent `quotation_at` falls between `effective_from` and `effective_to`.
+   - Surrogate keys fallback to `-1` on null.
+5. **Convert Date Keys**: Formats the parent transaction date (`quotation_at`) to a `YYYYMMDD` integer key (`quotation_date_key`), falling back to `-1`.
+
+### Implementation PySpark Merge Pattern
+The conformed line-item records are merged on a composite match condition (`quotation_id` and `coverage_key`):
+
+```python
+delta_table = DeltaTable.forName(spark, "gold.fact_quotation_item")
+
+delta_table.alias("target").merge(
+    final_df.alias("source"),
+    "target.quotation_id = source.quotation_id AND target.coverage_key = source.coverage_key"
+).whenMatchedUpdate(
+    set={
+        "quotation_item_id": "source.quotation_item_id",
+        "quotation_key": "source.quotation_key",
+        "quotation_date_key": "source.quotation_date_key",
+        "customer_key": "source.customer_key",
+        "agent_key": "source.agent_key",
+        "provider_key": "source.provider_key",
+        "package_key": "source.package_key",
+        "quotation_status_key": "source.quotation_status_key",
+        "vehicle_key": "source.vehicle_key",
+        "coverage_amount": "source.coverage_amount",
+        "deductible_amount": "source.deductible_amount",
+        "updated_at": "current_timestamp()",
+        "_batch_id": "source._batch_id",
+        "_source_system": "source._source_system",
+        "pipeline_run_id": "source.pipeline_run_id",
+        "is_deleted": "source.is_deleted",
+        "deleted_at": "source.deleted_at",
+        "delete_batch_id": "source.delete_batch_id"
+    }
+).whenNotMatchedInsertAll().execute()
+```
 
 ---
 
 ## 5. Idempotency & Rerun Behavior (No-Change Scenario)
 
-*   **No Changes**: If the line items in the incoming Silver batch are identical to target data (all keys and measures match), the Delta MERGE checks for column updates and evaluates to `false`. **No update operations occur, and no data is written to disk**, optimizing pipeline runtime.
-*   **Batch Reruns**: In recovery runs, the MERGE statement matches on `(quotation_id, coverage_type)` keys and only updates fields with actual differences. No duplicate line-item rows are created.
+*   **Idempotent Updates**: In recovery runs or batch reruns, the MERGE statement matches on `(quotation_id, coverage_key)`. Existing rows are updated with conformed dimension surrogate keys matching the active batch state. No duplicate records are inserted, ensuring that the fact grain remains strictly unique.
+*   **Active Audits**: All metrics and counts are validated post-ingestion by `nb_gold_validate_reconciliation_dev` to ensure data completeness and consistency before finishing the run.
 
 

@@ -83,8 +83,8 @@ try:
     q_df = spark.table("silver.quotation").select("quotation_id", "quotation_at", "agent_id", "package_code")
     p_with_q = p_df.alias("p").join(q_df.alias("q"), on="quotation_id", how="left")
 
-    # 3. Resolve vehicle_id from silver.vehicle using customer_id
-    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").distinct()
+    # 3. Resolve vehicle_id from silver.vehicle using customer_id (1-to-1 assumption)
+    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").dropDuplicates(["customer_id"])
     p_with_veh_id = p_with_q.join(vehicle_df, on=F.col("p.customer_id") == vehicle_df["customer_id"], how="left").drop(vehicle_df["customer_id"])
 
     # 4. Read conformed dimensions

@@ -83,8 +83,8 @@ try:
     policy_df = spark.table("silver.policy").select("quotation_id").distinct().withColumn("has_policy", F.lit(True))
     q_with_conv = q_df.join(policy_df, on="quotation_id", how="left")
 
-    # 3. Resolve vehicle_id from silver.vehicle using customer_id
-    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").distinct()
+    # 3. Resolve vehicle_id from silver.vehicle using customer_id (1-to-1 assumption)
+    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").dropDuplicates(["customer_id"])
     q_with_veh_id = q_with_conv.join(vehicle_df, on="customer_id", how="left")
 
     # 4. Read target dimension tables

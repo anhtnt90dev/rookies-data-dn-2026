@@ -58,7 +58,8 @@ run_mode = str(run_mode).upper()
 def get_table_session_id(dim_fact_table_id: int) -> str:
     try:
         rows = spark.table("log.audit_table_session") \
-            .where((F.col("session_id") == F.lit(session_id)) & (F.col("source_table_id") == F.lit(dim_fact_table_id))) \
+            .where((F.col("batch_id") == F.lit(batch_id)) & (F.col("source_table_id") == F.lit(dim_fact_table_id))) \
+            .orderBy(F.col("created_at").desc()) \
             .select("id") \
             .limit(1) \
             .collect()
@@ -77,9 +78,11 @@ def validate_fact_table(
     metric_cols: list[str] # col_name in gold vs expression/col_name in silver
 ):
     table_session_id = get_table_session_id(dim_fact_table_id)
+    is_temp_session = False
     if not table_session_id:
-        print(f"[INFO] No table session found for {table_name} in session {session_id}. Using a temporary session ID.")
+        print(f"[INFO] No table session found for {table_name} in batch {batch_id}. Using a temporary session ID.")
         table_session_id = new_audit_id()
+        is_temp_session = True
 
     print(f"[VALIDATE] Starting QA check suite for {table_name}...")
     gold_df = spark.table(table_name)
@@ -104,7 +107,8 @@ def validate_fact_table(
             error_column=grain_cols[0],
             error_type=ErrorType.RULE
         )
-        finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="GRAIN_UNIQUENESS_FAILED", error_message=err_msg)
+        if not is_temp_session:
+            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="GRAIN_UNIQUENESS_FAILED", error_message=err_msg)
         raise Exception(err_msg)
 
     # 2. Foreign Key Integrity Check
@@ -137,7 +141,8 @@ def validate_fact_table(
                 error_column=fk_col,
                 error_type=ErrorType.RULE
             )
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="FK_INTEGRITY_FAILED", error_message=err_msg)
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="FK_INTEGRITY_FAILED", error_message=err_msg)
             raise Exception(err_msg)
 
     # 3. Date Key Validity Check
@@ -164,7 +169,8 @@ def validate_fact_table(
                 error_column=date_key_col,
                 error_type=ErrorType.RULE
             )
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="DATE_KEY_VALIDITY_FAILED", error_message=err_msg)
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="DATE_KEY_VALIDITY_FAILED", error_message=err_msg)
             raise Exception(err_msg)
 
     # 4. Row Count Reconciliation Check
@@ -187,15 +193,19 @@ def validate_fact_table(
             error_column="row_count",
             error_type=ErrorType.RULE
         )
-        finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="ROW_COUNT_RECONCILIATION_FAILED", error_message=err_msg)
+        if not is_temp_session:
+            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="ROW_COUNT_RECONCILIATION_FAILED", error_message=err_msg)
         raise Exception(err_msg)
 
     # 5. Metric Reconciliation Check
     for metric_col in metric_cols:
-        # Reconcile sum of metrics, zeroing out metrics for soft-deleted records in Silver to match Gold
-        silver_metric_sum = silver_df.select(
-            F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00)))).alias("metric_sum")
-        ).collect()[0]["metric_sum"]
+        # Reconcile sum of metrics, zeroing out metrics for soft-deleted records in Silver if column exists
+        if "is_deleted" in silver_df.columns:
+            silver_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
+        else:
+            silver_metric_sum_col = F.sum(F.coalesce(F.col(metric_col), F.lit(0.00)))
+            
+        silver_metric_sum = silver_df.select(silver_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
         silver_metric_sum = float(silver_metric_sum) if silver_metric_sum is not None else 0.00
 
         gold_metric_sum = batch_gold_df.select(F.sum(metric_col).alias("metric_sum")).collect()[0]["metric_sum"]
@@ -215,7 +225,8 @@ def validate_fact_table(
                 error_column=metric_col,
                 error_type=ErrorType.RULE
             )
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="METRIC_RECONCILIATION_FAILED", error_message=err_msg)
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="METRIC_RECONCILIATION_FAILED", error_message=err_msg)
             raise Exception(err_msg)
 
     # 6. Soft Delete Auditing Check
@@ -236,7 +247,8 @@ def validate_fact_table(
             error_column="deleted_at/delete_batch_id",
             error_type=ErrorType.RULE
         )
-        finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
+        if not is_temp_session:
+            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
         raise Exception(err_msg)
 
     print(f"[SUCCESS] {table_name} passed all QA audits successfully.")

@@ -83,8 +83,8 @@ try:
     p_df = spark.table("silver.policy").select("policy_id", "customer_id", "provider_code")
     c_with_p = c_df.alias("c").join(p_df.alias("p"), on="policy_id", how="left")
 
-    # 3. Resolve vehicle_id from silver.vehicle using customer_id
-    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").distinct()
+    # 3. Resolve vehicle_id from silver.vehicle using customer_id (1-to-1 assumption)
+    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").dropDuplicates(["customer_id"])
     c_with_veh_id = c_with_p.join(vehicle_df, on=F.col("p.customer_id") == vehicle_df["customer_id"], how="left").drop(vehicle_df["customer_id"])
 
     # 4. Read conformed dimensions

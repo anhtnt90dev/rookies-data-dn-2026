@@ -87,8 +87,8 @@ try:
         how="inner"
     )
 
-    # 3. Resolve vehicle_id from silver.vehicle using customer_id
-    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").distinct()
+    # 3. Resolve vehicle_id from silver.vehicle using customer_id (1-to-1 assumption)
+    vehicle_df = spark.table("silver.vehicle").select("customer_id", "vehicle_id").dropDuplicates(["customer_id"])
     qi_with_veh_id = qi_with_parent.join(vehicle_df, on=F.col("q.customer_id") == vehicle_df["customer_id"], how="left").drop(vehicle_df["customer_id"])
 
     # 4. Read conformed dimensions

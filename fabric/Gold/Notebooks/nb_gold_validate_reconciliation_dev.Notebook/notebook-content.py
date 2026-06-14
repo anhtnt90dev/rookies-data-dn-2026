@@ -177,7 +177,8 @@ def validate_fact_table(
     # Count of active batch records in silver table (deduplicated)
     silver_df = spark.table(silver_table_name).where(F.col("_batch_id") == F.lit(str(batch_id)))
     # For count, we reconcile against deduplicated silver table on business keys
-    silver_count = silver_df.dropDuplicates(grain_cols).count()
+    silver_grain_cols = [c if c != "coverage_key" else "coverage_type" for c in grain_cols]
+    silver_count = silver_df.dropDuplicates(silver_grain_cols).count()
     gold_count = batch_gold_df.count()
     
     if gold_count != silver_count:

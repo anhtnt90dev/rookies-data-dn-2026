@@ -62,19 +62,62 @@ The target columns for `gold.fact_policy` are resolved from the source fields us
 
 ---
 
-## 4. Soft Delete and Ingestion Rules
+## 4. Ingestion Strategy & PySpark Implementation Details
 
-*   **Soft Deletes**: If a policy is flagged as soft-deleted in `silver.policy` (`is_deleted = true`), the target row is updated:
-    *   `is_deleted = true`
-    *   `deleted_at = current_timestamp()`
-    *   `delete_batch_id = <current_batch_id>`
-    *   Metrics (`premium_amount`) are set to `0.00`.
+To build the fact table conformed rows, the notebook performs the following:
+
+1. **Read Incoming Batch**: Filters `silver.policy` by the current `batch_id`.
+2. **Resolve Parent Context**: Left joins with `silver.quotation` on `quotation_id` to retrieve parent fields: `quotation_at`, `agent_id`, `package_code`.
+3. **Resolve Vehicle ID**: Left joins with `silver.vehicle` (deduplicated by `customer_id`) on `customer_id` (from parent context) to obtain `vehicle_id` (using the 1-to-1 assumption).
+4. **Resolve Dimension Keys**: Left joins conformed dimensions:
+   - For **SCD1** dimensions (`dim_policy`, `dim_quotation`, `dim_package`, `dim_policy_status`), joins are on business keys.
+   - For **SCD2** dimensions (`dim_customer`, `dim_agent`, `dim_provider`, `dim_vehicle`), point-in-time joins check that the policy transaction date `issued_at` falls between `effective_from` and `effective_to`. (Note: for `dim_agent`, the join matches using `quotation_at` as the event time, while other SCD2 dimensions use `issued_at`).
+   - Surrogate keys fallback to `-1` on null.
+5. **Convert Date Keys**: Formats dates (`issued_at`, `policy_start_date`, `policy_end_date`) into `YYYYMMDD` integer keys (`issued_date_key`, `policy_start_date_key`, `policy_end_date_key`), falling back to `-1` on null.
+
+### Implementation PySpark Merge Pattern
+The conformed policy records are merged on a matching condition on `policy_id`:
+
+```python
+delta_table = DeltaTable.forName(spark, "gold.fact_policy")
+
+delta_table.alias("target").merge(
+    final_df.alias("source"),
+    "target.policy_id = source.policy_id"
+).whenMatchedUpdate(
+    set={
+        "policy_number": "source.policy_number",
+        "quotation_id": "source.quotation_id",
+        "customer_id": "source.customer_id",
+        "provider_code": "source.provider_code",
+        "policy_key": "source.policy_key",
+        "quotation_key": "source.quotation_key",
+        "customer_key": "source.customer_key",
+        "provider_key": "source.provider_key",
+        "agent_key": "source.agent_key",
+        "package_key": "source.package_key",
+        "policy_status_key": "source.policy_status_key",
+        "issued_date_key": "source.issued_date_key",
+        "policy_start_date_key": "source.policy_start_date_key",
+        "policy_end_date_key": "source.policy_end_date_key",
+        "vehicle_key": "source.vehicle_key",
+        "premium_amount": "source.premium_amount",
+        "updated_at": "current_timestamp()",
+        "_batch_id": "source._batch_id",
+        "_source_system": "source._source_system",
+        "pipeline_run_id": "source.pipeline_run_id",
+        "is_deleted": "source.is_deleted",
+        "deleted_at": "source.deleted_at",
+        "delete_batch_id": "source.delete_batch_id"
+    }
+).whenNotMatchedInsertAll().execute()
+```
 
 ---
 
 ## 5. Idempotency & Rerun Behavior (No-Change Scenario)
 
-*   **No Changes**: If policy details in the incoming Silver batch are identical to existing target records (keys, measures, status match), the MERGE statement condition checks for differences and evaluates to `false`. **No update operations are performed, and no data is written to disk**, saving I/O overhead.
-*   **Batch Reruns**: In recovery runs, the MERGE statement matches on the `policy_id` key and updates only the changed columns, preserving GWP values without duplication.
+*   **Idempotent Updates**: In recovery runs or batch reruns, the MERGE statement matches on `policy_id`. Existing rows are updated with conformed dimension surrogate keys matching the active batch state. No duplicate records are inserted, ensuring that the fact grain remains strictly unique.
+*   **Active Audits**: All metrics and counts are validated post-ingestion by `nb_gold_validate_reconciliation_dev` to ensure data completeness and consistency before finishing the run.
 
 

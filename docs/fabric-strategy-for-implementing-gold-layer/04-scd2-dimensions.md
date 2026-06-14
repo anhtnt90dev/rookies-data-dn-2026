@@ -59,77 +59,113 @@ graph TD
 
 ---
 
-## 4. SQL Ingestion Spec Example (`dim_customer`)
+## 4. PySpark Ingestion Design Specification
 
-To implement this logic efficiently in Spark SQL, we perform:
-1. An update of existing active rows whose tracked attributes have changed, setting `is_current = false` and `effective_to` to the new version's starting timestamp.
-2. An insert of new keys and new versions of changed records.
+To implement this logic efficiently in Spark, we calculate the MD5 hash of the tracked columns on-the-fly in PySpark dataframes rather than storing it in the Delta tables. The load is completed in two main phases:
 
-```sql
--- Expire current active records that have changed tracked columns
-UPDATE gold.dim_customer AS target
-SET target.is_current = false,
-    target.effective_to = COALESCE(source.updated_at, source.created_at),
-    target.updated_at = current_timestamp()
-FROM silver.customer AS source
-WHERE target.customer_id = source.customer_id
-  AND target.is_current = true
-  AND MD5(CONCAT_WS('||', 
-        COALESCE(source.full_name, ''), 
-        COALESCE(source.gender, ''), 
-        COALESCE(source.dob, ''), 
-        COALESCE(source.phone_number, ''), 
-        COALESCE(source.email, ''), 
-        COALESCE(source.city, ''), 
-        COALESCE(source.district, '')
-      )) <> target.row_hash;
+### Phase 1: Deduplication & Hash Generation (On-the-Fly)
+- Incoming source data is deduplicated by business key, keeping only the latest record based on `event_time` (using a window function partition).
+- An MD5 hash of the tracked attributes is generated on-the-fly for the incoming source records.
+- A similar hash is calculated for the active target records in the Delta table (`is_current = true`).
 
--- Insert new records and new versions of changed records
-INSERT INTO gold.dim_customer (
-    customer_key, customer_id, full_name, gender, dob, phone_number, 
-    email, city, district, is_current, effective_from, effective_to, row_hash, created_at, updated_at
+### Phase 2: Identify Versioning Actions & Execute
+The incoming and target dataframes are joined on the business key:
+1.  **Records to Expire**: Target records whose business key matches an incoming record, but whose tracked attributes' hash does not match (`src.row_hash != tgt.row_hash`).
+2.  **Records to Insert**:
+    - **New Keys**: Genuinely new business keys that do not exist in the target.
+    - **New Versions**: The updated version of records that were expired in Step 1.
+
+### Implementation PySpark Code Example (`dim_customer`)
+
+```python
+# 1. Generate row_hash on-the-fly for incoming source records
+incoming_with_hash = source_df.withColumn(
+    "row_hash",
+    F.md5(F.concat_ws("||", *[F.coalesce(F.col(c).cast("string"), F.lit("")) for c in customer_cols]))
 )
-SELECT 
-    next_surrogate_key(),
-    s.customer_id,
-    s.full_name,
-    s.gender,
-    s.dob,
-    s.phone_number,
-    s.email,
-    s.city,
-    s.district,
-    true AS is_current,
-    COALESCE(s.updated_at, s.created_at) AS effective_from,
-    TIMESTAMP('9999-12-31 23:59:59') AS effective_to,
-    MD5(CONCAT_WS('||', 
-        COALESCE(s.full_name, ''), 
-        COALESCE(s.gender, ''), 
-        COALESCE(s.dob, ''), 
-        COALESCE(s.phone_number, ''), 
-        COALESCE(s.email, ''), 
-        COALESCE(s.city, ''), 
-        COALESCE(s.district, '')
-      )) AS row_hash,
-    current_timestamp() AS created_at,
-    current_timestamp() AS updated_at
-FROM silver.customer s
-LEFT JOIN gold.dim_customer t
-  ON s.customer_id = t.customer_id
- AND t.is_current = true
-WHERE t.customer_id IS NULL; -- Inserts new keys or keys whose prior active version was expired above
+
+# 2. Get active target records and calculate row_hash on-the-fly
+target_active = spark.table("gold.dim_customer") \
+    .where((F.col("is_current") == True) & (F.col("customer_key") != -1)) \
+    .withColumn(
+        "row_hash",
+        F.md5(F.concat_ws("||", *[F.coalesce(F.col(c).cast("string"), F.lit("")) for c in customer_cols]))
+    )
+
+# 3. Join on customer_id to identify changes
+joined = incoming_with_hash.alias("src").join(
+    target_active.alias("tgt"),
+    on=F.col("src.customer_id") == F.col("tgt.customer_id"),
+    how="left"
+)
+
+records_to_expire = joined.filter(F.col("tgt.customer_key").isNotNull() & (F.col("src.row_hash") != F.col("tgt.row_hash")))
+new_records = joined.filter(F.col("tgt.customer_key").isNull())
+new_versions = records_to_expire
+
+# Step A: Expire old active records via Delta Table Merge Update
+if records_to_expire.count() > 0:
+    expire_df = records_to_expire.select(
+        F.col("src.customer_id").alias("customer_id"),
+        F.col("src.event_time").alias("expire_time")
+    )
+    delta_table = DeltaTable.forName(spark, "gold.dim_customer")
+    delta_table.alias("target").merge(
+        expire_df.alias("source"),
+        "target.customer_id = source.customer_id AND target.is_current = true"
+    ).whenMatchedUpdate(
+        set={
+            "is_current": "false",
+            "effective_to": "source.expire_time",
+            "updated_at": "current_timestamp()"
+        }
+    ).execute()
+
+# Step B: Insert new versions and new business keys with generated keys
+insert_source_df = new_records.select(
+    F.col("src.customer_id").alias("customer_id"),
+    *[F.col("src." + c).alias(c) for c in customer_cols],
+    F.col("src.event_time").alias("effective_from")
+).union(
+    new_versions.select(
+        F.col("src.customer_id").alias("customer_id"),
+        *[F.col("src." + c).alias(c) for c in customer_cols],
+        F.col("src.event_time").alias("effective_from")
+    )
+)
+
+if insert_source_df.count() > 0:
+    # Retrieve current maximum surrogate key to calculate next keys
+    max_key = spark.table("gold.dim_customer").where(F.col("customer_key") != -1).agg(F.max("customer_key")).collect()[0][0]
+    max_key = int(max_key) if max_key is not None else 0
+
+    window_insert = Window.orderBy("customer_id")
+    insert_final_df = insert_source_df.withColumn(
+        "customer_key",
+        F.lit(max_key) + F.row_number().over(window_insert).cast("bigint")
+    ).withColumn("effective_to", F.to_timestamp(F.lit("9999-12-31 23:59:59"))) \
+     .withColumn("is_current", F.lit(True)) \
+     .withColumn("created_at", F.current_timestamp()) \
+     .withColumn("updated_at", F.current_timestamp())
+
+    # Append new records
+    insert_final_df.select(
+        "customer_key", "customer_id", *customer_cols,
+        "effective_from", "effective_to", "is_current",
+        "created_at", "updated_at"
+    ).write.format("delta").mode("append").saveAsTable("gold.dim_customer")
 ```
 
 ---
 
 ## 5. Idempotency & Rerun Behavior (No-Change Scenario)
 
-SCD Type 2 processing ensures that rerun or recovery runs do not create duplicate historical versions:
-*   **No Changes**: If the business key already exists in Gold as an active version (`is_current = true`) and the hash of the tracked columns is identical to the incoming data:
-    *   The `UPDATE` statement that expires old records (matching on `row_hash <> target.row_hash`) will find no matches and skip the update.
-    *   The `INSERT` statement (which left joins on `customer_id` and `is_current = true`) will see that an active matching version already exists and bypass the insert.
-    *   Result: No records are expired and no new records are inserted.
-*   **Rerun of Changed Batch**: If the same batch is rerun after a failure, the query matches on the business key. Already updated/expired records will not be modified again, maintaining deterministic history.
+The PySpark-based SCD Type 2 logic guarantees strict idempotency on pipeline recovery or batch reruns:
+*   **No Changes**: If the business key already has an active record in Gold (`is_current = true`) and the incoming fields match the existing record (matching on MD5 hash):
+    *   `records_to_expire` will yield a count of 0. No merge statement will be executed.
+    *   `new_records` will find that `tgt.customer_key` is not null, yielding 0 rows.
+    *   Result: 0 updates and 0 appends occur. The system state remains unchanged.
+*   **Rerun of Changed Batch**: If the batch is rerun, the join resolves the active state. Since target records are already updated and expired in the initial run, the new run resolves them as already matching, causing no duplicate version records.
 
 ---
 
@@ -148,4 +184,3 @@ The Unknown row must be present with the following attributes:
 *   `is_current` = `true`
 *   `effective_from` = `'1900-01-01 00:00:00'`
 *   `effective_to` = `'9999-12-31 23:59:59'`
-*   `row_hash` = `'N/A'`

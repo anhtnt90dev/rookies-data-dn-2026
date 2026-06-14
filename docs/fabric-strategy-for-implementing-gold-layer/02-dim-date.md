@@ -80,7 +80,7 @@ After execution of the notebook `nb_gold_load_dim_date_dev`, the following queri
 1.  **Row Count Check**:
     ```sql
     SELECT COUNT(*) FROM gold.dim_date;
-    -- Expected result: 4018 rows (365 days * 8 years + 366 days * 3 leap years + 1 Unknown row)
+    -- Expected result: 4019 rows (365 days * 8 years + 366 days * 3 leap years = 4018 days + 1 Unknown row)
     ```
 2.  **Unknown Member Check**:
     ```sql

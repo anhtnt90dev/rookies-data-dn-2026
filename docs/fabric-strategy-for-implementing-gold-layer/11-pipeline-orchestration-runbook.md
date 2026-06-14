@@ -1,4 +1,4 @@
-# 12 - Pipeline Orchestration and Recovery Runbook
+# 11 - Pipeline Orchestration and Recovery Runbook
 
 This document defines the orchestration architecture, notebook integration, parameter passing, and recovery configurations for the Gold Layer in the master ETL pipeline.
 
@@ -6,7 +6,7 @@ This document defines the orchestration architecture, notebook integration, para
 
 ## 1. Orchestration Architecture
 
-The orchestration runs in the shared `pl_master_etl_dev` pipeline. All upstream ingestion stages (Bronze & Silver) designed by Member A and Member B execute first. The Gold Layer processes at the end of the pipeline.
+The orchestration runs in the shared `pl_master_etl_dev` pipeline. All upstream ingestion stages (Bronze & Silver) execute first. The Gold Layer processes at the end of the pipeline.
 
 ```mermaid
 graph TD
@@ -82,13 +82,20 @@ graph TD
 ```
 
 ### Parameter Propagation Code
-Within `nb_gold_master_load_dev`:
-```python
-# Read incoming pipeline variables
-p_session_id = mssparkutils.notebook.entryPoint.getArguments().get("p_session_id", "")
-p_batch_id = int(mssparkutils.notebook.entryPoint.getArguments().get("p_batch_id", "0"))
-p_run_mode = mssparkutils.notebook.entryPoint.getArguments().get("p_run_mode", "NEW")
+Within `nb_gold_master_load_dev`, parameters are defined in a parameters cell and automatically injected by the Microsoft Fabric pipeline orchestrator at runtime. They are then propagated down to child notebooks using the `common_args` parameter map:
 
+```python
+# Parameters Cell (injected by pipeline activity at runtime)
+p_session_id = ""
+p_batch_id = ""
+p_run_mode = "NEW"
+
+# Safe type casting of parameters
+p_batch_id = int(p_batch_id) if p_batch_id else 0
+p_session_id = str(p_session_id)
+p_run_mode = str(p_run_mode).upper()
+
+# Parameter map propagated to children
 common_args = {
     "session_id": p_session_id,
     "batch_id": p_batch_id,

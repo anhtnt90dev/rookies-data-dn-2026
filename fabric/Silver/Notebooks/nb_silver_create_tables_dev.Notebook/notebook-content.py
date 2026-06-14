@@ -271,3 +271,30 @@
 # META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC -- =====================================================================
+# MAGIC -- Project: CarPro Insurance Analytics
+# MAGIC -- Layer: Silver
+# MAGIC -- Purpose:
+# MAGIC -- Remove all data from Silver tables while preserving table schemas.
+# MAGIC -- =====================================================================
+# MAGIC 
+# MAGIC TRUNCATE TABLE silver.cancellation;
+# MAGIC TRUNCATE TABLE silver.payment;
+# MAGIC TRUNCATE TABLE silver.policy;
+# MAGIC TRUNCATE TABLE silver.customer;
+# MAGIC TRUNCATE TABLE silver.agent;
+# MAGIC TRUNCATE TABLE silver.provider;
+# MAGIC TRUNCATE TABLE silver.vehicle;
+# MAGIC TRUNCATE TABLE silver.quotation;
+# MAGIC TRUNCATE TABLE silver.quotation_item;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }

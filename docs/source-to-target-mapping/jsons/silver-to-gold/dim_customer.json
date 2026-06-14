@@ -52,7 +52,11 @@
     },
     {
       "target": "created_at",
-      "expression": "created_at"
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
     }
   ]
 }

@@ -32,7 +32,7 @@
                   },
                   "p_pipeline_run_id": {
                     "value": {
-                      "value": "@pipeline().Pipeline",
+                      "value": "@pipeline().RunId",
                       "type": "Expression"
                     },
                     "type": "string"

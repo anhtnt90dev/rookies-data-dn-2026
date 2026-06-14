@@ -1,0 +1,29 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/variableLibrary/definition/variables/1.0.0/schema.json",
+  "variables": [
+    {
+      "name": "default_lakehouse",
+      "note": "",
+      "type": "Guid",
+      "value": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+    },
+    {
+      "name": "default_lakehouse_name",
+      "note": "",
+      "type": "String",
+      "value": "lh_insurance_dev"
+    },
+    {
+      "name": "default_lakehouse_workspace_id",
+      "note": "",
+      "type": "Guid",
+      "value": "d7a45747-6b09-483f-b813-8aee84a3afc6"
+    },
+    {
+      "name": "known_lakehouses_id",
+      "note": "",
+      "type": "Guid",
+      "value": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+    }
+  ]
+}

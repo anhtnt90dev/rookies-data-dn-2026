@@ -46,6 +46,23 @@ p_layer = ""
 
 # CELL ********************
 
+p_session_id = "9693abc1-154f-4a40-a9a6-4f73860c656a"
+p_batch_id = "20260613113233"
+p_pipeline_run_id = "0725ec4c-a091-4204-9bb2-a838c417970f"
+p_execution_mode = "FULL_INGESTION"
+p_run_gold_create_tables = "false"
+p_run_mode = "NEW"
+p_layer = "GOLD"
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 # Fabric notebook: nb_gold_orchestrator_dev
 # Purpose: Run Gold Layer Ingestion safely from one notebook, sequentially, with preflight guards.
 

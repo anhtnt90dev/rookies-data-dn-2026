@@ -22,7 +22,7 @@
 
 # CELL ********************
 
-# MAGIC %run nb_audit_logging_helper_dev
+%run nb_audit_logging_helper_dev
 
 # METADATA ********************
 

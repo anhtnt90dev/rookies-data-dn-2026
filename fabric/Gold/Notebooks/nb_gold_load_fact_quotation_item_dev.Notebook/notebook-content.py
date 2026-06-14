@@ -22,7 +22,7 @@
 
 # CELL ********************
 
-# MAGIC %run nb_audit_logging_helper_dev
+%run nb_audit_logging_helper_dev
 
 # METADATA ********************
 
@@ -114,9 +114,6 @@ try:
         .join(dim_vehicle.alias("dv"), on=(F.col("j.vehicle_id") == F.col("dv.vehicle_id")) & (F.col("j.quotation_at").between(F.col("dv.effective_from"), F.col("dv.effective_to"))), how="left")
 
     # 6. Format final dataset
-    # Determine combined soft-delete flag
-    is_deleted_combined = F.coalesce(F.col("j.is_deleted"), F.lit(False)) | F.coalesce(F.col("q.is_deleted"), F.lit(False))
-
     final_df = joined_df.select(
         F.col("j.quotation_item_id"),
         F.col("j.quotation_id"),
@@ -129,18 +126,18 @@ try:
         F.coalesce(F.col("dqs.quotation_status_key"), F.lit(-1)).alias("quotation_status_key"),
         F.coalesce(F.col("dcov.coverage_key"), F.lit(-1)).alias("coverage_key"),
         F.coalesce(F.col("dv.vehicle_key"), F.lit(-1)).alias("vehicle_key"),
-        # Soft delete: zero metrics if deleted
-        F.when(is_deleted_combined == True, F.lit(0.00)).otherwise(F.coalesce(F.col("j.coverage_amount"), F.lit(0.00))).alias("coverage_amount"),
-        F.when(is_deleted_combined == True, F.lit(0.00)).otherwise(F.coalesce(F.col("j.deductible_amount"), F.lit(0.00))).alias("deductible_amount"),
+        # Soft delete: zero metrics if deleted (defaults to False for quotation items)
+        F.coalesce(F.col("j.coverage_amount"), F.lit(0.00)).alias("coverage_amount"),
+        F.coalesce(F.col("j.deductible_amount"), F.lit(0.00)).alias("deductible_amount"),
         # Metadata / Lineage columns
         F.current_timestamp().alias("created_at"),
         F.current_timestamp().alias("updated_at"),
         F.col("j._batch_id").alias("_batch_id"),
         F.col("j._source_system").alias("_source_system"),
         F.lit(session_id).alias("pipeline_run_id"),
-        is_deleted_combined.alias("is_deleted"),
-        F.when(is_deleted_combined == True, F.current_timestamp()).alias("deleted_at"),
-        F.when(is_deleted_combined == True, F.lit(str(batch_id))).alias("delete_batch_id")
+        F.lit(False).alias("is_deleted"),
+        F.lit(None).cast("timestamp").alias("deleted_at"),
+        F.lit(None).cast("string").alias("delete_batch_id")
     )
 
     # 7. Merge into Target Delta Table on (quotation_id, coverage_key)

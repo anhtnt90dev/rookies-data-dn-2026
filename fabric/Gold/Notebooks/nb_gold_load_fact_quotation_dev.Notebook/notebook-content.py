@@ -22,7 +22,7 @@
 
 # CELL ********************
 
-# MAGIC %run nb_audit_logging_helper_dev
+%run nb_audit_logging_helper_dev
 
 # METADATA ********************
 
@@ -122,8 +122,8 @@ try:
         F.coalesce(F.date_format(F.col("q.quotation_at"), "yyyyMMdd").cast(IntegerType()), F.lit(-1)).alias("quotation_date_key"),
         F.coalesce(F.date_format(F.col("q.quotation_expiry_at"), "yyyyMMdd").cast(IntegerType()), F.lit(-1)).alias("quotation_expiry_date_key"),
         F.coalesce(F.col("dv.vehicle_key"), F.lit(-1)).alias("vehicle_key"),
-        # Soft delete: zero premium if deleted
-        F.when(F.col("q.is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col("q.premium_amount"), F.lit(0.00))).alias("premium_amount"),
+        # Soft delete: zero premium if deleted (defaults to False for quotation)
+        F.coalesce(F.col("q.premium_amount"), F.lit(0.00)).alias("premium_amount"),
         F.coalesce(F.col("q.has_policy"), F.lit(False)).alias("converted_flag"),
         # Metadata / Lineage columns
         F.current_timestamp().alias("created_at"),
@@ -131,9 +131,9 @@ try:
         F.col("q._batch_id").alias("_batch_id"),
         F.col("q._source_system").alias("_source_system"),
         F.lit(session_id).alias("pipeline_run_id"),
-        F.coalesce(F.col("q.is_deleted"), F.lit(False)).alias("is_deleted"),
-        F.when(F.col("q.is_deleted") == True, F.current_timestamp()).alias("deleted_at"),
-        F.when(F.col("q.is_deleted") == True, F.lit(str(batch_id))).alias("delete_batch_id")
+        F.lit(False).alias("is_deleted"),
+        F.lit(None).cast("timestamp").alias("deleted_at"),
+        F.lit(None).cast("string").alias("delete_batch_id")
     )
 
     # 7. Merge into Target Delta Table

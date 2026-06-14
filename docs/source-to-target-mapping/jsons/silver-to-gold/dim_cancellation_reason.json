@@ -16,7 +16,7 @@
     },
     {
       "target": "updated_at",
-      "expression": "updated_at"
+      "expression": "current_timestamp()"
     }
   ]
 }

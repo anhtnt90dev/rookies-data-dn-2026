@@ -30,7 +30,7 @@ flowchart TD
     DROP_HASH --> DQ
 
     subgraph DQ["Step 5 · Data quality validation"]
-        DEFINE_RULES["Define Data Quality rules"]
+        DEFINE_RULES["Get define validate Data rules from JSON config"]
         DEFINE_RULES --> RUN_DQ["Run Data Validation engine"]
         RUN_DQ --> SPLIT{Any rows<br/>rejected?}
         SPLIT -->|Yes| QUARANTINE["Write rejected rows<br/>to quarantine table"]

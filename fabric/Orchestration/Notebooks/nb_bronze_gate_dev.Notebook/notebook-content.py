@@ -22,9 +22,7 @@
 
 # PARAMETERS CELL ********************
 
-session_id = ""
-batch_id = ""
-layer = ""
+result = ""
 
 # METADATA ********************
 
@@ -35,78 +33,11 @@ layer = ""
 
 # CELL ********************
 
-batch_id = int(batch_id)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-from pyspark.sql import functions as F
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-def update_next_run_mode_recovery(batch_id: int, session_id: str):
-    spark.sql(f"""
-        UPDATE cfg.next_run_mode
-        SET next_run_mode = 'RECOVERY',
-            batch_id = {batch_id},
-            session_id = '{session_id}',
-            updated_at = current_timestamp()
-    """)
-
-
-def update_audit_session_failed(session_id: str, error_message: str):
-    safe_error = str(error_message).replace("'", "''")
-
-    spark.sql(f"""
-        UPDATE log.audit_session
-        SET session_status = 'FAILED',
-            error_code = 'BRONZE_GATE_FAILED',
-            error_message = '{safe_error}',
-            session_finished = current_timestamp(),
-            updated_at = current_timestamp()
-        WHERE id = '{session_id}'
-    """)
-
-
-audit_df = (
-    spark.table("log.audit_table_session")
-    .where(
-        (F.col("session_id") == F.lit(session_id))
-        & (F.col("batch_id") == F.lit(batch_id))
+if result == "NO_DATA":
+    raise Exception(
+        "No data was loaded into Bronze tables. "
+        "All source entities have inserted_row = 0."
     )
-)
-
-invalid_df = audit_df.where(
-    ~F.col("bronze_status").isin("SUCCESS", "SKIPPED")
-)
-
-invalid_count = invalid_df.count()
-
-if invalid_count > 0:
-    error_message = (
-        f"{layer} gate failed. "
-        f"{invalid_count} table(s) are not SUCCESS/SKIPPED."
-    )
-
-    update_next_run_mode_recovery(batch_id, session_id)
-    update_audit_session_failed(session_id, error_message)
-
-    raise Exception(error_message)
-
-print(f"{layer} gate passed. All tables are SUCCESS or SKIPPED.")
 
 # METADATA ********************
 

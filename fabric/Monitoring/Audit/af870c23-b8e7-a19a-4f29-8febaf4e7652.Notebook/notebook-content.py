@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "44c157dd-49ca-46c5-896a-9cb48544300e",
-# META       "default_lakehouse_name": "audit_lakehouse_test",
-# META       "default_lakehouse_workspace_id": "e1832509-bd92-47cc-be34-c5e939a6456a",
+# META       "default_lakehouse": "a667e77c-0848-4e2e-90dc-502057b719c0",
+# META       "default_lakehouse_name": "lh_insurance_dev",
+# META       "default_lakehouse_workspace_id": "fe74f781-d77f-46e7-accd-2e57689ef181",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "44c157dd-49ca-46c5-896a-9cb48544300e"
+# META           "id": "a667e77c-0848-4e2e-90dc-502057b719c0"
 # META         }
 # META       ]
 # META     }
@@ -252,6 +252,24 @@ except Exception as error:
 # MAGIC     updated_at TIMESTAMP
 # MAGIC )
 # MAGIC USING DELTA;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC 
+# MAGIC TRUNCATE TABLE log.audit_session;
+# MAGIC TRUNCATE TABLE log.audit_table_session;
+# MAGIC TRUNCATE TABLE log.audit_detail;
+# MAGIC TRUNCATE TABLE log.audit_file_session;
+# MAGIC TRUNCATE TABLE log.retry_log;
+# MAGIC TRUNCATE TABLE log.invalid_record;
 
 # METADATA ********************
 

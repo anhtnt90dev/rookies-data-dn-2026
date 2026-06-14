@@ -6,7 +6,7 @@
         "typeProperties": {
           "source": {
             "type": "AzureSqlSource",
-            "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
+            "sqlReaderQuery": "select next_run_mode,\r\n       batch_id,\r\n       session_id\r\nfrom cfg.next_run_mode",
             "partitionOption": "None",
             "queryTimeout": "02:00:00"
           },
@@ -17,7 +17,7 @@
             },
             "schema": [],
             "externalReferences": {
-              "connection": "f50845e3-5c9b-4a6b-8048-5c211eaf57e8"
+              "connection": "5678de8a-9eff-4b08-8f3b-69716d8ae321"
             },
             "annotations": []
           }
@@ -31,52 +31,6 @@
         },
         "name": "lkp_next_run_mode",
         "dependsOn": []
-      },
-      {
-        "type": "TridentNotebook",
-        "typeProperties": {
-          "notebookId": "07b7bd02-65bc-a927-43c1-4d79b6726c4e",
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "parameters": {
-            "next_run_mode": {
-              "value": {
-                "value": "@activity('lkp_next_run_mode').output.firstRow.next_run_mode",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "batch_id": {
-              "value": {
-                "value": "@activity('lkp_next_run_mode').output.firstRow.batch_id",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "session_id": {
-              "value": {
-                "value": "@activity('lkp_next_run_mode').output.firstRow.session_id",
-                "type": "Expression"
-              },
-              "type": "string"
-            }
-          }
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "handle_mode",
-        "dependsOn": [
-          {
-            "activity": "lkp_next_run_mode",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
       },
       {
         "type": "TridentNotebook",
@@ -149,22 +103,11 @@
           "notebookId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b",
           "workspaceId": "00000000-0000-0000-0000-000000000000",
           "parameters": {
-            "session_id": {
+            "result": {
               "value": {
-                "value": "@variables('session_id')",
+                "value": "@activity('ingestion').output.result.exitValue",
                 "type": "Expression"
               },
-              "type": "string"
-            },
-            "batch_id": {
-              "value": {
-                "value": "@variables('batch_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "layer": {
-              "value": "BRONZE",
               "type": "string"
             }
           }
@@ -253,7 +196,7 @@
         "typeProperties": {
           "variableName": "batch_id",
           "value": {
-            "value": "@string(json(activity('handle_mode').output.result.exitValue).batch_id)",
+            "value": "@if(\n  equals(activity('lkp_next_run_mode').output.firstRow.next_run_mode, 'NEW'),\n  formatDateTime(utcNow(), 'yyyyMMddHHmmss'),\n  string(activity('lkp_next_run_mode').output.firstRow.batch_id)\n)",
             "type": "Expression"
           }
         },
@@ -264,7 +207,7 @@
         "name": "set_batch_id_variable",
         "dependsOn": [
           {
-            "activity": "handle_mode",
+            "activity": "lkp_next_run_mode",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -276,7 +219,7 @@
         "typeProperties": {
           "variableName": "run_mode",
           "value": {
-            "value": "@json(activity('handle_mode').output.result.exitValue).run_mode",
+            "value": "@activity('lkp_next_run_mode').output.firstRow.next_run_mode",
             "type": "Expression"
           }
         },
@@ -287,7 +230,7 @@
         "name": "set_run_mode_variable",
         "dependsOn": [
           {
-            "activity": "handle_mode",
+            "activity": "lkp_next_run_mode",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -299,7 +242,7 @@
         "typeProperties": {
           "variableName": "previous_session_id",
           "value": {
-            "value": "@json(activity('handle_mode').output.result.exitValue).previous_session_id",
+            "value": "@activity('lkp_next_run_mode').output.firstRow.session_id",
             "type": "Expression"
           }
         },
@@ -310,53 +253,7 @@
         "name": "set_previous_session_id_variable",
         "dependsOn": [
           {
-            "activity": "handle_mode",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "InvokePipeline",
-        "typeProperties": {
-          "parameters": {
-            "session_id": {
-              "value": "@variables('session_id')",
-              "type": "Expression"
-            },
-            "batch_id": {
-              "value": "@variables('batch_id')",
-              "type": "Expression"
-            },
-            "run_mode": {
-              "value": "@variables('run_mode')",
-              "type": "Expression"
-            },
-            "previous_session_id": {
-              "value": "@variables('previous_session_id')",
-              "type": "Expression"
-            }
-          },
-          "waitOnCompletion": true,
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "pipelineId": "b49aebbe-8b4b-84b6-4e21-b307e870c28d",
-          "operationType": "InvokeFabricPipeline"
-        },
-        "externalReferences": {
-          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "ingestion",
-        "dependsOn": [
-          {
-            "activity": "set_session_id_variable",
+            "activity": "lkp_next_run_mode",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -437,6 +334,59 @@
             "activity": "ingestion_silver_layer",
             "dependencyConditions": [
               "Failed"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "9a22ff8c-eba2-b6c0-41cb-396818327c4c",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "run_mode": {
+              "value": {
+                "value": "@variables('run_mode')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "previous_session_id": {
+              "value": {
+                "value": "@variables('previous_session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "ingestion",
+        "dependsOn": [
+          {
+            "activity": "set_session_id_variable",
+            "dependencyConditions": [
+              "Succeeded"
             ]
           }
         ]

@@ -135,10 +135,18 @@ def get_new_run_mode():
     return dataframe_to_records(df)
 
 
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
 
 def load_recovery_tables(previous_session_id):
     """
-    Load failed Silver tables from previous failed session.
+    Load failed or not-run Silver tables from previous session.
     """
 
     audit_df = (
@@ -146,19 +154,20 @@ def load_recovery_tables(previous_session_id):
         .alias("l")
         .filter(
             (F.col("l.session_id") == previous_session_id) &
-            (F.col("l.silver_status") == "FAILED")
+            (
+                (F.col("l.silver_status") == "FAILED") |
+                (F.col("l.silver_status") == "NOT_RUN")
+            )
         )
         .select(
             F.col("l.source_table_id")
         )
     )
 
-
     source_df = (
         spark.table("cfg.source_table")
         .alias("s")
     )
-
 
     result_df = (
         source_df
@@ -170,7 +179,6 @@ def load_recovery_tables(previous_session_id):
         .select(*get_source_columns("s"))
         .orderBy("load_sequence")
     )
-
 
     return dataframe_to_records(result_df)
 

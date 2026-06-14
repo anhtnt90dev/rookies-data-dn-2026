@@ -344,18 +344,14 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 2,
-          "retryIntervalInSeconds": 60,
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
           "secureInput": false,
-          "secureOutput": false,
-          "retryConditions": {
-            "type": "Expression",
-            "value": "@contains(activity('ingestion').Error.FailureType, 'SystemError')"
-          }
+          "secureOutput": false
         },
         "name": "ingestion",
         "dependsOn": [
@@ -386,12 +382,12 @@
           "operationType": "InvokeFabricPipeline"
         },
         "externalReferences": {
-          "connection": "61550c45-e90b-4968-b5d0-445b8b6a6fef"
+          "connection": "f7e11569-3a6a-43e8-879f-e994ce1faaf9"
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 1,
-          "retryIntervalInSeconds": 60,
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false
         },
@@ -441,49 +437,6 @@
             "activity": "ingestion_silver_layer",
             "dependencyConditions": [
               "Failed"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "TridentNotebook",
-        "typeProperties": {
-          "notebookId": "df0e3216-cb34-78ab-4c11-12501aae3c02",
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "parameters": {
-            "p_session_id": {
-              "value": {
-                "value": "@variables('session_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "p_batch_id": {
-              "value": {
-                "value": "@variables('batch_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "run_mode": {
-              "value": "@variables('run_mode')",
-              "type": "string"
-            }
-          }
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "gold_ingestion",
-        "dependsOn": [
-          {
-            "activity": "ingestion_silver_layer",
-            "dependencyConditions": [
-              "Succeeded"
             ]
           }
         ]

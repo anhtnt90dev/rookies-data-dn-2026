@@ -79,8 +79,16 @@ try:
     # 1. Read silver.quotation_item filtered by batch_id
     qi_df = spark.table("silver.quotation_item").where(F.col("_batch_id") == F.lit(str(batch_id)))
 
-    # 2. Join with silver.quotation for parent context
-    q_df = spark.table("silver.quotation")
+    # 2. Join with silver.quotation for parent context (selecting specific columns to avoid ambiguous references)
+    q_df = spark.table("silver.quotation").select(
+        "quotation_id",
+        "customer_id",
+        "agent_id",
+        "provider_code",
+        "quotation_at",
+        "quotation_status",
+        "package_code"
+    )
     qi_with_parent = qi_df.alias("qi").join(
         q_df.alias("q"),
         on="quotation_id",

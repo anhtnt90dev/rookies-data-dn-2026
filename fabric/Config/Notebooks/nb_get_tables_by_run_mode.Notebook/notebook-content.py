@@ -23,7 +23,7 @@
 # PARAMETERS CELL ********************
 
 p_run_mode="NEW"
-previous_session_id="739737c8-0c0d-4123-86e0-9ef86c77f3cc"
+p_previous_session_id=""
 
 # METADATA ********************
 
@@ -190,7 +190,9 @@ def load_recovery_tables(previous_session_id):
 
 
 if run_mode == RECOVERY_MODE:
-    output = load_recovery_tables(previous_session_id)
+    if not p_previous_session_id:
+        raise ValueError("p_previous_session_id is required when run_mode is RECOVERY")
+    output = load_recovery_tables(p_previous_session_id)
 else:
     output = get_new_run_mode()
 

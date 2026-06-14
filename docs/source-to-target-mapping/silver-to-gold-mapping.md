@@ -1,4 +1,4 @@
-﻿# Silver to Gold Layer Column Mapping
+# Silver to Gold Layer Column Mapping
 
 **Insurance Analytics - Dimensional Model (Star Schema)**
 
@@ -32,7 +32,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | Unknown member default    | If a lookup fails, the FK defaults to `-1` (Unknown).                                                                         |
 | Date key format            | Date columns convert to integer `YYYYMMDD` for `dim_date` FK resolution.                                                      |
 | Null handling on measures | `COALESCE(value, 0)` for all numeric measures.                                                                                |
-| Audit and Metadata columns | `created_at` and `updated_at` are mapped directly from Silver. Metadata columns are retained across all tables.               |
+| Audit and Metadata columns | `created_at` and `updated_at` are generated as current timestamp at Gold load time. Metadata columns are retained across all tables. |
 
 ---
 
@@ -77,8 +77,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(SCD logic)_          | -           | `effective_from`         | TIMESTAMP | `COALESCE(updated_at, created_at)` from Silver row.            |
 | _(SCD logic)_          | -           | `effective_to`           | TIMESTAMP | `9999-12-31 23:59:59` for current row; updated on new version. |
 | _(SCD logic)_          | -           | `is_current`             | BOOLEAN   | `true` for latest version.                                     |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                    |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                    |
 
 ---
 
@@ -98,8 +98,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(SCD logic)_          | -           | `effective_from`         | TIMESTAMP | `COALESCE(updated_at, created_at)` from Silver row.            |
 | _(SCD logic)_          | -           | `effective_to`           | TIMESTAMP | `9999-12-31 23:59:59` for current row; updated on new version. |
 | _(SCD logic)_          | -           | `is_current`             | BOOLEAN   | `true` for latest version.                                     |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                    |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                    |
 
 ---
 
@@ -118,8 +118,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(SCD logic)_          | -           | `effective_from`         | TIMESTAMP | `COALESCE(updated_at, created_at)` from Silver row.            |
 | _(SCD logic)_          | -           | `effective_to`           | TIMESTAMP | `9999-12-31 23:59:59` for current row; updated on new version. |
 | _(SCD logic)_          | -           | `is_current`             | BOOLEAN   | `true` for latest version.                                     |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                              |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                    |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                    |
 
 ---
 
@@ -132,8 +132,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | ---------------------- | ----------- | ------------------------ | --------- | ------------------------------------------------ |
 | _(pipeline generated)_ | -           | `package_key`            | BIGINT    | System-generated surrogate key.                  |
 | `package_code`         | STRING      | `package_code`           | STRING    | `DISTINCT package_code` from `silver.quotation`. |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                      |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                      |
 
 ---
 
@@ -146,8 +146,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | ---------------------- | ----------- | ------------------------ | --------- | ------------------------------------------------------ |
 | _(pipeline generated)_ | -           | `coverage_key`           | BIGINT    | System-generated surrogate key.                        |
 | `coverage_type`        | STRING      | `coverage_type`          | STRING    | `DISTINCT coverage_type` from `silver.quotation_item`. |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                      |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                    |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                    |
 
 ---
 
@@ -161,8 +161,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -           | `quotation_key`          | BIGINT    | System-generated surrogate key.                                    |
 | `quotation_id`         | STRING      | `quotation_id`           | STRING    | Direct mapping. Business key.                                      |
 | `quotation_expiry_at`  | TIMESTAMP   | `quotation_expiry_date`  | DATE      | Cast `TIMESTAMP` to `DATE`.                                        |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                                  |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                  |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                        |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                        |
 
 ---
 
@@ -176,7 +176,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -             | `policy_key`             | BIGINT        | System-generated surrogate key.   |
 | `policy_id`            | STRING        | `policy_id`              | STRING        | Direct mapping. Business key.     |
 | -                      | -             | `created_at`             | TIMESTAMP     | Generate at Gold load time.        |
-| `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer. |
+| -                      | -             | `updated_at`             | TIMESTAMP     | Generate at Gold load time.        |
 
 ---
 
@@ -189,8 +189,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | ---------------------- | ----------- | ------------------------ | --------- | --------------------------------------------------- |
 | _(pipeline generated)_ | -           | `quotation_status_key`   | BIGINT    | System-generated surrogate key.                     |
 | `quotation_status`     | STRING      | `quotation_status_code`  | STRING    | Direct mapping.                                     |
-| `created_at`           | TIMESTAMP   | `created_at`             | TIMESTAMP | Direct mapping from Silver layer.                   |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                   |
+| -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                         |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                         |
 
 ---
 
@@ -204,7 +204,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -           | `policy_status_key`      | BIGINT    | System-generated surrogate key.                                                                                                        |
 | `policy_status`        | STRING      | `policy_status_code`     | STRING    | Direct mapping.                                                                                                                        |
 | -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                            |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                      |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                            |
 
 ---
 
@@ -218,7 +218,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -           | `payment_status_key`     | BIGINT    | System-generated surrogate key.                                                                                                                                |
 | `payment_status`       | STRING      | `payment_status_code`    | STRING    | Direct mapping.                                                                                                                                                |
 | -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                                                    |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                                                    |
 
 ---
 
@@ -232,7 +232,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -           | `payment_method_key`     | BIGINT    | System-generated surrogate key.                                                                                                                                |
 | `payment_method`       | STRING      | `payment_method_code`    | STRING    | Standardize raw values: `Bank Transfer -> BANK_TRANSFER`, `Credit Card -> CREDIT_CARD`, `E-wallet -> E_WALLET`.                                                 |
 | -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                                                    |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer.                                                                                                                              |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.                                                                                                                                    |
 
 ---
 
@@ -246,7 +246,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(pipeline generated)_ | -           | `cancellation_reason_key`| BIGINT    | System-generated surrogate key.   |
 | `cancellation_reason`  | STRING      | `cancellation_reason`    | STRING    | Direct mapping.                   |
 | -                      | -           | `created_at`             | TIMESTAMP | Generate at Gold load time.       |
-| `updated_at`           | TIMESTAMP   | `updated_at`             | TIMESTAMP | Direct mapping from Silver layer. |
+| -                      | -           | `updated_at`             | TIMESTAMP | Generate at Gold load time.       |
 
 ---
 
@@ -268,8 +268,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | _(SCD logic)_          | -             | `effective_from`         | TIMESTAMP     | `COALESCE(updated_at, created_at)` from Silver row.            |
 | _(SCD logic)_          | -             | `effective_to`           | TIMESTAMP     | `9999-12-31 23:59:59` for current row; updated on new version. |
 | _(SCD logic)_          | -             | `is_current`             | BOOLEAN       | `true` for latest version.                                     |
-| `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                              |
-| `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                              |
+| -                      | -             | `created_at`             | TIMESTAMP     | Generate at Gold load time.                                    |
+| -                      | -             | `updated_at`             | TIMESTAMP     | Generate at Gold load time.                                    |
 
 ---
 
@@ -297,8 +297,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `agent_id`             | STRING        | `agent_id`               | STRING        | Direct mapping. Degenerate dimension.                                                                      |
 | `provider_code`        | STRING        | `provider_code`          | STRING        | Direct mapping. Degenerate dimension.                                                                      |
 | `_source_system`       | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                          |
-| `created_at`           | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
-| `updated_at`           | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
+| -                      | -             | `created_at`             | TIMESTAMP     | Generate at Gold load time.                                                                                |
+| -                      | -             | `updated_at`             | TIMESTAMP     | Generate at Gold load time.                                                                                |
 | `_batch_id`            | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                          |
 | -                      | -             | `pipeline_run_id`        | STRING        | Pipeline-derived lineage field. Maps to `log.audit_session.pipeline_run_id`.                               |
 | -                      | -             | `is_deleted`             | BOOLEAN       | Pipeline-derived field. Defaults to `false` on load; `deleted_at` and `delete_batch_id` remain `null` until a delete event is detected. |
@@ -328,8 +328,8 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `deductible_amount`       | DECIMAL(18,2) | `deductible_amount`       | DECIMAL(18,2) | `COALESCE(deductible_amount, 0)`.                                                                           |
 | `quotation_item_id`       | STRING        | `quotation_item_id`      | STRING        | Direct mapping. Degenerate dimension.                                                                      |
 | `quotation_id`            | STRING        | `quotation_id`           | STRING        | Direct mapping. Degenerate dimension.                                                                      |
-| `created_at`              | TIMESTAMP     | `created_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
-| `updated_at`              | TIMESTAMP     | `updated_at`             | TIMESTAMP     | Direct mapping from Silver layer.                                                                          |
+| -                         | -             | `created_at`             | TIMESTAMP     | Generate at Gold load time.                                                                                |
+| -                         | -             | `updated_at`             | TIMESTAMP     | Generate at Gold load time.                                                                                |
 | `_batch_id`               | STRING        | `_batch_id`              | STRING        | Direct mapping from Silver layer.                                                                          |
 | `_source_system`          | STRING        | `_source_system`         | STRING        | Direct mapping from Silver layer.                                                                          |
 | -                         | -             | `pipeline_run_id`        | STRING        | Pipeline-derived lineage field. Maps to `log.audit_session.pipeline_run_id`.                               |
@@ -365,7 +365,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `provider_code` | STRING | `provider_code` | STRING | Direct mapping. Degenerate dimension. |
 | `_source_system` | STRING | `_source_system` | STRING | Direct mapping from Silver layer. |
 | - | - | `created_at` | TIMESTAMP | Generate at Gold load time. |
-| `updated_at` | TIMESTAMP | `updated_at` | TIMESTAMP | Direct mapping from Silver layer. |
+| - | - | `updated_at` | TIMESTAMP | Generate at Gold load time. |
 | `_batch_id` | STRING | `_batch_id` | STRING | Direct mapping from Silver layer. |
 | - | - | `pipeline_run_id` | STRING | Pipeline-derived lineage field. Maps to `log.audit_session.pipeline_run_id`. |
 | - | - | `is_deleted` | BOOLEAN | Pipeline-derived field. Defaults to `false` on load; `deleted_at` and `delete_batch_id` remain `null` until a delete event is detected. |
@@ -395,7 +395,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `transaction_reference` | STRING | `transaction_reference` | STRING | Direct mapping. Degenerate dimension. |
 | `_source_system` | STRING | `_source_system` | STRING | Direct mapping from Silver layer. |
 | - | - | `created_at` | TIMESTAMP | Generate at Gold load time. |
-| `updated_at` | TIMESTAMP | `updated_at` | TIMESTAMP | Direct mapping from Silver layer. |
+| - | - | `updated_at` | TIMESTAMP | Generate at Gold load time. |
 | `_batch_id` | STRING | `_batch_id` | STRING | Direct mapping from Silver layer. |
 | - | - | `pipeline_run_id` | STRING | Pipeline-derived lineage field. Maps to `log.audit_session.pipeline_run_id`. |
 | - | - | `is_deleted` | BOOLEAN | Pipeline-derived field. Defaults to `false` on load; `deleted_at` and `delete_batch_id` remain `null` until a delete event is detected. |
@@ -422,7 +422,7 @@ This document defines the column-level mapping between the Silver layer (cleanse
 | `policy_id` | STRING | `policy_id` | STRING | Direct mapping. Degenerate dimension. |
 | `_source_system` | STRING | `_source_system` | STRING | Direct mapping from Silver layer. |
 | - | - | `created_at` | TIMESTAMP | Generate at Gold load time. |
-| `updated_at` | TIMESTAMP | `updated_at` | TIMESTAMP | Direct mapping from Silver layer. |
+| - | - | `updated_at` | TIMESTAMP | Generate at Gold load time. |
 | `_batch_id` | STRING | `_batch_id` | STRING | Direct mapping from Silver layer. |
 | - | - | `pipeline_run_id` | STRING | Pipeline-derived lineage field. Maps to `log.audit_session.pipeline_run_id`. |
 | - | - | `is_deleted` | BOOLEAN | Pipeline-derived field. Defaults to `false` on load; `deleted_at` and `delete_batch_id` remain `null` until a delete event is detected. |

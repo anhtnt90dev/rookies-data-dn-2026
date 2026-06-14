@@ -444,6 +444,49 @@
             ]
           }
         ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "df0e3216-cb34-78ab-4c11-12501aae3c02",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "p_session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "run_mode": {
+              "value": "@variables('run_mode')",
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "gold_ingestion",
+        "dependsOn": [
+          {
+            "activity": "ingestion_silver_layer",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
       }
     ],
     "variables": {

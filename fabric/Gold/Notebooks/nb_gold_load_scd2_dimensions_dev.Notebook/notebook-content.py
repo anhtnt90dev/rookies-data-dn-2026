@@ -34,21 +34,8 @@
 # PARAMETERS CELL ********************
 
 session_id = ""
-batch_id = 0
+batch_id = ""
 run_mode = "NEW"
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-p_session_id = "9693abc1-154f-4a40-a9a6-4f73860c656a"
-p_batch_id = "20260613113233"
-p_run_mode = "NEW"
 
 # METADATA ********************
 

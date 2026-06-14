@@ -34,7 +34,7 @@
 # PARAMETERS CELL ********************
 
 session_id = ""
-batch_id = 0
+batch_id = ""
 run_mode = "NEW"
 
 # METADATA ********************

@@ -36,7 +36,10 @@ run_mode = ""
 
 # CELL ********************
 
-batch_id = int(batch_id)
+if batch_id is None or str(batch_id).strip() == "":
+    raise ValueError("The 'batch_id' parameter must be provided as a non-empty integer.")
+else:
+    batch_id = int(batch_id)
 
 # METADATA ********************
 
@@ -669,13 +672,17 @@ def get_max_watermark(df):
             f"watermark_column '{watermark_column}' not found in source columns: {df.columns}"
         )
 
-    watermark_after = (
+    result = (
         df
-        .agg(F.max(F.to_timestamp(F.col(watermark_column))).alias("watermark_after"))
-        .collect()[0]["watermark_after"]
+        .agg(
+            F.count("*").alias("row_count"),
+            F.max(F.to_timestamp(F.col(watermark_column))).alias("watermark_after")
+        )
+        .collect()[0]
     )
 
-    row_count = df.count()
+    row_count = result["row_count"]
+    watermark_after = result["watermark_after"]
 
     if row_count > 0 and watermark_after is None:
         raise ValueError(
@@ -803,26 +810,25 @@ def register_file_sessions(table_session_id: str, files: list) -> list:
         ]
     )
 
-    df = (
-        df
-        .withColumn("id", F.col("id").cast("string"))
-        .withColumn("session_id", F.col("session_id").cast("string"))
-        .withColumn("table_session_id", F.col("table_session_id").cast("string"))
-        .withColumn("source_table_id", F.col("source_table_id").cast("bigint"))
-        .withColumn("batch_id", F.col("batch_id").cast("bigint"))
-        .withColumn("source_file", F.col("source_file").cast("string"))
-        .withColumn("file_status", F.col("file_status").cast("string"))
-        .withColumn("file_row_count", F.lit(None).cast("int"))
-        .withColumn("processed_row_count", F.lit(None).cast("int"))
-        .withColumn("rejected_row_count", F.lit(0).cast("int"))
-        .withColumn("error_code", F.lit(None).cast("string"))
-        .withColumn("error_message", F.lit(None).cast("string"))
-        .withColumn("retry_count", F.lit(0).cast("int"))
-        .withColumn("last_retry_at", F.lit(None).cast("timestamp"))
-        .withColumn("started_at", F.lit(None).cast("timestamp"))
-        .withColumn("completed_at", F.lit(None).cast("timestamp"))
-        .withColumn("created_at", F.current_timestamp())
-        .withColumn("updated_at", F.current_timestamp())
+    df = df.select(
+        F.col("id").cast("string").alias("id"),
+        F.col("session_id").cast("string").alias("session_id"),
+        F.col("table_session_id").cast("string").alias("table_session_id"),
+        F.col("source_table_id").cast("bigint").alias("source_table_id"),
+        F.col("batch_id").cast("bigint").alias("batch_id"),
+        F.col("source_file").cast("string").alias("source_file"),
+        F.col("file_status").cast("string").alias("file_status"),
+        F.lit(None).cast("int").alias("file_row_count"),
+        F.lit(None).cast("int").alias("processed_row_count"),
+        F.lit(0).cast("int").alias("rejected_row_count"),
+        F.lit(None).cast("string").alias("error_code"),
+        F.lit(None).cast("string").alias("error_message"),
+        F.lit(0).cast("int").alias("retry_count"),
+        F.lit(None).cast("timestamp").alias("last_retry_at"),
+        F.lit(None).cast("timestamp").alias("started_at"),
+        F.lit(None).cast("timestamp").alias("completed_at"),
+        F.current_timestamp().alias("created_at"),
+        F.current_timestamp().alias("updated_at")
     )
 
     df.write.format("delta").mode("append").saveAsTable("log.audit_file_session")
@@ -939,25 +945,30 @@ def process_database_source(mapping: dict, watermark_before):
     validate_source_schema(source_df, mapping)
 
     source_df = apply_load_type_filter(source_df, watermark_before)
+    source_df.cache()
 
-    source_row_count = source_df.count()
-    watermark_after = get_max_watermark(source_df)
+    try:
+        source_row_count = source_df.count()
+        watermark_after = get_max_watermark(source_df)
 
-    bronze_df = apply_source_to_bronze_mapping(
-        df=source_df,
-        mapping=mapping,
-        batch_id=batch_id,
-        source_system=source_system,
-        source_name=source_name
-    )
+        bronze_df = apply_source_to_bronze_mapping(
+            df=source_df,
+            mapping=mapping,
+            batch_id=batch_id,
+            source_system=source_system,
+            source_name=source_name
+        )
 
-    bronze_df = align_to_target_schema(bronze_df, bronze_table_name)
+        bronze_df = align_to_target_schema(bronze_df, bronze_table_name)
 
-    write_mode = "overwrite" if load_type == "FULL" else "append"
+        write_mode = "overwrite" if load_type == "FULL" else "append"
 
-    bronze_df.write.format("delta").mode(write_mode).saveAsTable(bronze_table_name)
+        bronze_df.write.format("delta").mode(write_mode).saveAsTable(bronze_table_name)
 
-    target_row_count = bronze_df.count()
+        target_row_count = source_row_count
+
+    finally:
+        source_df.unpersist()
 
     return {
         "watermark_after": watermark_after,
@@ -1027,33 +1038,38 @@ def process_file_source(mapping: dict, table_session_id: str, watermark_before):
             validate_source_schema(source_df, mapping)
 
             source_df = apply_load_type_filter(source_df, watermark_before)
+            source_df.cache()
 
-            row_count = source_df.count()
-            file_watermark_after = get_max_watermark(source_df)
+            try:
+                row_count = source_df.count()
+                file_watermark_after = get_max_watermark(source_df)
 
-            if file_watermark_after is not None:
-                if total_watermark_max is None or file_watermark_after > total_watermark_max:
-                    total_watermark_max = file_watermark_after
+                if file_watermark_after is not None:
+                    if total_watermark_max is None or file_watermark_after > total_watermark_max:
+                        total_watermark_max = file_watermark_after
 
-            relative_source_file = get_relative_source_file(source_file)
+                relative_source_file = get_relative_source_file(source_file)
 
-            bronze_df = apply_source_to_bronze_mapping(
-                df=source_df,
-                mapping=mapping,
-                batch_id=batch_id,
-                source_system=source_system,
-                source_name=source_name,
-                source_file=relative_source_file
-            )
+                bronze_df = apply_source_to_bronze_mapping(
+                    df=source_df,
+                    mapping=mapping,
+                    batch_id=batch_id,
+                    source_system=source_system,
+                    source_name=source_name,
+                    source_file=relative_source_file
+                )
 
-            bronze_df = align_to_target_schema(bronze_df, bronze_table_name)
+                bronze_df = align_to_target_schema(bronze_df, bronze_table_name)
 
-            write_mode = "overwrite" if load_type == "FULL" else "append"
+                write_mode = "overwrite" if load_type == "FULL" else "append"
 
-            bronze_df.write.format("delta").mode(write_mode).saveAsTable(bronze_table_name)
+                bronze_df.write.format("delta").mode(write_mode).saveAsTable(bronze_table_name)
 
-            current_file_log["status"] = "SUCCESS"
-            current_file_log["row_count"] = row_count
+                current_file_log["status"] = "SUCCESS"
+                current_file_log["row_count"] = row_count
+
+            finally:
+                source_df.unpersist()
 
         except Exception as e:
             current_file_log["status"] = "FAILED"
@@ -1154,7 +1170,7 @@ def run_source_to_bronze(source):
             table_session_id=table_session_id,
             detail_status="SUCCESS",
             source_row_count=execution_result["source_row_count"],
-            target_row_count=execution_result["inserted_row"],
+            target_row_count=execution_result["target_row_count"],
             inserted_row=execution_result["inserted_row"],
             updated_row=0,
             deleted_row=0,
@@ -1240,7 +1256,10 @@ def run_layer_gate(layer: str, session_id: str, batch_id: int):
 
     invalid_count = (
         audit_df
-        .where(~F.col(status_col).isin("SUCCESS", "SKIPPED"))
+        .where(
+            F.col(status_col).isNull() | 
+            ~F.col(status_col).isin("SUCCESS", "SKIPPED")
+        )
         .count()
     )
 
@@ -1258,7 +1277,7 @@ def run_layer_gate(layer: str, session_id: str, batch_id: int):
     total_target_rows = (
         spark.table("log.audit_detail").alias("d")
         .join(
-            audit_df.select("id").alias("t"),
+            F.broadcast(audit_df.select("id").alias("t")),
             F.col("d.table_session_id") == F.col("t.id"),
             "inner"
         )

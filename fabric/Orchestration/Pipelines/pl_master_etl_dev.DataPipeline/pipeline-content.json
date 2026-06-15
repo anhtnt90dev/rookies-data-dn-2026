@@ -109,6 +109,13 @@
                 "type": "Expression"
               },
               "type": "string"
+            },
+            "run_mode": {
+              "value": {
+                "value": "@variables('run_mode')",
+                "type": "Expression"
+              },
+              "type": "string"
             }
           }
         },

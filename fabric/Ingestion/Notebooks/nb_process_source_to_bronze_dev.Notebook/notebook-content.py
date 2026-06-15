@@ -682,12 +682,7 @@ def bulk_finish_file_sessions(table_session_id: str, file_results_list: list):
 
 def process_database_source(mapping: dict, watermark_before):
 
-    if source_format.lower() == "table":
-        source_df = spark.read.table(source_location)
-    elif source_format.lower() == "query":
-        source_df = spark.sql(source_location)
-    else:
-        raise ValueError(f"Unsupported source_format for database: {source_format}")
+    source_df = spark.read.table(source_location)
 
     validate_source_schema(source_df, mapping)
 

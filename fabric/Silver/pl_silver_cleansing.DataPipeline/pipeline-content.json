@@ -4,7 +4,8 @@
       {
         "type": "ForEach",
         "typeProperties": {
-          "isSequential": true,
+          "isSequential": false,
+          "batchCount": 9,
           "items": {
             "value": "@json(activity('nb_lookup_tables_ingestion').output.result.exitValue)",
             "type": "Expression"
@@ -43,8 +44,16 @@
                       "type": "Expression"
                     },
                     "type": "string"
+                  },
+                  "p_previous_session_id": {
+                    "value": {
+                      "value": "@pipeline().parameters.p_previous_session_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
                   }
-                }
+                },
+                "sessionTag": "session_silver_conncurrency"
               },
               "policy": {
                 "timeout": "0.12:00:00",
@@ -118,6 +127,7 @@
         "type": "string",
         "defaultValue": "@pipeline().parameters.p_previous_session_id"
       }
-    }
+    },
+    "concurrency": 3
   }
 }

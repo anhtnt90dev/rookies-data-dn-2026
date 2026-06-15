@@ -1,5 +1,9 @@
 # Master Pipeline - Source-to-Bronze Processing Flow
 
+> **Source of Truth**
+>
+> This Mermaid diagram is the source of truth for the Source-to-Bronze pipeline execution flow. It supersedes any previous draw.io or image-based diagrams.
+
 ## Workflow Diagram
 
 ```mermaid

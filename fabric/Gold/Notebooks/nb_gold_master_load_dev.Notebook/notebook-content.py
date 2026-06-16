@@ -144,7 +144,12 @@ try:
 
     # 5. Validation Check Suite
     print("[MASTER] Running Validation Checks...")
-    mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
+    try:
+        mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
+    except Exception as val_err:
+        for i in [15, 16, 17, 18, 19]:
+            conformed_statuses[i] = "FAILED"
+        raise val_err
 
     # 6. Post-Ingestion Source Status Resolution
     print("[MASTER] Running Source Success Matrix Resolution...")

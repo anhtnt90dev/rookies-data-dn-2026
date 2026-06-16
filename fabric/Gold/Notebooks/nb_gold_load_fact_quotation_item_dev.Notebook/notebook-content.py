@@ -23,6 +23,7 @@
 # CELL ********************
 
 %run nb_audit_logging_helper_dev
+%run nb_gold_audit_helper_dev
 
 # METADATA ********************
 

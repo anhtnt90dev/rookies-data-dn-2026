@@ -1178,6 +1178,97 @@ def mark_recovery_required(
 
 # CELL ********************
 
+def auto_initialize_table_sessions(
+    session_id: str,
+    batch_id: int,
+    audit_table_session_table: str = AUDIT_TABLE_SESSION_TABLE
+) -> None:
+    audit_table_session_table = validate_table_name(audit_table_session_table)
+    
+    # Safely convert parameters
+    safe_session_id = str(session_id) if session_id is not None else ""
+    try:
+        safe_batch_id = int(batch_id) if batch_id is not None and str(batch_id).strip() != "" else 0
+    except (ValueError, TypeError):
+        safe_batch_id = 0
+        
+    try:
+        exists_count = (
+            spark.table(audit_table_session_table)
+            .where(
+                (F.col("session_id") == F.lit(safe_session_id))
+                & (F.col("batch_id") == F.lit(safe_batch_id))
+            )
+            .count()
+        )
+    except Exception:
+        exists_count = 0
+        
+    if exists_count > 0:
+        print(f"Table sessions already initialized for session_id='{safe_session_id}' and batch_id={safe_batch_id}")
+        return
+
+    print(f"Initializing 9 table session records for session_id='{safe_session_id}', batch_id={safe_batch_id}")
+    
+    # Query active source tables and watermark values
+    try:
+        sources_df = (
+            spark.table("cfg.source_table")
+            .where(F.col("is_active") == F.lit(True))
+            .join(
+                spark.table("cfg.watermark"),
+                F.col("cfg.source_table.id") == F.col("cfg.watermark.source_table_id"),
+                "left"
+            )
+            .select(
+                F.col("cfg.source_table.id").alias("source_table_id"),
+                F.col("cfg.source_table.source_name").alias("source_table_name"),
+                F.col("cfg.source_table.load_type").alias("load_type"),
+                F.col("cfg.source_table.watermark_column").alias("watermark_column"),
+                F.col("cfg.watermark.watermark_value").cast("string").alias("watermark_before")
+            )
+        )
+        
+        # Build default records matching audit_table_session schema
+        init_df = (
+            sources_df
+            .withColumn("id", F.expr("uuid()"))
+            .withColumn("session_id", F.lit(safe_session_id))
+            .withColumn("batch_id", F.lit(safe_batch_id).cast("long"))
+            .withColumn("table_session_status", F.lit("NOT_RUN"))
+            .withColumn("bronze_status", F.lit("NOT_RUN"))
+            .withColumn("silver_status", F.lit("NOT_RUN"))
+            .withColumn("gold_status", F.lit("NOT_RUN"))
+            .withColumn("watermark_after", F.lit(None).cast("string"))
+            .withColumn("load_window_start", F.lit(None).cast("timestamp"))
+            .withColumn("load_window_end", F.lit(None).cast("timestamp"))
+            .withColumn("bronze_started_at", F.lit(None).cast("timestamp"))
+            .withColumn("silver_started_at", F.lit(None).cast("timestamp"))
+            .withColumn("gold_started_at", F.lit(None).cast("timestamp"))
+            .withColumn("bronze_ended_at", F.lit(None).cast("timestamp"))
+            .withColumn("silver_ended_at", F.lit(None).cast("timestamp"))
+            .withColumn("gold_ended_at", F.lit(None).cast("timestamp"))
+            .withColumn("error_code", F.lit(None).cast("string"))
+            .withColumn("error_message", F.lit(None).cast("string"))
+            .withColumn("retry_count", F.lit(0).cast("integer"))
+            .withColumn("last_retry_at", F.lit(None).cast("timestamp"))
+            .withColumn("duration_ms", F.lit(None).cast("long"))
+            .withColumn("sla_target_ms", F.lit(None).cast("long"))
+            .withColumn("sla_breached", F.lit(None).cast("boolean"))
+            .withColumn("created_at", F.current_timestamp())
+            .withColumn("updated_at", F.current_timestamp())
+        )
+        
+        # Order columns according to the target table
+        target_columns = spark.table(audit_table_session_table).columns
+        ordered_df = init_df.select(*target_columns)
+        
+        ordered_df.write.format("delta").mode("append").saveAsTable(audit_table_session_table)
+        print("Table sessions successfully initialized.")
+    except Exception as e:
+        print(f"Error during auto-initialization of table sessions: {str(e)}")
+
+
 def start_table_layer(
     session_id: str,
     source_table_id: int,
@@ -1194,6 +1285,7 @@ def start_table_layer(
 ) -> str:
     audit_table_session_table = validate_table_name(audit_table_session_table)
     layer = require_layer(layer)
+    auto_initialize_table_sessions(session_id, batch_id, audit_table_session_table)
     layer_started_column = {Layer.BRONZE.value: "bronze_started_at", Layer.SILVER.value: "silver_started_at", Layer.GOLD.value: "gold_started_at"}[layer]
     layer_ended_column = {Layer.BRONZE.value: "bronze_ended_at", Layer.SILVER.value: "silver_ended_at", Layer.GOLD.value: "gold_ended_at"}[layer]
     layer_status_column = {Layer.BRONZE.value: "bronze_status", Layer.SILVER.value: "silver_status", Layer.GOLD.value: "gold_status"}[layer]

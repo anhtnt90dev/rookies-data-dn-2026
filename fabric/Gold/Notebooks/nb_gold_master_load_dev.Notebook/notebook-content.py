@@ -47,6 +47,7 @@ p_run_mode = "NEW"
 # CELL ********************
 
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pyspark.sql import functions as F
 
 # Cast parameters safely
@@ -104,43 +105,72 @@ conformed_statuses = {i: "FAILED" for i in range(1, 20)}
 is_success = False
 
 try:
-    # 1. Date Dimension Setup (ID: 1)
-    print("[MASTER] Running Date Setup...")
-    mssparkutils.notebook.run("nb_gold_load_dim_date_dev", 1800, common_args)
-    conformed_statuses[1] = "SUCCESS"
+    # 1. Run Dimensions Setup in Parallel (IDs: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    dim_tasks = [
+        ("nb_gold_load_dim_date_dev", {**common_args, "p_table_id": "1"}, 1),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "5"}, 5),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "6"}, 6),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "7"}, 7),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "8"}, 8),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "9"}, 9),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "10"}, 10),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "11"}, 11),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "12"}, 12),
+        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "13"}, 13),
+        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "2"}, 2),
+        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "3"}, 3),
+        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "4"}, 4),
+        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "14"}, 14)
+    ]
 
-    # 2. SCD1 Dimensions Loading (IDs: 5, 6, 7, 8, 9, 10, 11, 12, 13)
-    print("[MASTER] Running SCD1 Ingestions...")
-    mssparkutils.notebook.run("nb_gold_load_scd1_dimensions_dev", 1800, common_args)
-    for i in [5, 6, 7, 8, 9, 10, 11, 12, 13]:
-        conformed_statuses[i] = "SUCCESS"
+    print(f"[MASTER] Running {len(dim_tasks)} Dimensions in parallel (max_workers=8)...")
+    dim_failures = []
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = {
+            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            for nb_name, args, table_id in dim_tasks
+        }
+        for future in as_completed(futures):
+            nb_name, table_id = futures[future]
+            try:
+                future.result()
+                conformed_statuses[table_id] = "SUCCESS"
+                print(f"[MASTER] Dimension table ID {table_id} loaded successfully.")
+            except Exception as e:
+                print(f"[MASTER ERROR] Dimension table ID {table_id} ({nb_name}) failed: {e}")
+                dim_failures.append((table_id, e))
 
-    # 3. SCD2 Dimensions Loading (IDs: 2, 3, 4, 14)
-    print("[MASTER] Running SCD2 Ingestions...")
-    mssparkutils.notebook.run("nb_gold_load_scd2_dimensions_dev", 1800, common_args)
-    for i in [2, 3, 4, 14]:
-        conformed_statuses[i] = "SUCCESS"
+    if dim_failures:
+        raise Exception(f"Dimensions loading failed for tables: {[f[0] for f in dim_failures]}")
 
-    # 4. Fact Ingestions
-    print("[MASTER] Running Fact Quotation Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_quotation_dev", 1800, common_args)
-    conformed_statuses[15] = "SUCCESS"
+    # 2. Run Fact Ingestions in Parallel (IDs: 15, 16, 17, 18, 19)
+    fact_tasks = [
+        ("nb_gold_load_fact_quotation_dev", {**common_args, "p_table_id": "15"}, 15),
+        ("nb_gold_load_fact_quotation_item_dev", {**common_args, "p_table_id": "16"}, 16),
+        ("nb_gold_load_fact_policy_dev", {**common_args, "p_table_id": "17"}, 17),
+        ("nb_gold_load_fact_payment_dev", {**common_args, "p_table_id": "18"}, 18),
+        ("nb_gold_load_fact_cancellation_dev", {**common_args, "p_table_id": "19"}, 19)
+    ]
 
-    print("[MASTER] Running Fact Quotation Item Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_quotation_item_dev", 1800, common_args)
-    conformed_statuses[16] = "SUCCESS"
+    print(f"[MASTER] Running {len(fact_tasks)} Facts in parallel (max_workers=5)...")
+    fact_failures = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            for nb_name, args, table_id in fact_tasks
+        }
+        for future in as_completed(futures):
+            nb_name, table_id = futures[future]
+            try:
+                future.result()
+                conformed_statuses[table_id] = "SUCCESS"
+                print(f"[MASTER] Fact table ID {table_id} loaded successfully.")
+            except Exception as e:
+                print(f"[MASTER ERROR] Fact table ID {table_id} ({nb_name}) failed: {e}")
+                fact_failures.append((table_id, e))
 
-    print("[MASTER] Running Fact Policy Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_policy_dev", 1800, common_args)
-    conformed_statuses[17] = "SUCCESS"
-
-    print("[MASTER] Running Fact Payment Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_payment_dev", 1800, common_args)
-    conformed_statuses[18] = "SUCCESS"
-
-    print("[MASTER] Running Fact Cancellation Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_cancellation_dev", 1800, common_args)
-    conformed_statuses[19] = "SUCCESS"
+    if fact_failures:
+        raise Exception(f"Facts loading failed for tables: {[f[0] for f in fact_failures]}")
 
     # 5. Validation Check Suite
     print("[MASTER] Running Validation Checks...")

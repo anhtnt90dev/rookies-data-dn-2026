@@ -47,6 +47,7 @@
 session_id = ""
 batch_id = ""
 run_mode = "NEW"
+p_table_id = ""
 
 # METADATA ********************
 

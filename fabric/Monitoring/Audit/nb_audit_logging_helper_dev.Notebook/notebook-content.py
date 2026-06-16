@@ -315,6 +315,34 @@ def should_process_table_layer(
         Layer.GOLD.value: "gold_status",
     }[layer]
 
+    if layer == Layer.GOLD.value:
+        # Check Gold layer using mapping of conformed dim_fact_table_id to source_table_ids loaded dynamically from cfg.source_dim_fact
+        mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
+        dim_fact_to_sources = {}
+        for row in mappings:
+            df_id = int(row["dim_fact_table_id"])
+            src_id = int(row["source_table_id"])
+            if df_id not in dim_fact_to_sources:
+                dim_fact_to_sources[df_id] = []
+            dim_fact_to_sources[df_id].append(src_id)
+        dependent_sources = dim_fact_to_sources.get(int(source_table_id), [])
+        if not dependent_sources:
+            return True
+        
+        # Check if ALL dependent sources have already succeeded in Gold layer
+        successful_rows = (
+            spark.table(audit_table_session_table)
+            .where(
+                (F.col("batch_id") == F.lit(int(batch_id)))
+                & (F.col("source_table_id").isin(dependent_sources))
+                & (F.col(layer_status_column) == F.lit(AuditStatus.SUCCESS.value))
+            )
+            .select("source_table_id")
+            .collect()
+        )
+        success_source_ids = {row["source_table_id"] for row in successful_rows}
+        return not (len(success_source_ids) == len(dependent_sources))
+
     successful_rows = (
         spark.table(audit_table_session_table)
         .where(
@@ -540,60 +568,69 @@ def log_retry_attempt(
     layer = require_layer(layer)
     status = require_status(status, [AuditStatus.RUNNING, AuditStatus.SUCCESS, AuditStatus.FAILED])
 
-    attempt_no = get_next_retry_attempt_no(retry_log_table, str(table_session_id), layer, file_session_id)
+    if layer == Layer.GOLD.value and str(table_session_id).startswith("gold_nonrep_"):
+        print(f"Skipped retry logging for non-representative conformed table session: {table_session_id}")
+        return
 
-    row = Row(
-        id=new_audit_id(),
-        table_session_id=str(table_session_id),
-        file_session_id=str(file_session_id) if file_session_id else None,
-        attempt_no=attempt_no,
-        layer=layer,
-        status=status,
-        error_code=error_code,
-        error_message=error_message,
-        error_type=enum_value(error_type) if error_type is not None else None,
-        is_retryable=is_retryable,
-    )
+    actual_table_session_ids = [table_session_id]
+    if layer == Layer.GOLD.value and str(table_session_id).startswith("gold_rep_"):
+        actual_table_session_ids = str(table_session_id).split("__")[1].split("|")
 
-    schema = StructType([
-        StructField("id", StringType(), False),
-        StructField("table_session_id", StringType(), False),
-        StructField("file_session_id", StringType(), True),
-        StructField("attempt_no", IntegerType(), True),
-        StructField("layer", StringType(), True),
-        StructField("status", StringType(), True),
-        StructField("error_code", StringType(), True),
-        StructField("error_message", StringType(), True),
-        StructField("error_type", StringType(), True),
-        StructField("is_retryable", BooleanType(), True),
-    ])
+    for curr_session_id in actual_table_session_ids:
+        attempt_no = get_next_retry_attempt_no(retry_log_table, str(curr_session_id), layer, file_session_id)
 
-    retry_df = (
-        spark.createDataFrame([row], schema)
-        .withColumn("started_at", F.current_timestamp())
-        .withColumn("ended_at", F.current_timestamp())
-        .withColumn("duration_ms", F.lit(None).cast("bigint"))
-        .withColumn("created_at", F.current_timestamp())
-    )
+        row = Row(
+            id=new_audit_id(),
+            table_session_id=str(curr_session_id),
+            file_session_id=str(file_session_id) if file_session_id else None,
+            attempt_no=attempt_no,
+            layer=layer,
+            status=status,
+            error_code=error_code,
+            error_message=error_message,
+            error_type=enum_value(error_type) if error_type is not None else None,
+            is_retryable=is_retryable,
+        )
 
-    retry_df.write.format("delta").mode("append").saveAsTable(retry_log_table)
+        schema = StructType([
+            StructField("id", StringType(), False),
+            StructField("table_session_id", StringType(), False),
+            StructField("file_session_id", StringType(), True),
+            StructField("attempt_no", IntegerType(), True),
+            StructField("layer", StringType(), True),
+            StructField("status", StringType(), True),
+            StructField("error_code", StringType(), True),
+            StructField("error_message", StringType(), True),
+            StructField("error_type", StringType(), True),
+            StructField("is_retryable", BooleanType(), True),
+        ])
 
-    spark.sql(f"""
-        UPDATE {audit_table_session_table}
-        SET retry_count = COALESCE(retry_count, 0) + 1,
-            last_retry_at = current_timestamp(),
-            updated_at = current_timestamp()
-        WHERE id = '{str(table_session_id)}'
-    """)
+        retry_df = (
+            spark.createDataFrame([row], schema)
+            .withColumn("started_at", F.current_timestamp())
+            .withColumn("ended_at", F.current_timestamp())
+            .withColumn("duration_ms", F.lit(None).cast("bigint"))
+            .withColumn("created_at", F.current_timestamp())
+        )
 
-    if file_session_id:
+        retry_df.write.format("delta").mode("append").saveAsTable(retry_log_table)
+
         spark.sql(f"""
-            UPDATE {audit_file_session_table}
+            UPDATE {audit_table_session_table}
             SET retry_count = COALESCE(retry_count, 0) + 1,
                 last_retry_at = current_timestamp(),
                 updated_at = current_timestamp()
-            WHERE id = '{str(file_session_id)}'
+            WHERE id = '{str(curr_session_id)}'
         """)
+
+        if file_session_id:
+            spark.sql(f"""
+                UPDATE {audit_file_session_table}
+                SET retry_count = COALESCE(retry_count, 0) + 1,
+                    last_retry_at = current_timestamp(),
+                    updated_at = current_timestamp()
+                WHERE id = '{str(file_session_id)}'
+            """)
 
 
 def parse_error_type_list(error_types) -> list:
@@ -1174,6 +1211,149 @@ def start_table_layer(
         StructField("load_window_end_text", StringType(), True),
         StructField("sla_target_ms", LongType(), True),
     ])
+
+    if layer == Layer.GOLD.value:
+        # 1. Query source names dynamically
+        source_names = {
+            int(row["id"]): row["source_name"]
+            for row in spark.table("cfg.source_table").select("id", "source_name").collect()
+        }
+
+        # 2. Query active conformed tables and their load sequence
+        dim_facts = (
+            spark.table("cfg.dim_fact_table")
+            .where(F.col("is_active") == F.lit(True))
+            .select("id", "load_sequence")
+        )
+        
+        # Join with source mappings to find all conformed tables per source
+        mappings_df = (
+            spark.table("cfg.source_dim_fact")
+            .join(dim_facts, F.col("dim_fact_table_id") == dim_facts["id"])
+            .select("source_table_id", "dim_fact_table_id", "load_sequence")
+        )
+        
+        # Find the conformed table with maximum load sequence for each source
+        from pyspark.sql.window import Window
+        window_spec = Window.partitionBy("source_table_id").orderBy(F.desc("load_sequence"))
+        representatives = (
+            mappings_df.withColumn("rn", F.row_number().over(window_spec))
+            .where(F.col("rn") == 1)
+            .select("source_table_id", "dim_fact_table_id")
+            .collect()
+        )
+        
+        # Build representative_mapping: representative_id -> list of source_ids
+        from collections import defaultdict
+        rep_to_sources = defaultdict(list)
+        for row in representatives:
+            src_id = int(row["source_table_id"])
+            rep_id = int(row["dim_fact_table_id"])
+            rep_to_sources[rep_id].append(src_id)
+        
+        representative_mapping = dict(rep_to_sources)
+
+        conformed_id = int(source_table_id)
+        if conformed_id in representative_mapping:
+            uuids = []
+            mapped_sources = representative_mapping[conformed_id]
+            for mapped_src_id in mapped_sources:
+                mapped_src_name = source_names.get(mapped_src_id, source_table_name)
+                source_view = create_temp_view_from_rows([
+                    Row(
+                        id=new_audit_id(),
+                        session_id=str(session_id),
+                        source_table_id=int(mapped_src_id),
+                        source_table_name=mapped_src_name,
+                        batch_id=int(batch_id),
+                        load_type=load_type,
+                        watermark_column=watermark_column,
+                        watermark_before=watermark_before,
+                        load_window_start_text=load_window_start,
+                        load_window_end_text=load_window_end,
+                        sla_target_ms=sla_target_ms,
+                    )
+                ], schema, "table_layer")
+
+                spark.sql(f"""
+                    MERGE INTO {audit_table_session_table} AS target
+                    USING (
+                        SELECT
+                            id, session_id, source_table_id, source_table_name, batch_id,
+                            '{AuditStatus.RUNNING.value}' AS table_session_status,
+                            '{AuditStatus.NOT_RUN.value}' AS bronze_status,
+                            '{AuditStatus.NOT_RUN.value}' AS silver_status,
+                            '{AuditStatus.NOT_RUN.value}' AS gold_status,
+                            load_type, watermark_column, watermark_before,
+                            CAST(NULL AS STRING) AS watermark_after,
+                            CAST(load_window_start_text AS TIMESTAMP) AS load_window_start,
+                            CAST(load_window_end_text AS TIMESTAMP) AS load_window_end,
+                            CAST(NULL AS TIMESTAMP) AS bronze_started_at,
+                            CAST(NULL AS TIMESTAMP) AS silver_started_at,
+                            CAST(NULL AS TIMESTAMP) AS gold_started_at,
+                            CAST(NULL AS TIMESTAMP) AS bronze_ended_at,
+                            CAST(NULL AS TIMESTAMP) AS silver_ended_at,
+                            CAST(NULL AS TIMESTAMP) AS gold_ended_at,
+                            CAST(NULL AS STRING) AS error_code,
+                            CAST(NULL AS STRING) AS error_message,
+                            0 AS retry_count,
+                            CAST(NULL AS TIMESTAMP) AS last_retry_at,
+                            CAST(NULL AS BIGINT) AS duration_ms,
+                            sla_target_ms,
+                            CAST(NULL AS BOOLEAN) AS sla_breached,
+                            current_timestamp() AS created_at,
+                            current_timestamp() AS updated_at
+                        FROM {source_view}
+                    ) AS source
+                    ON target.session_id = source.session_id
+                       AND target.source_table_id = source.source_table_id
+                    WHEN MATCHED THEN UPDATE SET
+                        target.table_session_status = source.table_session_status,
+                        target.{layer_status_column} = source.table_session_status,
+                        target.{layer_started_column} = source.updated_at,
+                        target.{layer_ended_column} = NULL,
+                        target.error_code = NULL,
+                        target.error_message = NULL,
+                        target.updated_at = source.updated_at
+                    WHEN NOT MATCHED THEN INSERT (
+                        id, session_id, source_table_id, batch_id, table_session_status,
+                        bronze_status, silver_status, gold_status, load_type, watermark_column,
+                        watermark_before, watermark_after, load_window_start, load_window_end,
+                        bronze_started_at, silver_started_at, gold_started_at,
+                        bronze_ended_at, silver_ended_at, gold_ended_at,
+                        error_code, error_message,
+                        retry_count, last_retry_at, duration_ms, sla_target_ms, sla_breached,
+                        created_at, updated_at, source_table_name
+                    ) VALUES (
+                        source.id, source.session_id, source.source_table_id, source.batch_id, source.table_session_status,
+                        source.bronze_status, source.silver_status, '{AuditStatus.RUNNING.value}',
+                        source.load_type, source.watermark_column,
+                        source.watermark_before, source.watermark_after, source.load_window_start, source.load_window_end,
+                        source.bronze_started_at, source.silver_started_at, source.updated_at,
+                        source.bronze_ended_at, source.silver_ended_at, source.gold_ended_at,
+                        source.error_code, source.error_message,
+                        source.retry_count, source.last_retry_at, source.duration_ms, source.sla_target_ms, source.sla_breached,
+                        source.created_at, source.updated_at, source.source_table_name
+                    )
+                """)
+
+                actual_id = get_single_id(
+                    audit_table_session_table,
+                    {
+                        "session_id": str(session_id),
+                        "source_table_id": int(mapped_src_id),
+                    },
+                )
+                uuids.append(actual_id)
+            
+            table_session_id = f"gold_rep_{conformed_id}__{'|'.join(uuids)}"
+            print(f"Started representative {layer} layer: table_session_id={table_session_id}, conformed_id={conformed_id}")
+            return table_session_id
+        else:
+            table_session_id = f"gold_nonrep_{conformed_id}_{batch_id}"
+            print(f"Skipped starting {layer} layer logging for non-representative conformed table: ID={conformed_id}, name={source_table_name}")
+            return table_session_id
+
     source_view = create_temp_view_from_rows([
         Row(
             id=new_audit_id(),
@@ -1349,6 +1529,14 @@ def finish_table_layer(
     layer_started_column = {Layer.BRONZE.value: "bronze_started_at", Layer.SILVER.value: "silver_started_at", Layer.GOLD.value: "gold_started_at"}[layer]
     layer_status_column = {Layer.BRONZE.value: "bronze_status", Layer.SILVER.value: "silver_status", Layer.GOLD.value: "gold_status"}[layer]
 
+    if layer == Layer.GOLD.value and str(table_session_id).startswith("gold_nonrep_"):
+        print(f"Skipped finishing {layer} layer logging for non-representative conformed table session: {table_session_id}")
+        return
+
+    actual_table_session_ids = [table_session_id]
+    if layer == Layer.GOLD.value and str(table_session_id).startswith("gold_rep_"):
+        actual_table_session_ids = str(table_session_id).split("__")[1].split("|")
+
     if status == AuditStatus.FAILED.value:
         table_session_status = AuditStatus.FAILED.value
     elif is_final_table_step:
@@ -1365,98 +1553,100 @@ def finish_table_layer(
         StructField("watermark_after", StringType(), True),
         StructField("sla_target_ms", LongType(), True),
     ])
-    source_view = create_temp_view_from_rows([
-        Row(
-            id=str(table_session_id),
-            layer_status=status,
-            table_session_status=table_session_status,
-            error_code=error_code,
-            error_message=error_message,
-            watermark_after=watermark_after,
-            sla_target_ms=sla_target_ms,
-        )
-    ], schema, "finish_table_layer")
 
-    spark.sql(f"""
-        MERGE INTO {audit_table_session_table} AS target
-        USING (
-            SELECT
-                id,
-                layer_status,
-                table_session_status,
-                error_code,
-                error_message,
-                watermark_after,
-                sla_target_ms,
-                current_timestamp() AS finished_at
-            FROM {source_view}
-        ) AS source
-        ON target.id = source.id
-        WHEN MATCHED THEN UPDATE SET
-            target.{layer_status_column} = source.layer_status,
-            target.{layer_ended_column} = source.finished_at,
-            target.watermark_after = COALESCE(source.watermark_after, target.watermark_after),
-            target.table_session_status = source.table_session_status,
-            target.error_code = CASE
-                WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_code
-                ELSE NULL
-            END,
-            target.error_message = CASE
-                WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_message
-                ELSE NULL
-            END,
-            target.duration_ms = CAST(
-                (unix_timestamp(source.finished_at) - unix_timestamp(COALESCE(target.{layer_started_column}, target.created_at))) * 1000 AS BIGINT
-            ),
-            target.sla_target_ms = COALESCE(source.sla_target_ms, target.sla_target_ms),
-            target.sla_breached = CASE
-                WHEN COALESCE(source.sla_target_ms, target.sla_target_ms) IS NOT NULL
-                 AND CAST((unix_timestamp(source.finished_at) - unix_timestamp(COALESCE(target.{layer_started_column}, target.created_at))) * 1000 AS BIGINT)
-                     > COALESCE(source.sla_target_ms, target.sla_target_ms)
-                THEN TRUE
-                ELSE FALSE
-            END,
-            target.updated_at = source.finished_at
-    """)
+    for curr_session_id in actual_table_session_ids:
+        source_view = create_temp_view_from_rows([
+            Row(
+                id=str(curr_session_id),
+                layer_status=status,
+                table_session_status=table_session_status,
+                error_code=error_code,
+                error_message=error_message,
+                watermark_after=watermark_after,
+                sla_target_ms=sla_target_ms,
+            )
+        ], schema, "finish_table_layer")
 
-    if write_detail:
-        table_snapshot = (
-            spark.table(audit_table_session_table)
-            .where(F.col("id") == F.lit(str(table_session_id)))
-            .select("watermark_before", "watermark_after", "load_window_start", "load_window_end", "duration_ms", "sla_target_ms", "sla_breached")
-            .limit(1)
-            .collect()
-        )
-        if not table_snapshot:
-            raise Exception(f"No table session found for id={table_session_id}")
+        spark.sql(f"""
+            MERGE INTO {audit_table_session_table} AS target
+            USING (
+                SELECT
+                    id,
+                    layer_status,
+                    table_session_status,
+                    error_code,
+                    error_message,
+                    watermark_after,
+                    sla_target_ms,
+                    current_timestamp() AS finished_at
+                FROM {source_view}
+            ) AS source
+            ON target.id = source.id
+            WHEN MATCHED THEN UPDATE SET
+                target.{layer_status_column} = source.layer_status,
+                target.{layer_ended_column} = source.finished_at,
+                target.watermark_after = COALESCE(source.watermark_after, target.watermark_after),
+                target.table_session_status = source.table_session_status,
+                target.error_code = CASE
+                    WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_code
+                    ELSE NULL
+                END,
+                target.error_message = CASE
+                    WHEN source.layer_status = '{AuditStatus.FAILED.value}' THEN source.error_message
+                    ELSE NULL
+                END,
+                target.duration_ms = CAST(
+                    (unix_timestamp(source.finished_at) - unix_timestamp(COALESCE(target.{layer_started_column}, target.created_at))) * 1000 AS BIGINT
+                ),
+                target.sla_target_ms = COALESCE(source.sla_target_ms, target.sla_target_ms),
+                target.sla_breached = CASE
+                    WHEN COALESCE(source.sla_target_ms, target.sla_target_ms) IS NOT NULL
+                     AND CAST((unix_timestamp(source.finished_at) - unix_timestamp(COALESCE(target.{layer_started_column}, target.created_at))) * 1000 AS BIGINT)
+                         > COALESCE(source.sla_target_ms, target.sla_target_ms)
+                    THEN TRUE
+                    ELSE FALSE
+                END,
+                target.updated_at = source.finished_at
+        """)
 
-        table_row = table_snapshot[0]
-        attempt_no = get_next_attempt_no(audit_detail_table, str(table_session_id), layer)
-        append_audit_detail({
-            "id": new_audit_id(),
-            "table_session_id": str(table_session_id),
-            "attempt_no": attempt_no,
-            "detail_status": status,
-            "layer": layer,
-            "watermark_before": table_row["watermark_before"],
-            "watermark_after": watermark_after or table_row["watermark_after"],
-            "load_window_start": table_row["load_window_start"],
-            "load_window_end": table_row["load_window_end"],
-            "source_row_count": source_row_count,
-            "target_row_count": target_row_count,
-            "inserted_row": inserted_row,
-            "updated_row": updated_row,
-            "deleted_row": deleted_row,
-            "rejected_row": rejected_row,
-            "error_message": error_message,
-            "error_type": enum_value(error_type) if error_type is not None else None,
-            "is_retryable": is_retryable,
-            "duration_ms": table_row["duration_ms"],
-            "sla_target_ms": sla_target_ms or table_row["sla_target_ms"],
-            "sla_breached": table_row["sla_breached"],
-        }, audit_detail_table)
+        if write_detail:
+            table_snapshot = (
+                spark.table(audit_table_session_table)
+                .where(F.col("id") == F.lit(str(curr_session_id)))
+                .select("watermark_before", "watermark_after", "load_window_start", "load_window_end", "duration_ms", "sla_target_ms", "sla_breached")
+                .limit(1)
+                .collect()
+            )
+            if not table_snapshot:
+                raise Exception(f"No table session found for id={curr_session_id}")
 
-    print(f"Finished {layer} layer: table_session_id={table_session_id}, status={status}")
+            table_row = table_snapshot[0]
+            attempt_no = get_next_attempt_no(audit_detail_table, str(curr_session_id), layer)
+            append_audit_detail({
+                "id": new_audit_id(),
+                "table_session_id": str(curr_session_id),
+                "attempt_no": attempt_no,
+                "detail_status": status,
+                "layer": layer,
+                "watermark_before": table_row["watermark_before"],
+                "watermark_after": watermark_after or table_row["watermark_after"],
+                "load_window_start": table_row["load_window_start"],
+                "load_window_end": table_row["load_window_end"],
+                "source_row_count": source_row_count,
+                "target_row_count": target_row_count,
+                "inserted_row": inserted_row,
+                "updated_row": updated_row,
+                "deleted_row": deleted_row,
+                "rejected_row": rejected_row,
+                "error_message": error_message,
+                "error_type": enum_value(error_type) if error_type is not None else None,
+                "is_retryable": is_retryable,
+                "duration_ms": table_row["duration_ms"],
+                "sla_target_ms": sla_target_ms or table_row["sla_target_ms"],
+                "sla_breached": table_row["sla_breached"],
+            }, audit_detail_table)
+
+        print(f"Finished {layer} layer: table_session_id={curr_session_id}, status={status}")
 
 
 # METADATA ********************

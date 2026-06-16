@@ -56,9 +56,43 @@ run_mode = str(run_mode).upper()
 
 # Helper to retrieve table_session_id for a given target table
 def get_table_session_id(dim_fact_table_id: int) -> str:
+    # Map conformed ID to source ID dynamically under Option 2
+    try:
+        df_tables = spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
+        mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
+        src_tables = spark.table("cfg.source_table").select("id", "source_name").collect()
+        
+        df_names = {row["id"]: row["table_name"] for row in df_tables}
+        src_names = {row["id"]: row["source_name"] for row in src_tables}
+        
+        from collections import defaultdict
+        df_to_srcs = defaultdict(list)
+        for row in mappings:
+            df_id = int(row["dim_fact_table_id"])
+            src_id = int(row["source_table_id"])
+            df_to_srcs[df_id].append(src_id)
+            
+        dim_fact_to_source = {}
+        for df_id, src_ids in df_to_srcs.items():
+            df_name = df_names.get(df_id, "").lower()
+            matched_id = None
+            for s_id in src_ids:
+                s_name = src_names.get(s_id, "").lower()
+                s_norm = s_name[:-1] if s_name.endswith('s') else s_name
+                if s_norm in df_name:
+                    if matched_id is None or len(s_norm) > len(src_names.get(matched_id, "")):
+                        matched_id = s_id
+            dim_fact_to_source[df_id] = matched_id if matched_id is not None else src_ids[0]
+
+        source_id = dim_fact_to_source.get(dim_fact_table_id)
+    except Exception:
+        source_id = None
+
+    if not source_id:
+        return None
     try:
         rows = spark.table("log.audit_table_session") \
-            .where((F.col("batch_id") == F.lit(batch_id)) & (F.col("source_table_id") == F.lit(dim_fact_table_id))) \
+            .where((F.col("batch_id") == F.lit(batch_id)) & (F.col("source_table_id") == F.lit(source_id))) \
             .orderBy(F.col("created_at").desc()) \
             .select("id") \
             .limit(1) \

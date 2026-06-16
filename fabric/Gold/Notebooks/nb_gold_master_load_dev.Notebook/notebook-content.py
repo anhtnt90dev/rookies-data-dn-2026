@@ -64,48 +64,9 @@ common_args = {
 }
 
 def resolve_source_success(batch_id: int):
-    # Query mappings between Gold tables and source table IDs
-    mappings = spark.table("cfg.source_dim_fact").collect()
-    
-    # Group conformed dimension/fact table IDs by source_table_id
-    from collections import defaultdict
-    source_to_targets = defaultdict(list)
-    for row in mappings:
-        source_to_targets[row["source_table_id"]].append(row["dim_fact_table_id"])
-    
-    # Get all successful table sessions for this batch
-    gold_statuses = spark.table("log.audit_table_session") \
-                         .where(F.col("batch_id") == F.lit(batch_id)) \
-                         .select("source_table_id", "gold_status") \
-                         .collect()
-    
-    success_table_ids = {row["source_table_id"] for row in gold_statuses if row["gold_status"] == "SUCCESS"}
-
-    # Evaluate the 9 active sources
-    for src_id in range(1, 10):
-        mapped_targets = source_to_targets[src_id]
-        if mapped_targets and all(tgt_id in success_table_ids for tgt_id in mapped_targets):
-            # All target conformed dimensions/facts processed successfully. Update source log.
-            spark.sql(f"""
-                UPDATE log.audit_table_session
-                SET gold_status = 'SUCCESS',
-                    table_session_status = 'SUCCESS',
-                    gold_ended_at = current_timestamp(),
-                    updated_at = current_timestamp()
-                WHERE batch_id = {batch_id} AND source_table_id = {src_id}
-            """)
-            print(f"[MASTER] Resolved Source Table {src_id} success status: SUCCESS")
-        else:
-            # If not all mapped targets succeeded, flag source table as FAILED
-            spark.sql(f"""
-                UPDATE log.audit_table_session
-                SET gold_status = 'FAILED',
-                    table_session_status = 'FAILED',
-                    gold_ended_at = current_timestamp(),
-                    updated_at = current_timestamp()
-                WHERE batch_id = {batch_id} AND source_table_id = {src_id}
-            """)
-            print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more target lookups failed)")
+    # Conformed representative tables update the source status directly during execution.
+    print(f"[MASTER] Skipping master source status resolution as representative tables update status inline.")
+    pass
 
 try:
     # 1. Date Dimension Setup (ID: 1)

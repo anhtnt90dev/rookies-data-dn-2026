@@ -101,6 +101,7 @@ def resolve_source_success(batch_id: int, conformed_statuses: dict):
 
 # Track conformed table load statuses in-memory
 conformed_statuses = {i: "FAILED" for i in range(1, 20)}
+is_success = False
 
 try:
     # 1. Date Dimension Setup (ID: 1)
@@ -158,7 +159,7 @@ try:
     reset_next_run_mode()
 
     print("[MASTER] Gold Layer Master Ingestion completed successfully.")
-    mssparkutils.notebook.exit("SUCCESS")
+    is_success = True
 
 except Exception as err:
     print(f"[MASTER ERROR] Gold Layer pipeline execution failed: {err}")
@@ -168,6 +169,9 @@ except Exception as err:
         print(f"[MASTER ERROR] Failed to resolve source status post-failure: {resolve_err}")
     # Propagate exception to trigger handle_failed_gold downstream error handler
     raise err
+
+if is_success:
+    mssparkutils.notebook.exit("SUCCESS")
 
 # METADATA ********************
 

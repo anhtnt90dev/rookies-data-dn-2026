@@ -7,6 +7,7 @@
           "source": {
             "type": "AzureSqlSource",
             "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
+            "partitionOption": "None",
             "isolationLevel": "ReadCommitted"
           },
           "datasetSettings": {
@@ -32,46 +33,6 @@
         },
         "name": "lkp_next_run_mode",
         "dependsOn": []
-      },
-      {
-        "type": "TridentNotebook",
-        "typeProperties": {
-          "notebookId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b",
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "parameters": {
-            "result": {
-              "value": {
-                "value": "@activity('ingestion').output.result.exitValue",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "run_mode": {
-              "value": {
-                "value": "@variables('run_mode')",
-                "type": "Expression"
-              },
-              "type": "string"
-            }
-          },
-          "sessionTag": "bronze_layer_session"
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "bronze_gate",
-        "dependsOn": [
-          {
-            "activity": "ingestion",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
       },
       {
         "type": "TridentNotebook",
@@ -288,51 +249,12 @@
         ]
       },
       {
-        "type": "TridentNotebook",
-        "typeProperties": {
-          "notebookId": "a937b4d2-58fc-a340-47d7-83ec231d30bd",
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "parameters": {
-            "p_previous_session_id": {
-              "value": {
-                "value": "@variables('previous_session_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "p_run_mode": {
-              "value": {
-                "value": "@variables('run_mode')",
-                "type": "Expression"
-              },
-              "type": "string"
-            }
-          }
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "nb_lookup_tables_ingestion",
-        "dependsOn": [
-          {
-            "activity": "bronze_gate",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
         "type": "ForEach",
         "typeProperties": {
           "isSequential": false,
           "batchCount": 9,
           "items": {
-            "value": "@json(activity('nb_lookup_tables_ingestion').output.result.exitValue)",
+            "value": "@activity('lk_tables_need_load_for_silver').output.value",
             "type": "Expression"
           },
           "activities": [
@@ -395,7 +317,7 @@
         "name": "for_each_table_config",
         "dependsOn": [
           {
-            "activity": "nb_lookup_tables_ingestion",
+            "activity": "lk_tables_need_load_for_silver",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -521,6 +443,78 @@
           },
           {
             "activity": "set_previous_session_id_variable",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "Lookup",
+        "typeProperties": {
+          "source": {
+            "type": "AzureSqlSource",
+            "sqlReaderQuery": {
+              "value": "@if(\n    equals(\n        toUpper(variables('run_mode')),\n        'NEW'\n    ),\n    'SELECT id,\n            source_system,\n            source_type,\n            source_name,\n            source_location,\n            source_format,\n            delimiter,\n            load_type,\n            primary_key,\n            source_to_bronze_mapping_path,\n            bronze_to_silver_mapping_path,\n            silver_transform_name,\n            watermark_column,\n            bronze_table_name,\n            silver_table_name,\n            load_sequence,\n            is_active,\n            created_at,\n            updated_at\n     FROM cfg.source_table\n     ORDER BY load_sequence',\n    concat(\n        'SELECT s.id,\n                s.source_system,\n                s.source_type,\n                s.source_name,\n                s.source_location,\n                s.source_format,\n                s.delimiter,\n                s.load_type,\n                s.primary_key,\n                s.source_to_bronze_mapping_path,\n                s.bronze_to_silver_mapping_path,\n                s.silver_transform_name,\n                s.watermark_column,\n                s.bronze_table_name,\n                s.silver_table_name,\n                s.load_sequence,\n                s.is_active,\n                s.created_at,\n                s.updated_at\n         FROM cfg.source_table s\n         JOIN log.audit_table_session l\n             ON s.id = l.source_table_id\n         WHERE l.session_id = ''',\n        variables('previous_session_id'),\n        '''\n         AND (\n             UPPER(l.silver_status) = ''FAILED''\n             OR UPPER(l.silver_status) = ''NOT_RUN''\n         )\n         ORDER BY s.load_sequence'\n    )\n)",
+              "type": "Expression"
+            },
+            "partitionOption": "None",
+            "queryTimeout": "02:00:00"
+          },
+          "datasetSettings": {
+            "type": "AzureSqlTable",
+            "typeProperties": {
+              "database": "lh_insurance_dev"
+            },
+            "schema": [],
+            "externalReferences": {
+              "connection": "41c94ad4-2c37-4565-8d25-03a700377ef2"
+            },
+            "annotations": []
+          },
+          "firstRowOnly": false
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "lk_tables_need_load_for_silver",
+        "dependsOn": [
+          {
+            "activity": "Validate Bronze Row Count",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "IfCondition",
+        "typeProperties": {
+          "expression": {
+            "value": "@and(\n    equals(variables('run_mode'), 'NEW'),\n    equals(activity('ingestion').output.result.exitValue, 'NO_DATA')\n)",
+            "type": "Expression"
+          },
+          "ifTrueActivities": [
+            {
+              "type": "Fail",
+              "typeProperties": {
+                "message": "No data was loaded into Bronze tables. All source entities have inserted_row = 0.",
+                "errorCode": "BRONZE_NO_DATA"
+              },
+              "name": "Stop Pipeline",
+              "dependsOn": []
+            }
+          ],
+          "ifFalseActivities": []
+        },
+        "name": "Validate Bronze Row Count",
+        "dependsOn": [
+          {
+            "activity": "ingestion",
             "dependencyConditions": [
               "Succeeded"
             ]

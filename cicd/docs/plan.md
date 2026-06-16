@@ -1,141 +1,494 @@
-
+# Fabric CI/CD Solution with GitHub Actions
 
 ## 1. Context
 
-**chưa có quy trình deploy tự động** nào cho Fabric workspace. Điều này dẫn đến:
+Source code được quản lý trên GitHub. Trong repository, toàn bộ Fabric
+artifacts được tổ chức trong folder `/fabric`
 
-- Deploy thủ công tốn thời gian, dễ xảy ra lỗi sót item
-- Không có approval workflow trước khi đưa thay đổi lên Test/Prod
-- Notebooks chứa hardcoded GUIDs (Lakehouse ID, Workspace ID) — khi copy sang môi trường khác phải sửa tay từng file
-- Không có audit trail: không biết ai deploy gì, lúc nào, từ branch nào
+------------------------------------------------------------------------
 
----
+# 2. Repository Structure
 
-## 2. Giải pháp đề xuất
+Cấu trúc source code đề xuất:
 
-Xây dựng CI/CD pipeline dựa trên **Azure DevOps (ADO)** + **thư viện `fabric-cicd`** của Microsoft.
+    repository-root/
 
-### Kiến trúc tổng quan
+    ├── .github/
+    │   └── workflows/
+    │       └── fabric-deploy.yml
+    │
+    ├── fabric/
+    │   │
+    │   ├── notebooks/
+    │   │
+    │   ├── pipelines/
+    │   │
+    │   ├── lakehouses/
+    │   │
+    │   ├── semanticModels/
+    │   │
+    │   └── other Fabric items
+    │
+    ├── scripts/
+    │   └── deploy.py
+    │
+    ├── parameter.yml
+    │
+    └── requirements.txt
 
+Folder:
+
+    /fabric
+
+là folder chứa toàn bộ Fabric workspace artifacts được quản lý bằng Git.
+
+Mapping:
+
+    GitHub Repository
+            |
+            |
+            v
+    /fabric folder
+            |
+            |
+            v
+    Fabric Workspace
+
+------------------------------------------------------------------------
+
+# 3. Giải pháp đề xuất
+
+Xây dựng CI/CD pipeline dựa trên:
+
+-   GitHub Repository:
+    -   Source control cho Fabric artifacts.
+-   GitHub Actions:
+    -   Automation pipeline.
+-   fabric-cicd:
+    -   Publish Fabric items từ folder `/fabric`.
+-   GitHub Environment:
+    -   Approval workflow Test/Prod.
+-   GitHub Secrets:
+    -   Quản lý credential.
+
+------------------------------------------------------------------------
+
+# 4. Kiến trúc tổng quan
+
+    Feature Branch
+
+          |
+          |
+    Pull Request
+
+          |
+          v
+
+    GitHub Actions CI
+    (validate)
+
+          |
+          |
+    Merge main
+
+          |
+          v
+
+    GitHub Actions CD
+
+          |
+          v
+
+    fabric-cicd publish_all_items()
+
+          |
+          |
+          v
+
+    /fabric folder
+
+          |
+          |
+    parameter.yml replacement
+
+          |
+          v
+
+    Test Workspace
+
+          |
+          |
+    Manual Approval
+
+          |
+          v
+
+    Prod Workspace
+
+------------------------------------------------------------------------
+
+# 5. Thành phần kiến trúc
+
+  Thành phần           Vai trò
+  -------------------- -----------------------------------------------
+  `/fabric` folder     Chứa toàn bộ Fabric artifacts
+  fabric-cicd          Deploy artifacts từ Git sang Fabric workspace
+  parameter.yml        Mapping GUID giữa môi trường
+  GitHub Actions       CI/CD workflow
+  GitHub Environment   Approval gate
+  GitHub Secrets       Credential management
+  Azure Key Vault      Optional secret management
+
+------------------------------------------------------------------------
+
+# 6. GitHub Actions Deployment Flow
+
+Workflow:
+
+    Checkout Repository
+
+            |
+
+    Read /fabric folder
+
+            |
+
+    Install fabric-cicd
+
+            |
+
+    Authenticate Azure
+
+            |
+
+    Publish Fabric Items
+
+            |
+
+    Deploy Workspace
+
+Ví dụ:
+
+`.github/workflows/fabric-deploy.yml`
+
+``` yaml
+name: Fabric Deployment
+
+on:
+
+  push:
+    branches:
+      - main
+
+
+jobs:
+
+  deploy-test:
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: fabric-test
+
+
+    steps:
+
+
+    - name: Checkout
+      uses: actions/checkout@v4
+
+
+    - name: Setup Python
+
+      uses: actions/setup-python@v5
+
+      with:
+        python-version: '3.11'
+
+
+    - name: Install dependencies
+
+      run: |
+
+        pip install fabric-cicd
+
+
+    - name: Deploy Fabric
+
+      run: |
+
+        python scripts/deploy.py
 ```
-Git branch (feature/*) 
-    ↓ merge to main
-ADO Pipeline trigger tự động
-    ↓
-fabric-cicd publish_all_items()
-    ↓ (GUID auto-replace via parameter.yml)
-Test workspace  ←  Approval gate (manual approve)
-    ↓
-Prod workspace  ←  Approval gate (manual approve)
-```
 
-### Các thành phần chính
+------------------------------------------------------------------------
 
-| Thành phần | Vai trò | Ghi chú |
-|---|---|---|
-| `fabric-cicd` (Python lib) | Deploy Fabric items tự động | Microsoft-maintained, open source |
-| `parameter.yml` | Map GUIDs dev → test/prod | Giải quyết vấn đề hardcoded IDs trong Notebook |
-| ADO Pipeline YAML | Định nghĩa luồng CI/CD | Trigger on merge, stages, approvals |
-| ADO Environments | Approval gate trước mỗi môi trường | Test & Prod cần người phê duyệt |
-| Azure Key Vault + ADO Variable Groups | Quản lý credentials an toàn | Service Principal, connection strings |
+# 7. Deploy Script
 
----
+`scripts/deploy.py`
 
-## 3. Giải quyết vấn đề hardcoded GUIDs
+Luồng:
 
-Đây là vấn đề kỹ thuật đặc thù của Fabric. Khi Notebook dùng `%%configure` để attach Lakehouse, file định nghĩa sẽ lưu trực tiếp các ID như:
+    /fabric
+        |
+        |
+    fabric-cicd
+        |
+        |
+    publish_all_items()
+        |
+        |
+    Fabric Workspace
 
-```json
+Script sẽ:
+
+1.  Authenticate với Fabric.
+2.  Load source từ `/fabric`.
+3.  Apply parameter replacement.
+4.  Publish items.
+
+------------------------------------------------------------------------
+
+# 8. Environment Mapping
+
+Ví dụ:
+
+    GitHub Repository
+
+           |
+
+           |
+
+    fabric folder
+
+
+           |
+
+           |
+
+    Fabric Workspace DEV
+
+Promotion:
+
+    DEV
+
+     |
+
+     |
+
+    Test Workspace
+
+     |
+
+     |
+
+    Prod Workspace
+
+------------------------------------------------------------------------
+
+# 9. Hardcoded GUID Replacement
+
+Ví dụ Notebook:
+
+``` json
 {
-  "defaultLakehouse": {
-    "name": "lh_silver",
-    "id": "xxxxxxxx-dev-lakehouse-id",
-    "workspaceId": "xxxxxxxx-dev-workspace-id"
-  }
+ "defaultLakehouse": {
+
+    "id":"DEV-LAKEHOUSE-ID",
+
+    "workspaceId":"DEV-WORKSPACE-ID"
+
+ }
 }
 ```
 
-`fabric-cicd` tự động thay thế các GUIDs này trước khi publish, dựa trên file `parameter.yml`:
+`parameter.yml`
 
-```yaml
-# parameter.yml
+``` yaml
 find_replace:
-  - find: "xxxxxxxx-dev-workspace-id"
-    replace_with:
-      PPE: "yyyyyyyy-test-workspace-id"
-      PROD: "zzzzzzzz-prod-workspace-id"
-  - find: "xxxxxxxx-dev-lakehouse-id"
-    replace_with:
-      PPE: "yyyyyyyy-test-lakehouse-id"
-      PROD: "zzzzzzzz-prod-lakehouse-id"
+
+
+- find: DEV-WORKSPACE-ID
+
+  replace_with:
+
+    TEST: TEST-WORKSPACE-ID
+
+    PROD: PROD-WORKSPACE-ID
+
+
+
+- find: DEV-LAKEHOUSE-ID
+
+  replace_with:
+
+    TEST: TEST-LAKEHOUSE-ID
+
+    PROD: PROD-LAKEHOUSE-ID
 ```
 
-**Không cần sửa tay một dòng nào sau khi setup xong.**
+------------------------------------------------------------------------
 
----
+# 10. Approval Workflow
 
-## 4. Kế hoạch triển khai theo giai đoạn
+GitHub Environment:
 
-### Giai đoạn 1 — Setup nền tảng 
-**Mục tiêu:** Có pipeline chạy được từ dev lên Test
+    fabric-test
 
-- [ ] Tạo Service Principal trong Azure AD, cấp quyền vào Fabric workspaces
-- [ ] Setup Azure Key Vault, lưu credentials của Service Principal
-- [ ] Tạo ADO Variable Group, liên kết với Key Vault
-- [ ] Cài đặt `fabric-cicd`, viết script Python deploy cơ bản
-- [ ] Thu thập GUIDs của cả 3 môi trường, viết `parameter.yml`
-- [ ] Viết ADO Pipeline YAML với trigger on merge và 1 stage deploy lên Test
+    fabric-prod
 
-**Kết quả:** Push code → merge → pipeline tự deploy lên Test trong ~5 phút
+Production:
 
----
+    Merge main
 
-### Giai đoạn 2 — Approval workflow & Prod 
-**Mục tiêu:** Hoàn thiện luồng Test → Prod với approval gate
+         |
 
-- [ ] Tạo ADO Environments: `fabric-test` và `fabric-prod`
-- [ ] Cấu hình approval checks trên từng Environment (chỉ định người approve)
-- [ ] Thêm stage Prod vào Pipeline YAML, gắn với `fabric-prod` environment
-- [ ] Test toàn bộ luồng: dev → test (approve) → prod (approve)
-- [ ] Viết runbook hướng dẫn sử dụng cho team
+    Deploy Test
 
-**Kết quả:** Luồng đầy đủ dev → test → prod với approval, có audit log trên ADO
+         |
 
----
+    Approval Required
 
-### Giai đoạn 3 — Hardening & tối ưu
-**Mục tiêu:** Ổn định, dễ maintain, sẵn sàng scale
+         |
 
-- [ ] Thêm tham số `items_in_scope` để control loại item nào được deploy (Notebook, DataPipeline, SemanticModel…)
-- [ ] Thêm bước smoke test tự động sau mỗi deploy
-- [ ] Review và document danh sách GUIDs cần maintain
-- [ ] Hướng dẫn teammate về quy trình làm việc mới với Git branches
+    Deploy Production
 
-**Kết quả:** Pipeline production-ready, team tự vận hành được
+------------------------------------------------------------------------
 
----
+# 11. Secret Management
 
-## 5. So sánh: Trước và sau
+## Option 1 - GitHub Secrets
 
-| Tiêu chí | Hiện tại (thủ công) | Sau khi có CI/CD |
-|---|---|---|
-| Thời gian deploy | 30–60 phút/lần | ~5 phút (tự động) |
-| Sửa GUIDs | Tay, dễ sót | Tự động qua parameter.yml |
-| Approval trước Prod | Không có | Bắt buộc qua ADO gate |
-| Audit trail | Không có | Đầy đủ trên ADO (ai, khi nào, branch nào) |
-| Khả năng rollback | Khó, không rõ ràng | Git history + ADO run history |
-| Rủi ro lỗi human | Cao | Thấp |
+    Repository Settings
 
----
+            |
 
----
+    Secrets
 
-## 6. Rủi ro và cách giảm thiểu
+            |
 
-| Rủi ro | Khả năng | Cách giảm thiểu |
-|---|---|---|
-| Thiếu quyền Azure AD để tạo Service Principal | Trung bình | Xác nhận với IT/Azure admin ngay tuần 1 |
-| GUIDs thay đổi khi workspace bị recreate | Thấp | Document và có checklist cập nhật parameter.yml |
-| fabric-cicd không hỗ trợ một item type cụ thể | Thấp | Kiểm tra [compatibility list](https://microsoft.github.io/fabric-cicd/) trước khi commit |
+    CLIENT_ID
 
----
+    CLIENT_SECRET
+
+    TENANT_ID
+
+------------------------------------------------------------------------
+
+# 12. Implementation Plan
+
+## Phase 1 - Foundation
+
+-   Setup GitHub repository.
+-   Create `/fabric` folder structure.
+-   Enable GitHub Actions.
+-   Create Service Principal.
+-   Grant Fabric workspace permission.
+-   Setup GitHub Secrets.
+-   Install fabric-cicd.
+-   Create deploy.py.
+-   Create parameter.yml.
+
+Result:
+
+    git push main
+
+          |
+
+    GitHub Action
+
+          |
+
+    Deploy /fabric
+
+          |
+
+    Test Workspace
+
+------------------------------------------------------------------------
+
+## Phase 2 - Promotion Flow
+
+-   Create environments:
+
+```{=html}
+
+```
+    fabric-test
+
+    fabric-prod
+
+-   Configure reviewers.
+-   Add production deployment.
+-   Validate DEV → TEST → PROD flow.
+
+------------------------------------------------------------------------
+
+## Phase 3 - Hardening
+
+-   Add deployment validation.
+-   Add smoke test.
+-   Add rollback strategy.
+-   Control item deployment scope.
+
+Example:
+
+``` yaml
+items_in_scope:
+
+- notebooks
+
+- pipelines
+
+- lakehouses
+```
+
+------------------------------------------------------------------------
+
+# 13. So sánh trước và sau
+
+  Tiêu chí                 Hiện tại          Sau
+  ------------------------ ----------------- ------------------------
+  Source control           Manual            GitHub
+  Fabric source location   Không chuẩn hóa   `/fabric` folder
+  Deployment               Manual            GitHub Actions
+  Approval                 Không             GitHub Environment
+  GUID replacement         Manual            parameter.yml
+  Audit                    Không             GitHub Actions history
+  Rollback                 Khó               Git history
+
+------------------------------------------------------------------------
+
+# 14. Technical Note
+
+`fabric-cicd` deploy dựa trên folder `/fabric`.
+
+Không nên chỉnh sửa trực tiếp trên Fabric workspace Test/Prod.
+
+Luồng chuẩn:
+
+    Developer
+
+       |
+
+    GitHub
+
+       |
+
+    /fabric
+
+       |
+
+    GitHub Actions
+
+       |
+
+    Fabric Workspace
+
+Cần kiểm tra compatibility của các artifact:
+
+-   Notebook
+-   Data Pipeline
+-   Lakehouse
+-   Semantic Model
+
+trước khi đưa production.

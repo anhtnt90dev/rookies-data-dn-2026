@@ -19,7 +19,20 @@ export default function CustomerDashboard() {
   useEffect(() => {
     async function fetchToken() {
       try {
-        const response = await fetch("/api/getEmbedToken");
+        const storedUserId = localStorage.getItem("carpro_userId");
+        if (!storedUserId) {
+          router.push("/login");
+          return;
+        }
+
+        const response = await fetch("/api/getEmbedToken", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId: storedUserId }),
+        });
+        
         const data = await response.json();
 
         // 1 = Embed Token, 0 = AAD Token
@@ -78,7 +91,6 @@ export default function CustomerDashboard() {
         ) : !embedConfig ? (
           <div style={{ padding: 20, color: "var(--text-primary)" }}>Authenticating securely with Power BI...</div>
         ) : embedConfig.devModeFallback ? (
-          <div style={{ flex: 1, width: "100%", height: "100%" }}>
              <iframe
                 title="Dashboard 1 - Quotation Conversion & Sales Analytics"
                 width="100%"
@@ -86,10 +98,10 @@ export default function CustomerDashboard() {
                 src={embedConfig.embedUrl}
                 frameBorder="0"
                 allowFullScreen={true}
+                style={{ flex: 1, height: '100%', width: '100%', minHeight: '600px', border: 'none', borderRadius: '12px' }}
               ></iframe>
-          </div>
         ) : (
-          <div style={{ flex: 1, width: "100%", height: "100%" }}>
+          <div style={{ flex: 1, display: 'flex', width: "100%", minHeight: 0 }}>
             <PowerBIEmbed
               embedConfig={embedConfig}
               cssClassName="powerbi-container"

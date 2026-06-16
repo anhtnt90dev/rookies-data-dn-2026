@@ -22,8 +22,10 @@ export default function Login() {
     const upperId = userId.toUpperCase();
     
     if (upperId.startsWith("CUS")) {
+      localStorage.setItem("carpro_userId", upperId);
       router.push("/dashboard/customer");
     } else if (upperId.startsWith("AG")) {
+      localStorage.setItem("carpro_userId", upperId);
       router.push("/dashboard/agent");
     } else {
       setError("Invalid User ID prefix. Must start with CUS or AG.");

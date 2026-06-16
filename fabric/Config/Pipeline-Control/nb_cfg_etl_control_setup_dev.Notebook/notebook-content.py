@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "561e17c5-1ddb-4ff5-8cf0-4979fe0f6a9c",
+# META       "default_lakehouse": "a667e77c-0848-4e2e-90dc-502057b719c0",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "7cc49813-e700-4770-b90b-9613e48bb7df",
+# META       "default_lakehouse_workspace_id": "fe74f781-d77f-46e7-accd-2e57689ef181",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "561e17c5-1ddb-4ff5-8cf0-4979fe0f6a9c"
+# META           "id": "a667e77c-0848-4e2e-90dc-502057b719c0"
 # META         }
 # META       ]
 # META     }
@@ -147,39 +147,39 @@ def insert_source_table_data() -> None:
     MAPPING_PATH = "Files/config/mapping"
 
     data = [
-        (1, "crm_system", "database", "customers", "dbo.customers", "table", None, "INCREMENTAL", "customer_id",
+        (1, "crm_system", "database", "customers", "dbo.customers", "table", None, "FULL", "customer_id",
          None, "updated_date", "bronze.customer", "silver.customer",
          f"{MAPPING_PATH}/source-to-bronze/customer.json", f"{MAPPING_PATH}/bronze-to-silver/customer.json", 1, True),
 
-        (2, "crm_system", "database", "agents", "dbo.agents", "table", None, "INCREMENTAL", "agent_id",
+        (2, "crm_system", "database", "agents", "dbo.agents", "table", None, "FULL", "agent_id",
          None, "updated_date", "bronze.agent", "silver.agent",
          f"{MAPPING_PATH}/source-to-bronze/agent.json", f"{MAPPING_PATH}/bronze-to-silver/agent.json", 2, True),
 
-        (3, "crm_system", "database", "insurance_providers", "dbo.insurance_providers", "table", None, "INCREMENTAL", "provider_code",
+        (3, "crm_system", "database", "insurance_providers", "dbo.insurance_providers", "table", None, "FULL", "provider_code",
          None, "updated_date", "bronze.insurance_provider", "silver.provider",
          f"{MAPPING_PATH}/source-to-bronze/insurance_provider.json", f"{MAPPING_PATH}/bronze-to-silver/provider.json", 3, True),
 
-        (4, "crm_system", "database", "vehicle", "dbo.vehicle", "table", None, "INCREMENTAL", "vehicle_id",
+        (4, "crm_system", "database", "vehicle", "dbo.vehicle", "table", None, "FULL", "vehicle_id",
          None, "updated_date", "bronze.vehicle", "silver.vehicle",
          f"{MAPPING_PATH}/source-to-bronze/vehicle.json", f"{MAPPING_PATH}/bronze-to-silver/vehicle.json", 4, True),
 
-        (5, "crm_system", "database", "quotation", "dbo.quotation", "table", None, "INCREMENTAL", "quotation_id",
+        (5, "crm_system", "database", "quotation", "dbo.quotation", "table", None, "FULL", "quotation_id",
          None, "updated_date", "bronze.quotation", "silver.quotation",
          f"{MAPPING_PATH}/source-to-bronze/quotation.json", f"{MAPPING_PATH}/bronze-to-silver/quotation.json", 5, True),
 
-        (6, "crm_system", "database", "quotation_item", "dbo.quotation_item", "table", None, "INCREMENTAL", "quotation_item_id",
+        (6, "crm_system", "database", "quotation_item", "dbo.quotation_item", "table", None, "FULL", "quotation_item_id",
          None, "updated_date", "bronze.quotation_item", "silver.quotation_item",
          f"{MAPPING_PATH}/source-to-bronze/quotation_item.json", f"{MAPPING_PATH}/bronze-to-silver/quotation_item.json", 6, True),
 
-        (7, "policy_system", "file", "policy", "Files/landing/policy_system/policy", "json", None, "INCREMENTAL", "policy_id",
+        (7, "policy_system", "file", "policy", "Files/landing/policy_system/policy", "json", None, "FULL", "policy_id",
          None, "last_updated", "bronze.policy", "silver.policy",
          f"{MAPPING_PATH}/source-to-bronze/policy.json", f"{MAPPING_PATH}/bronze-to-silver/policy.json", 7, True),
 
-        (8, "policy_system", "file", "cancellation", "Files/landing/policy_system/cancellation", "json", None, "INCREMENTAL", "cancellation_id",
+        (8, "policy_system", "file", "cancellation", "Files/landing/policy_system/cancellation", "json", None, "FULL", "cancellation_id",
          None, "last_updated", "bronze.cancellation", "silver.cancellation",
          f"{MAPPING_PATH}/source-to-bronze/cancellation.json", f"{MAPPING_PATH}/bronze-to-silver/cancellation.json", 8, True),
 
-        (9, "payment_system", "file", "payment", "Files/landing/payment_system/payment", "json", None, "INCREMENTAL", "payment_id",
+        (9, "payment_system", "file", "payment", "Files/landing/payment_system/payment", "json", None, "FULL", "payment_id",
          None, "last_updated", "bronze.payment", "silver.payment",
          f"{MAPPING_PATH}/source-to-bronze/payment.json", f"{MAPPING_PATH}/bronze-to-silver/payment.json", 9, True),
     ]
@@ -425,6 +425,34 @@ insert_next_run_mode_data()
 insert_retry_policy_data()
 insert_dim_fact_table_data()
 insert_source_dim_fact_data()
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def update_load_type(load_type: str) -> None:
+    spark.sql(f"""
+        UPDATE cfg.source_table
+        SET load_type = '{load_type}',
+            updated_at = current_timestamp()
+        WHERE is_active = true
+    """)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# update_load_type("INCREMENTAL")
 
 # METADATA ********************
 

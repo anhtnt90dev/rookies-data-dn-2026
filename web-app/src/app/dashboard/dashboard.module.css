@@ -40,6 +40,17 @@
   background: white; /* PowerBI usually requires white background */
 }
 
+.powerbiContainer {
+  height: 100%;
+  width: 100%;
+}
+
+.powerbiContainer iframe {
+  border: none !important;
+  width: 100%;
+  height: 100%;
+}
+
 @keyframes slideDown {
   from {
     opacity: 0;

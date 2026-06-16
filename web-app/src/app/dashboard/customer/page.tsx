@@ -115,20 +115,11 @@ export default function CustomerDashboard() {
               ></iframe>
           </>
         ) : (
-          <div style={{ flex: 1, display: 'flex', width: "100%", minHeight: 0 }}>
+          <div style={{ flex: 1, display: 'flex', width: "100%", height: "100%", minHeight: 0 }}>
             <PowerBIEmbed
               embedConfig={embedConfig}
-              cssClassName="powerbi-container"
+              cssClassName={styles.powerbiContainer}
             />
-            <style jsx global>{`
-              .powerbi-container {
-                height: 100%;
-                width: 100%;
-              }
-              .powerbi-container iframe {
-                border: none !important;
-              }
-            `}</style>
           </div>
         )}
       </div>

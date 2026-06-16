@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 
 export async function POST(request: Request) {
-  const tenantId = process.env.AZURE_TENANT_ID;
-  const clientId = process.env.AZURE_CLIENT_ID;
-  const clientSecret = process.env.AZURE_CLIENT_SECRET;
+  const tenantId = process.env.TEST_AZURE_TENANT_ID;
+  const clientId = process.env.TEST_AZURE_CLIENT_ID;
+  const clientSecret = process.env.TEST_AZURE_CLIENT_SECRET;
 
   let userId = "";
   let dashboardType = "";
@@ -26,13 +26,13 @@ export async function POST(request: Request) {
   let datasetId = "";
 
   if (dashboardType === "customer") {
-    workspaceId = process.env.POWERBI_WORKSPACE_ID_CUSTOMER || "";
-    reportId = process.env.POWERBI_REPORT_ID_CUSTOMER || "";
-    datasetId = process.env.POWERBI_DATASET_ID_CUSTOMER || "";
+    workspaceId = process.env.TEST_POWERBI_WORKSPACE_ID_CUSTOMER || process.env.POWERBI_WORKSPACE_ID_CUSTOMER || "";
+    reportId = process.env.TEST_POWERBI_REPORT_ID_CUSTOMER || process.env.POWERBI_REPORT_ID_CUSTOMER || "";
+    datasetId = process.env.TEST_POWERBI_DATASET_ID_CUSTOMER || process.env.POWERBI_DATASET_ID_CUSTOMER || "";
   } else if (dashboardType === "agent") {
-    workspaceId = process.env.POWERBI_WORKSPACE_ID_AGENT || "";
-    reportId = process.env.POWERBI_REPORT_ID_AGENT || "";
-    datasetId = process.env.POWERBI_DATASET_ID_AGENT || "";
+    workspaceId = process.env.TEST_POWERBI_WORKSPACE_ID_AGENT || process.env.POWERBI_WORKSPACE_ID_AGENT || "";
+    reportId = process.env.TEST_POWERBI_REPORT_ID_AGENT || process.env.POWERBI_REPORT_ID_AGENT || "";
+    datasetId = process.env.TEST_POWERBI_DATASET_ID_AGENT || process.env.POWERBI_DATASET_ID_AGENT || "";
   } else {
     return NextResponse.json({ error: "Missing or invalid dashboardType" }, { status: 400 });
   }

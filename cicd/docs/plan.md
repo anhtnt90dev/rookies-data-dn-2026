@@ -1,15 +1,13 @@
 
 
-## 1. Vấn đề hiện tại
+## 1. Context
 
-Team hiện **chưa có quy trình deploy tự động** nào cho Fabric workspace. Điều này dẫn đến:
+**chưa có quy trình deploy tự động** nào cho Fabric workspace. Điều này dẫn đến:
 
 - Deploy thủ công tốn thời gian, dễ xảy ra lỗi sót item
 - Không có approval workflow trước khi đưa thay đổi lên Test/Prod
 - Notebooks chứa hardcoded GUIDs (Lakehouse ID, Workspace ID) — khi copy sang môi trường khác phải sửa tay từng file
 - Không có audit trail: không biết ai deploy gì, lúc nào, từ branch nào
-
-**Ước tính thời gian deploy thủ công hiện tại:** 30–60 phút/lần (bao gồm kiểm tra, copy, sửa GUIDs, test smoke)
 
 ---
 

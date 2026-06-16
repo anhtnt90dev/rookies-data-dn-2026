@@ -5,21 +5,26 @@
         "type": "Lookup",
         "typeProperties": {
           "source": {
-            "type": "AzureSqlSource",
-            "sqlReaderQuery": "select next_run_mode,\n       batch_id,\n       session_id\nfrom cfg.next_run_mode",
-            "partitionOption": "None",
-            "isolationLevel": "ReadCommitted"
+            "type": "LakehouseTableSource"
           },
           "datasetSettings": {
-            "type": "AzureSqlTable",
+            "type": "LakehouseTable",
             "typeProperties": {
               "schema": "cfg",
-              "table": "next_run_mode",
-              "database": "lh_insurance_dev"
+              "table": "next_run_mode"
             },
             "schema": [],
-            "externalReferences": {
-              "connection": "41c94ad4-2c37-4565-8d25-03a700377ef2"
+            "linkedService": {
+              "name": "lh_insurance_dev",
+              "properties": {
+                "type": "Lakehouse",
+                "typeProperties": {
+                  "artifactId": "e2adb411-3221-a686-42b5-cbe3442aa4c8",
+                  "workspaceId": "00000000-0000-0000-0000-000000000000",
+                  "rootFolder": "Tables"
+                },
+                "annotations": []
+              }
             },
             "annotations": []
           }
@@ -243,7 +248,7 @@
           {
             "activity": "nb_ingestion_gold",
             "dependencyConditions": [
-              "Succeeded"
+              "Failed"
             ]
           }
         ]

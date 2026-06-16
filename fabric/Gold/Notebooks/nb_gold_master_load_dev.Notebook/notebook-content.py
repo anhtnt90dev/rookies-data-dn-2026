@@ -100,32 +100,24 @@ def resolve_source_success(batch_id: int, conformed_statuses: dict):
             """)
             print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more dependent tables failed)")
 
-# Track conformed table load statuses in-memory
-conformed_statuses = {i: "FAILED" for i in range(1, 20)}
+# Track conformed table load statuses dynamically based on the configuration table
+all_table_ids = [int(row["id"]) for row in spark.table("cfg.dim_fact_table").select("id").collect()]
+conformed_statuses = {table_id: "FAILED" for table_id in all_table_ids}
 is_success = False
 
 try:
-    # 1. Run Dimensions Setup in Parallel (IDs: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+    # Query mappings dynamically from the control configuration table
+    dim_fact_config = spark.table("cfg.dim_fact_table").where(F.col("is_active") == True).collect()
+
+    # 1. Run Dimensions Setup in Parallel (dynamically determined)
     dim_tasks = [
-        ("nb_gold_load_dim_date_dev", {**common_args, "p_table_id": "1"}, 1),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "5"}, 5),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "6"}, 6),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "7"}, 7),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "8"}, 8),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "9"}, 9),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "10"}, 10),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "11"}, 11),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "12"}, 12),
-        ("nb_gold_load_scd1_dimensions_dev", {**common_args, "p_table_id": "13"}, 13),
-        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "2"}, 2),
-        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "3"}, 3),
-        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "4"}, 4),
-        ("nb_gold_load_scd2_dimensions_dev", {**common_args, "p_table_id": "14"}, 14)
+        (row["gold_transform_name"], {**common_args, "p_table_id": str(row["id"])}, int(row["id"]))
+        for row in dim_fact_config if row["table_type"] == "DIM"
     ]
 
-    print(f"[MASTER] Running {len(dim_tasks)} Dimensions in parallel (max_workers=8)...")
+    print(f"[MASTER] Running {len(dim_tasks)} Dimensions in parallel (max_workers=15)...")
     dim_failures = []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=15) as executor:
         futures = {
             executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
             for nb_name, args, table_id in dim_tasks
@@ -141,15 +133,12 @@ try:
                 dim_failures.append((table_id, e))
 
     if dim_failures:
-        raise Exception(f"Dimensions loading failed for tables: {[f[0] for f in dim_failures]}")
+        raise Exception(f"Failed to load dimensions: {[f[0] for f in dim_failures]}")
 
-    # 2. Run Fact Ingestions in Parallel (IDs: 15, 16, 17, 18, 19)
+    # 2. Run Fact Ingestions in Parallel (dynamically determined)
     fact_tasks = [
-        ("nb_gold_load_fact_quotation_dev", {**common_args, "p_table_id": "15"}, 15),
-        ("nb_gold_load_fact_quotation_item_dev", {**common_args, "p_table_id": "16"}, 16),
-        ("nb_gold_load_fact_policy_dev", {**common_args, "p_table_id": "17"}, 17),
-        ("nb_gold_load_fact_payment_dev", {**common_args, "p_table_id": "18"}, 18),
-        ("nb_gold_load_fact_cancellation_dev", {**common_args, "p_table_id": "19"}, 19)
+        (row["gold_transform_name"], {**common_args, "p_table_id": str(row["id"])}, int(row["id"]))
+        for row in dim_fact_config if row["table_type"] == "FACT"
     ]
 
     print(f"[MASTER] Running {len(fact_tasks)} Facts in parallel (max_workers=5)...")
@@ -170,15 +159,16 @@ try:
                 fact_failures.append((table_id, e))
 
     if fact_failures:
-        raise Exception(f"Facts loading failed for tables: {[f[0] for f in fact_failures]}")
+        raise Exception(f"Failed to load facts: {[f[0] for f in fact_failures]}")
 
     # 5. Validation Check Suite
     print("[MASTER] Running Validation Checks...")
     try:
         mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
     except Exception as val_err:
-        for i in [15, 16, 17, 18, 19]:
-            conformed_statuses[i] = "FAILED"
+        active_fact_ids = [int(row["id"]) for row in dim_fact_config if row["table_type"] == "FACT"]
+        for fact_id in active_fact_ids:
+            conformed_statuses[fact_id] = "FAILED"
         raise val_err
 
     # 6. Post-Ingestion Source Status Resolution

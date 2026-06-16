@@ -32,7 +32,7 @@ export default function CustomerDashboard() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId: storedUserId }),
+          body: JSON.stringify({ userId: storedUserId, dashboardType: "customer" }),
         });
         
         const data = await response.json();
@@ -86,7 +86,10 @@ export default function CustomerDashboard() {
           <h1>CarPro Dashboard 1</h1>
           <p>Quotation Conversion & Sales Analytics</p>
         </div>
-        <button onClick={() => router.push("/")} className="btn-primary" style={{ width: 'auto' }}>
+        <button onClick={() => {
+          localStorage.removeItem("carpro_userId");
+          router.push("/");
+        }} className="btn-primary" style={{ width: 'auto' }}>
           Sign Out
         </button>
       </header>

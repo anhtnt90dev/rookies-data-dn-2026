@@ -32,7 +32,7 @@ export default function AgentDashboard() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ userId: storedUserId }),
+          body: JSON.stringify({ userId: storedUserId, dashboardType: "agent" }),
         });
         
         const data = await response.json();
@@ -86,7 +86,10 @@ export default function AgentDashboard() {
           <h1>CarPro Dashboard 2</h1>
           <p>Agent Analytics</p>
         </div>
-        <button onClick={() => router.push("/")} className="btn-primary" style={{ width: 'auto' }}>
+        <button onClick={() => {
+          localStorage.removeItem("carpro_userId");
+          router.push("/");
+        }} className="btn-primary" style={{ width: 'auto' }}>
           Sign Out
         </button>
       </header>

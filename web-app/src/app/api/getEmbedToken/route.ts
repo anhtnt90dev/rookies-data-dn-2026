@@ -5,22 +5,13 @@ export async function POST(request: Request) {
   const tenantId = process.env.AZURE_TENANT_ID;
   const clientId = process.env.AZURE_CLIENT_ID;
   const clientSecret = process.env.AZURE_CLIENT_SECRET;
-  const workspaceId = process.env.POWERBI_WORKSPACE_ID;
-  const reportId = process.env.POWERBI_REPORT_ID;
-  const datasetId = process.env.POWERBI_DATASET_ID;
-
-  // DEV MODE FALLBACK: If credentials are missing, tell the frontend to use the public sample
-  if (!tenantId || !clientId || !clientSecret) {
-    return NextResponse.json({
-      devMode: true,
-      message: "Credentials missing. Switching to Development Mode with Public Sample Report."
-    });
-  }
 
   let userId = "";
+  let dashboardType = "";
   try {
     const body = await request.json();
     userId = body.userId;
+    dashboardType = body.dashboardType;
   } catch (e) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
@@ -29,7 +20,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing userId in request body" }, { status: 400 });
   }
 
-  const upperId = userId.toUpperCase();
+  // Determine specific Power BI variables based on dashboardType
+  let workspaceId = "";
+  let reportId = "";
+  let datasetId = "";
+
+  if (dashboardType === "customer") {
+    workspaceId = process.env.POWERBI_WORKSPACE_ID_CUSTOMER || "";
+    reportId = process.env.POWERBI_REPORT_ID_CUSTOMER || "";
+    datasetId = process.env.POWERBI_DATASET_ID_CUSTOMER || "";
+  } else if (dashboardType === "agent") {
+    workspaceId = process.env.POWERBI_WORKSPACE_ID_AGENT || "";
+    reportId = process.env.POWERBI_REPORT_ID_AGENT || "";
+    datasetId = process.env.POWERBI_DATASET_ID_AGENT || "";
+  } else {
+    return NextResponse.json({ error: "Missing or invalid dashboardType" }, { status: 400 });
+  }
+
+  // DEV MODE FALLBACK: If credentials are missing, tell the frontend to use the public sample
+  if (!tenantId || !clientId || !clientSecret || !workspaceId || !reportId || !datasetId) {
+    return NextResponse.json({
+      devMode: true,
+      message: `Missing credentials or IDs for ${dashboardType} dashboard. Switching to Development Mode with Public Sample Report.`
+    });
+  }
+
+  const upperId = userId.trim().toUpperCase();
   let role = "";
 
   if (upperId.startsWith("CUS")) {
@@ -38,10 +54,6 @@ export async function POST(request: Request) {
     role = "ROLE_AGENT";
   } else {
     return NextResponse.json({ error: "Invalid userId prefix. Must start with CUS or AG." }, { status: 400 });
-  }
-
-  if (!datasetId) {
-    return NextResponse.json({ error: "POWERBI_DATASET_ID environment variable is missing." }, { status: 500 });
   }
 
   try {
@@ -86,6 +98,7 @@ export async function POST(request: Request) {
     );
 
     const embedToken = embedResponse.data.token;
+
     // Note: embedUrl format for App-Owns-Data
     const embedUrl = `https://app.powerbi.com/reportEmbed?reportId=${reportId}&groupId=${workspaceId}`;
 

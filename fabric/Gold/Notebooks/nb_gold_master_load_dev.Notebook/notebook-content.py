@@ -63,7 +63,7 @@ common_args = {
     "run_mode": p_run_mode
 }
 
-def resolve_source_success(batch_id: int):
+def resolve_source_success(batch_id: int, conformed_statuses: dict):
     # Query mappings between Gold tables and source table IDs
     mappings = spark.table("cfg.source_dim_fact").collect()
     
@@ -73,18 +73,10 @@ def resolve_source_success(batch_id: int):
     for row in mappings:
         source_to_targets[row["source_table_id"]].append(row["dim_fact_table_id"])
     
-    # Get all successful table sessions for this batch
-    gold_statuses = spark.table("log.audit_table_session") \
-                         .where(F.col("batch_id") == F.lit(batch_id)) \
-                         .select("source_table_id", "gold_status") \
-                         .collect()
-    
-    success_table_ids = {row["source_table_id"] for row in gold_statuses if row["gold_status"] == "SUCCESS"}
-
     # Evaluate the 9 active sources
     for src_id in range(1, 10):
         mapped_targets = source_to_targets[src_id]
-        if mapped_targets and all(tgt_id in success_table_ids for tgt_id in mapped_targets):
+        if mapped_targets and all(conformed_statuses.get(tgt_id) == "SUCCESS" for tgt_id in mapped_targets):
             # All target conformed dimensions/facts processed successfully. Update source log.
             spark.sql(f"""
                 UPDATE log.audit_table_session
@@ -105,36 +97,50 @@ def resolve_source_success(batch_id: int):
                     updated_at = current_timestamp()
                 WHERE batch_id = {batch_id} AND source_table_id = {src_id}
             """)
-            print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more target lookups failed)")
+            print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more dependent tables failed)")
+
+# Track conformed table load statuses in-memory
+conformed_statuses = {i: "FAILED" for i in range(1, 20)}
+is_success = False
 
 try:
     # 1. Date Dimension Setup (ID: 1)
     print("[MASTER] Running Date Setup...")
     mssparkutils.notebook.run("nb_gold_load_dim_date_dev", 1800, common_args)
+    conformed_statuses[1] = "SUCCESS"
 
     # 2. SCD1 Dimensions Loading (IDs: 5, 6, 7, 8, 9, 10, 11, 12, 13)
     print("[MASTER] Running SCD1 Ingestions...")
     mssparkutils.notebook.run("nb_gold_load_scd1_dimensions_dev", 1800, common_args)
+    for i in [5, 6, 7, 8, 9, 10, 11, 12, 13]:
+        conformed_statuses[i] = "SUCCESS"
 
     # 3. SCD2 Dimensions Loading (IDs: 2, 3, 4, 14)
     print("[MASTER] Running SCD2 Ingestions...")
     mssparkutils.notebook.run("nb_gold_load_scd2_dimensions_dev", 1800, common_args)
+    for i in [2, 3, 4, 14]:
+        conformed_statuses[i] = "SUCCESS"
 
     # 4. Fact Ingestions
     print("[MASTER] Running Fact Quotation Ingestion...")
     mssparkutils.notebook.run("nb_gold_load_fact_quotation_dev", 1800, common_args)
+    conformed_statuses[15] = "SUCCESS"
 
     print("[MASTER] Running Fact Quotation Item Ingestion...")
     mssparkutils.notebook.run("nb_gold_load_fact_quotation_item_dev", 1800, common_args)
+    conformed_statuses[16] = "SUCCESS"
 
     print("[MASTER] Running Fact Policy Ingestion...")
     mssparkutils.notebook.run("nb_gold_load_fact_policy_dev", 1800, common_args)
+    conformed_statuses[17] = "SUCCESS"
 
     print("[MASTER] Running Fact Payment Ingestion...")
     mssparkutils.notebook.run("nb_gold_load_fact_payment_dev", 1800, common_args)
+    conformed_statuses[18] = "SUCCESS"
 
     print("[MASTER] Running Fact Cancellation Ingestion...")
     mssparkutils.notebook.run("nb_gold_load_fact_cancellation_dev", 1800, common_args)
+    conformed_statuses[19] = "SUCCESS"
 
     # 5. Validation Check Suite
     print("[MASTER] Running Validation Checks...")
@@ -142,7 +148,7 @@ try:
 
     # 6. Post-Ingestion Source Status Resolution
     print("[MASTER] Running Source Success Matrix Resolution...")
-    resolve_source_success(p_batch_id)
+    resolve_source_success(p_batch_id, conformed_statuses)
 
     # 7. Complete master session successfully
     print("[MASTER] Finishing pipeline session successfully...")
@@ -153,12 +159,19 @@ try:
     reset_next_run_mode()
 
     print("[MASTER] Gold Layer Master Ingestion completed successfully.")
-    mssparkutils.notebook.exit("SUCCESS")
+    is_success = True
 
 except Exception as err:
     print(f"[MASTER ERROR] Gold Layer pipeline execution failed: {err}")
+    try:
+        resolve_source_success(p_batch_id, conformed_statuses)
+    except Exception as resolve_err:
+        print(f"[MASTER ERROR] Failed to resolve source status post-failure: {resolve_err}")
     # Propagate exception to trigger handle_failed_gold downstream error handler
     raise err
+
+if is_success:
+    mssparkutils.notebook.exit("SUCCESS")
 
 # METADATA ********************
 

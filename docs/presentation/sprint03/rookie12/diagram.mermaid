@@ -1,0 +1,31 @@
+flowchart TD
+    subgraph DEVELOPER_NOTEBOOK["Your Layer Notebook (Bronze / Silver / Gold)"]
+        START["1. Start Notebook Execution"]
+        START --> INIT_SESSION["2. Call nb_insert_audit_table_session<br/>(Pass table_name, layer, run_id)"]
+        
+        INIT_SESSION --> TRANSFORM["3. Execute Data Processing"]
+        
+        TRANSFORM -.->|Identify Invalid Rows| CALL_INVALID["4. Call log_invalid_record()<br/>(Pass dataframe or row)"]
+        
+        TRANSFORM -.->|Unhandled Exception| CATCH["5. Catch Error Block"]
+        CATCH --> CALL_UPDATE["6. Call nb_update_audit_session_and_next_run_mode<br/>(Pass session_id, batch_id)"]
+    end
+
+    subgraph HELPER_INTERNALS["Helper Notebook Mechanics (What happens inside)"]
+        INIT_SESSION -.->|Creates new record| AUDIT_DB_1[(log.audit_table_session)]
+        
+        CALL_INVALID -.->|Appends to central log| AUDIT_DB_2[(log.invalid_record)]
+        
+        CALL_UPDATE -.->|Updates Config| SET_RECOVERY["Set cfg.next_run_mode = 'RECOVERY'"]
+        SET_RECOVERY -.->|Updates Log| MARK_FAILED["Set log.audit_session status = 'FAILED'"]
+    end
+
+    classDef default fill:#E1F5EE,stroke:#0F6E56,color:#085041
+    classDef error fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
+    classDef success fill:#EAF3DE,stroke:#3B6D11,color:#27500A
+    classDef terminal fill:#EEEDFE,stroke:#534AB7,color:#3C3489
+    classDef module fill:#FAEEDA,stroke:#854F0B,color:#633806
+    
+    class DEVELOPER_NOTEBOOK module
+    class HELPER_INTERNALS success
+    class CATCH,CALL_UPDATE,CALL_INVALID error

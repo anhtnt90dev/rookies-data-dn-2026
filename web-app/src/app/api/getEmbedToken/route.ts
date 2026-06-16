@@ -33,9 +33,9 @@ export async function POST(request: Request) {
   let role = "";
 
   if (upperId.startsWith("CUS")) {
-    role = "CustomerRole";
+    role = "ROLE_CUSTOMER";
   } else if (upperId.startsWith("AG")) {
-    role = "AgentRole";
+    role = "ROLE_AGENT";
   } else {
     return NextResponse.json({ error: "Invalid userId prefix. Must start with CUS or AG." }, { status: 400 });
   }

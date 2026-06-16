@@ -19,21 +19,21 @@ sequenceDiagram
     participant Backend as Web API (Backend)<br/>src/app/api/getEmbedToken
     participant Azure as Microsoft Entra ID
     participant PowerBI as Power BI Service
-    
-    User->>Frontend: Enters ID (e.g., CUS0001) and clicks Sign In
+
+        User->>Frontend: Enters ID (e.g., AG0001) and clicks Sign In
     Frontend->>Frontend: Validates prefix, saves ID to localStorage
-    Frontend->>Frontend: Routes to /dashboard/customer
-    Frontend->>Backend: POST /api/getEmbedToken { userId: "CUS0001" }
-    
+    Frontend->>Frontend: Routes to /dashboard/agent
+    Frontend->>Backend: POST /api/getEmbedToken { userId: "AG0001" }
+
     rect rgb(240, 248, 255)
         Note over Backend, PowerBI: Secure Server-to-Server Communication
-        Backend->>Backend: Maps "CUS" -> "CustomerRole"
+        Backend->>Backend: Maps "AG" -> "ROLE_AGENT"
         Backend->>Azure: Authenticates Service Principal (Client Credentials)
         Azure-->>Backend: Returns Azure AD Access Token
-        Backend->>PowerBI: POST GenerateToken with RLS payload<br/>(username: CUS0001, roles: [CustomerRole])
-        PowerBI-->>Backend: Returns secure Embed Token locked to CUS0001
+        Backend->>PowerBI: POST GenerateToken with RLS payload<br/>(username: AG0001, roles: [ROLE_AGENT])
+        PowerBI-->>Backend: Returns secure Embed Token locked to AG0001
     end
-    
+
     Backend-->>Frontend: Returns Embed Token & Embed URL
     Frontend->>Frontend: powerbi-client-react SDK initializes
     Frontend-->>User: Renders secure iframe with filtered data
@@ -54,15 +54,16 @@ The entry point of the application. It acts as the identity provider for our App
 
 ### 2. Backend Token Orchestrator (`src/app/api/getEmbedToken/route.ts`)
 A secure Next.js API route that acts as the trusted middleman. It holds the Azure App Registration secrets and communicates with Microsoft APIs.
-- **Role Inference:** Parses the incoming POST body for `userId`. Automatically infers the Power BI role based on the prefix (e.g., assigning `CustomerRole` to `CUS` users).
+- **Role Inference:** Parses the incoming POST body for `userId`. Automatically infers the Power BI role based on the prefix (e.g., assigning `ROLE_CUSTOMER` to `CUS` users).
 - **Service Principal Auth:** Reaches out to `login.microsoftonline.com` using the `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` to obtain a master Access Token.
-- **RLS Payload Generation:** Makes a request to the Power BI `GenerateToken` API, injecting the `identities` array (mapping the exact `userId`, inferred role, and `POWERBI_DATASET_ID`). 
-- **Dev Mode Fallback:** Automatically detects if Azure credentials are missing from the environment and switches the frontend into a safe "Development Mode" to prevent crashing.
+- **RLS Payload Generation:** Makes a request to the Power BI `GenerateToken` API, injecting the `identities` array (mapping the exact `userId`, inferred role, and `POWERBI_DATASET_ID`).
+- **Dev Mode Fallback:** Automatically detects if Azure credentials are missing from the environment and switches the frontend into a safe "Development Mode" to prevent crashing. In this mode, instead of a real Power BI report, the frontend renders a static mock-up dashboard and displays a warning banner stating "Running Offline: Azure Credentials Missing".
 
 ### 3. Frontend Dashboard Views (`src/app/dashboard/...`)
 React components representing the final landing pages for the user.
 - On mount, they retrieve the `carpro_userId` from `localStorage` (kicking unauthenticated users back to `/login`).
 - They ping the internal `/api/getEmbedToken` route to fetch the secure token.
+- **Token Refresh Strategy:** Power BI Embed tokens expire after 1 hour. To prevent the dashboard from crashing, the frontend uses a proactive timer. Every 50 minutes, the frontend silently calls `/api/getEmbedToken` in the background to fetch a fresh token, and updates the Power BI SDK instance without reloading the iframe.
 - They utilize the official `@microsoft/powerbi-client-react` SDK (`<PowerBIEmbed>`) to spawn an `iframe` and securely bind the Power BI report to the UI.
 
 ---

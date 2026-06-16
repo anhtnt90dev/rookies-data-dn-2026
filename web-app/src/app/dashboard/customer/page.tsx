@@ -17,6 +17,8 @@ export default function CustomerDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
     async function fetchToken() {
       try {
         const storedUserId = localStorage.getItem("carpro_userId");
@@ -71,6 +73,10 @@ export default function CustomerDashboard() {
     }
 
     fetchToken();
+    // Refresh the token every 50 minutes (50 * 60 * 1000 = 3000000 ms)
+    intervalId = setInterval(fetchToken, 3000000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
@@ -91,6 +97,10 @@ export default function CustomerDashboard() {
         ) : !embedConfig ? (
           <div style={{ padding: 20, color: "var(--text-primary)" }}>Authenticating securely with Power BI...</div>
         ) : embedConfig.devModeFallback ? (
+          <>
+            <div style={{ padding: "10px 20px", backgroundColor: "var(--error)", color: "white", borderRadius: "8px", marginBottom: "10px", textAlign: "center" }}>
+              <strong>Running Offline:</strong> Azure Credentials Missing. Displaying public sample report.
+            </div>
              <iframe
                 title="Dashboard 1 - Quotation Conversion & Sales Analytics"
                 width="100%"
@@ -100,6 +110,7 @@ export default function CustomerDashboard() {
                 allowFullScreen={true}
                 style={{ flex: 1, height: '100%', width: '100%', minHeight: '600px', border: 'none', borderRadius: '12px' }}
               ></iframe>
+          </>
         ) : (
           <div style={{ flex: 1, display: 'flex', width: "100%", minHeight: 0 }}>
             <PowerBIEmbed

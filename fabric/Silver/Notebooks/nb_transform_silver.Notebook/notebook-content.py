@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -1301,7 +1301,6 @@ print(
     f"  mapping_path      = {MAPPING_PATH}\n"
     f"  primary_key       = {PRIMARY_KEY_COLUMNS}\n"
     f"  watermark_column  = {WATERMARK_COLUMN}\n"
-    f"  run_mode          = {current_run_mode}\n"
     f"  load_type         = {resolved_load_type}"
 )
 
@@ -1339,24 +1338,8 @@ COLUMN_WATERMARK_VALUE:str = "watermark_value"
 
 # CELL ********************
 
-# DUMP START SESSION PIPELINE LOG
-# try:
-#     session_id_dump = start_pipeline_session(
-#         pipeline_name="TEST_SILVER_LAYER",
-#         pipeline_run_id="PL_01",
-#         batch_id=batch_id,
-#         run_mode=current_run_mode,
-#     )
-
-#     print(f"[AUDIT] Started table layer session")
-# except Exception as audit_start_error:
-#     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
-
-
-
 session_id = p_session_id
 pipeline_run_id = p_pipeline_run_id
-
 
 # METADATA ********************
 
@@ -1471,19 +1454,7 @@ try:
         primary_key_columns=PRIMARY_KEY_COLUMNS,
     )
 
-    # Skip records already in Silver with the same hash (no data change)
-    # Only applies to incremental loads — full load always overwrites
-    if resolved_load_type == LOAD_TYPE_INCREMENTAL:
-        deduped_final_df: DataFrame = deduplicate_against_silver(
-            incoming_df=deduped_batch_df,
-            silver_table_name=SILVER_TABLE_NAME,
-            primary_key_columns=PRIMARY_KEY_COLUMNS,
-        )
-    else:
-        deduped_final_df = deduped_batch_df
-
-    # Drop the internal hash column before writing to Silver
-    mapped_silver_df_final: DataFrame = deduped_final_df.drop("__row_hash")
+    mapped_silver_df_final: DataFrame = deduped_batch_df.drop("__row_hash")
 
     # -----------------------------------------------------------------------
     # STEP 5 — Data Quality (DQ) Validation
@@ -1643,7 +1614,6 @@ print(f"  Notebook          : nb_ingest_bronze_silver_dev")
 print(f"  Environment       : {run_env}")
 print(f"  Session ID        : {session_id}")
 print(f"  Batch ID          : {batch_id}")
-print(f"  Run mode          : {current_run_mode}")
 print(f"  Load type         : {resolved_load_type}")
 print(f"  Source (Bronze)   : {BRONZE_TABLE_NAME}")
 print(f"  Target (Silver)   : {SILVER_TABLE_NAME}")
@@ -1669,7 +1639,6 @@ summary = {
     "notebook": "nb_ingest_bronze_silver_dev",
     "session_id": session_id,
     "batch_id": batch_id,
-    "run_mode": current_run_mode,
     "load_type": resolved_load_type,
     "source_table": BRONZE_TABLE_NAME,
     "target_table": SILVER_TABLE_NAME,

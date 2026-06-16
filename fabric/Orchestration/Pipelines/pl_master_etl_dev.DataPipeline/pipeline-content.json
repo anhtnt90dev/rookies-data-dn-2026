@@ -35,71 +35,6 @@
       {
         "type": "TridentNotebook",
         "typeProperties": {
-          "notebookId": "2b2495c8-2dca-9efc-4863-611891820ce5",
-          "workspaceId": "00000000-0000-0000-0000-000000000000",
-          "parameters": {
-            "run_mode": {
-              "value": {
-                "value": "@variables('run_mode')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "batch_id": {
-              "value": {
-                "value": "@variables('batch_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "pipeline_run_id": {
-              "value": {
-                "value": "@pipeline().RunId",
-                "type": "Expression"
-              },
-              "type": "string"
-            },
-            "previous_session_id": {
-              "value": {
-                "value": "@variables('previous_session_id')",
-                "type": "Expression"
-              },
-              "type": "string"
-            }
-          }
-        },
-        "policy": {
-          "timeout": "0.12:00:00",
-          "retry": 0,
-          "retryIntervalInSeconds": 30,
-          "secureInput": false,
-          "secureOutput": false
-        },
-        "name": "insert_audit_session",
-        "dependsOn": [
-          {
-            "activity": "set_previous_session_id_variable",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          },
-          {
-            "activity": "set_run_mode_variable",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          },
-          {
-            "activity": "set_batch_id_variable",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
-        "type": "TridentNotebook",
-        "typeProperties": {
           "notebookId": "8254becd-bc2e-9c7e-49ad-5d70340ddc2b",
           "workspaceId": "00000000-0000-0000-0000-000000000000",
           "parameters": {
@@ -180,7 +115,7 @@
         "typeProperties": {
           "variableName": "session_id",
           "value": {
-            "value": "@json(activity('insert_audit_session').output.result.exitValue).session_id",
+            "value": "@guid()",
             "type": "Expression"
           }
         },
@@ -191,7 +126,7 @@
         "name": "set_session_id_variable",
         "dependsOn": [
           {
-            "activity": "insert_audit_session",
+            "activity": "lkp_next_run_mode",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -378,6 +313,13 @@
                 "type": "Expression"
               },
               "type": "string"
+            },
+            "pipeline_run_id": {
+              "value": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              },
+              "type": "string"
             }
           }
         },
@@ -390,6 +332,24 @@
         },
         "name": "ingestion",
         "dependsOn": [
+          {
+            "activity": "set_batch_id_variable",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "set_run_mode_variable",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "set_previous_session_id_variable",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
           {
             "activity": "set_session_id_variable",
             "dependencyConditions": [

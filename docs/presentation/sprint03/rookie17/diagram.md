@@ -1,5 +1,9 @@
 # Master Pipeline - Source-to-Bronze Processing Flow
 
+> **Source of Truth**
+>
+> This Mermaid diagram is the source of truth for the Source-to-Bronze pipeline execution flow. It supersedes any previous draw.io or image-based diagrams.
+
 ## Workflow Diagram
 
 ```mermaid
@@ -11,11 +15,11 @@ flowchart TD
     C -->|NEW| D[Generate new batch_id]
     C -->|RECOVERY| E[Reuse existing batch_id<br/>and previous_session_id]
 
-    D --> F[Set Pipeline Variables]
+    D --> F[Generate session_id]
     E --> F
 
-    F --> G[Insert audit_session]
-    G --> H[Set session_id]
+    F --> G[Set Pipeline Variables]
+    G --> H[Insert audit_session]
 
     H --> I[Lookup active source_table config]
     I --> J[Insert audit_table_session for all active sources]

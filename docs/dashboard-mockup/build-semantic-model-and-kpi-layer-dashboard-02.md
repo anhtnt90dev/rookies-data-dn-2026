@@ -16,7 +16,7 @@ Please review the semantic model, KPI calculations, business logic, and dashboar
 
 **Dashboard Link:**
 
-> [\[Power BI Service URL here\]](https://app.powerbi.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/92070815-9831-44df-affb-ecd0c38482e3?ctid=039815dd-00ae-48d7-adbb-090e93dcbc01&pbi_source=linkShare)
+> [\[Power BI Service report - Dashboard 02\]](https://app.powerbi.com/groups/9199cf3f-9e5c-41b4-a4be-8eecf20f108d/reports/92070815-9831-44df-affb-ecd0c38482e3?ctid=039815dd-00ae-48d7-adbb-090e93dcbc01&pbi_source=linkShare)
 
 ### Main Components
 
@@ -64,6 +64,9 @@ The KPI measures have been implemented and reviewed within the semantic model.
 | Total Written Premium    | Total insurance premium written (VND)              |
 | Total Collected Premium   | Total insurance premium collected (VND)       |
 
+> Note:
+> The KPI table above provides example dashboard measures only.
+> Detailed KPI definitions, calculation logic, source fact tables, dimensions, filters, and DAX implementations are documented in the KPI Measures Documentation linked in the Supporting Files section below.
 ---
 
 ## Review Checklist

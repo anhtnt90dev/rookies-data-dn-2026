@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "a667e77c-0848-4e2e-90dc-502057b719c0",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "fe74f781-d77f-46e7-accd-2e57689ef181",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "a667e77c-0848-4e2e-90dc-502057b719c0"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -22,10 +22,23 @@
 
 # CELL ********************
 
-def create_schema() -> None:
-    spark.sql("CREATE SCHEMA IF NOT EXISTS cfg")
+spark.sql("""TRUNCATE TABLE bronze.cancellation""")
 
-create_schema()
+spark.sql("""TRUNCATE TABLE bronze.payment""")
+
+spark.sql("""TRUNCATE TABLE bronze.policy""")
+
+spark.sql("""TRUNCATE TABLE bronze.customer""")
+
+spark.sql("""TRUNCATE TABLE bronze.agent""")
+
+spark.sql("""TRUNCATE TABLE bronze.insurance_provider""")
+
+spark.sql("""TRUNCATE TABLE bronze.vehicle""")
+
+spark.sql("""TRUNCATE TABLE bronze.quotation""")
+
+spark.sql("""TRUNCATE TABLE bronze.quotation_item""")
 
 # METADATA ********************
 
@@ -36,101 +49,60 @@ create_schema()
 
 # CELL ********************
 
-def create_config_tables() -> None:
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.source_table (
-        id BIGINT,
-        source_system STRING,
-        source_type STRING,
-        source_name STRING,
-        source_location STRING,
-        source_format STRING,
-        delimiter STRING,
-        load_type STRING,
-        primary_key STRING,
-        source_to_bronze_mapping_path STRING,
-        bronze_to_silver_mapping_path STRING,
-        silver_transform_name STRING,
-        watermark_column STRING,
-        bronze_table_name STRING,
-        silver_table_name STRING,
-        load_sequence INT,
-        is_active BOOLEAN,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.dim_fact_table (
-        id BIGINT,
-        table_name STRING,
-        table_type STRING,
-        gold_transform_name STRING,
-        load_sequence INT,
-        upsert_key STRING,
-        is_active BOOLEAN,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.watermark (
-        source_table_id BIGINT,
-        watermark_value TIMESTAMP,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.source_dim_fact (
-        dim_fact_table_id BIGINT,
-        source_table_id BIGINT,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.next_run_mode (
-        next_run_mode STRING,
-        batch_id BIGINT,
-        session_id STRING,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-    spark.sql("""
-    CREATE TABLE IF NOT EXISTS cfg.retry_policy (
-        id BIGINT,
-        policy_name STRING,
-        max_retry_count INT,
-        retry_delay_seconds INT,
-        backoff_strategy STRING,
-        retryable_error_types STRING,
-        non_retryable_error_types STRING,
-        is_active BOOLEAN,
-        created_at TIMESTAMP,
-        updated_at TIMESTAMP
-    )
-    USING DELTA
-    """)
-
-create_config_tables()
+# MAGIC %%sql
+# MAGIC -- =====================================================================
+# MAGIC -- Project: CarPro Insurance Analytics
+# MAGIC -- Layer: Silver
+# MAGIC -- Purpose:
+# MAGIC -- Remove all data from Silver tables while preserving table schemas.
+# MAGIC -- =====================================================================
+# MAGIC 
+# MAGIC TRUNCATE TABLE silver.cancellation;
+# MAGIC TRUNCATE TABLE silver.payment;
+# MAGIC TRUNCATE TABLE silver.policy;
+# MAGIC TRUNCATE TABLE silver.customer;
+# MAGIC TRUNCATE TABLE silver.agent;
+# MAGIC TRUNCATE TABLE silver.provider;
+# MAGIC TRUNCATE TABLE silver.vehicle;
+# MAGIC TRUNCATE TABLE silver.quotation;
+# MAGIC TRUNCATE TABLE silver.quotation_item;
 
 # METADATA ********************
 
 # META {
-# META   "language": "python",
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC 
+# MAGIC TRUNCATE TABLE gold.dim_date;
+# MAGIC TRUNCATE TABLE gold.dim_customer;
+# MAGIC TRUNCATE TABLE gold.dim_agent;
+# MAGIC TRUNCATE TABLE gold.dim_provider;
+# MAGIC TRUNCATE TABLE gold.dim_package;
+# MAGIC TRUNCATE TABLE gold.dim_coverage;
+# MAGIC TRUNCATE TABLE gold.dim_quotation;
+# MAGIC TRUNCATE TABLE gold.dim_policy;
+# MAGIC TRUNCATE TABLE gold.dim_quotation_status;
+# MAGIC TRUNCATE TABLE gold.dim_policy_status;
+# MAGIC TRUNCATE TABLE gold.dim_payment_status;
+# MAGIC TRUNCATE TABLE gold.dim_payment_method;
+# MAGIC TRUNCATE TABLE gold.dim_cancellation_reason;
+# MAGIC TRUNCATE TABLE gold.dim_vehicle;
+# MAGIC 
+# MAGIC TRUNCATE TABLE gold.fact_quotation;
+# MAGIC TRUNCATE TABLE gold.fact_quotation_item;
+# MAGIC TRUNCATE TABLE gold.fact_policy;
+# MAGIC TRUNCATE TABLE gold.fact_payment;
+# MAGIC TRUNCATE TABLE gold.fact_cancellation;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }
 
@@ -394,15 +366,7 @@ def insert_source_dim_fact_data() -> None:
 
     df.write.format("delta").mode("overwrite").saveAsTable("cfg.source_dim_fact")
 
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
+    
 spark.sql("""TRUNCATE TABLE cfg.source_table""")
 spark.sql("""TRUNCATE TABLE cfg.next_run_mode""")
 spark.sql("""TRUNCATE TABLE cfg.watermark""")
@@ -410,14 +374,7 @@ spark.sql("""TRUNCATE TABLE cfg.retry_policy""")
 spark.sql("""TRUNCATE TABLE cfg.source_dim_fact""")
 spark.sql("""TRUNCATE TABLE cfg.dim_fact_table""")
 
-# METADATA ********************
 
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
 
 insert_source_table_data()
 insert_watermark_data()
@@ -435,28 +392,19 @@ insert_source_dim_fact_data()
 
 # CELL ********************
 
-def update_load_type(load_type: str) -> None:
-    spark.sql(f"""
-        UPDATE cfg.source_table
-        SET load_type = '{load_type}',
-            updated_at = current_timestamp()
-        WHERE is_active = true
-    """)
+# MAGIC %%sql
+# MAGIC 
+# MAGIC TRUNCATE TABLE log.audit_session;
+# MAGIC TRUNCATE TABLE log.audit_table_session;
+# MAGIC TRUNCATE TABLE log.audit_detail;
+# MAGIC TRUNCATE TABLE log.audit_file_session;
+# MAGIC TRUNCATE TABLE log.retry_log;
+# MAGIC TRUNCATE TABLE log.invalid_record;
+
 
 # METADATA ********************
 
 # META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-# update_load_type("INCREMENTAL")
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
+# META   "language": "sparksql",
 # META   "language_group": "synapse_pyspark"
 # META }

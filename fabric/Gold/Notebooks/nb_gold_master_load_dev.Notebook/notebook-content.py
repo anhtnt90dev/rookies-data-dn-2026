@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "126c09a8-79bf-4e16-9e56-5e7c93311e29",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "6358469d-5cd2-48a3-8d0f-c9583b40d1fa",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "126c09a8-79bf-4e16-9e56-5e7c93311e29"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -35,7 +35,7 @@
 
 p_session_id = ""
 p_batch_id = ""
-p_run_mode = "NEW"
+p_run_mode = ""
 
 # METADATA ********************
 
@@ -47,6 +47,7 @@ p_run_mode = "NEW"
 # CELL ********************
 
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pyspark.sql import functions as F
 
 # Cast parameters safely
@@ -99,52 +100,76 @@ def resolve_source_success(batch_id: int, conformed_statuses: dict):
             """)
             print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more dependent tables failed)")
 
-# Track conformed table load statuses in-memory
-conformed_statuses = {i: "FAILED" for i in range(1, 20)}
+# Track conformed table load statuses dynamically based on the configuration table
+all_table_ids = [int(row["id"]) for row in spark.table("cfg.dim_fact_table").select("id").collect()]
+conformed_statuses = {table_id: "FAILED" for table_id in all_table_ids}
 is_success = False
 
 try:
-    # 1. Date Dimension Setup (ID: 1)
-    print("[MASTER] Running Date Setup...")
-    mssparkutils.notebook.run("nb_gold_load_dim_date_dev", 1800, common_args)
-    conformed_statuses[1] = "SUCCESS"
+    # Query mappings dynamically from the control configuration table
+    dim_fact_config = spark.table("cfg.dim_fact_table").where(F.col("is_active") == True).collect()
 
-    # 2. SCD1 Dimensions Loading (IDs: 5, 6, 7, 8, 9, 10, 11, 12, 13)
-    print("[MASTER] Running SCD1 Ingestions...")
-    mssparkutils.notebook.run("nb_gold_load_scd1_dimensions_dev", 1800, common_args)
-    for i in [5, 6, 7, 8, 9, 10, 11, 12, 13]:
-        conformed_statuses[i] = "SUCCESS"
+    # 1. Run Dimensions Setup in Parallel (dynamically determined)
+    dim_tasks = [
+        (row["gold_transform_name"], {**common_args, "p_table_id": str(row["id"])}, int(row["id"]))
+        for row in dim_fact_config if row["table_type"] == "DIM"
+    ]
 
-    # 3. SCD2 Dimensions Loading (IDs: 2, 3, 4, 14)
-    print("[MASTER] Running SCD2 Ingestions...")
-    mssparkutils.notebook.run("nb_gold_load_scd2_dimensions_dev", 1800, common_args)
-    for i in [2, 3, 4, 14]:
-        conformed_statuses[i] = "SUCCESS"
+    print(f"[MASTER] Running {len(dim_tasks)} Dimensions in parallel (max_workers=15)...")
+    dim_failures = []
+    with ThreadPoolExecutor(max_workers=15) as executor:
+        futures = {
+            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            for nb_name, args, table_id in dim_tasks
+        }
+        for future in as_completed(futures):
+            nb_name, table_id = futures[future]
+            try:
+                future.result()
+                conformed_statuses[table_id] = "SUCCESS"
+                print(f"[MASTER] Dimension table ID {table_id} loaded successfully.")
+            except Exception as e:
+                print(f"[MASTER ERROR] Dimension table ID {table_id} ({nb_name}) failed: {e}")
+                dim_failures.append((table_id, e))
 
-    # 4. Fact Ingestions
-    print("[MASTER] Running Fact Quotation Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_quotation_dev", 1800, common_args)
-    conformed_statuses[15] = "SUCCESS"
+    if dim_failures:
+        raise Exception(f"Failed to load dimensions: {[f[0] for f in dim_failures]}")
 
-    print("[MASTER] Running Fact Quotation Item Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_quotation_item_dev", 1800, common_args)
-    conformed_statuses[16] = "SUCCESS"
+    # 2. Run Fact Ingestions in Parallel (dynamically determined)
+    fact_tasks = [
+        (row["gold_transform_name"], {**common_args, "p_table_id": str(row["id"])}, int(row["id"]))
+        for row in dim_fact_config if row["table_type"] == "FACT"
+    ]
 
-    print("[MASTER] Running Fact Policy Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_policy_dev", 1800, common_args)
-    conformed_statuses[17] = "SUCCESS"
+    print(f"[MASTER] Running {len(fact_tasks)} Facts in parallel (max_workers=5)...")
+    fact_failures = []
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            for nb_name, args, table_id in fact_tasks
+        }
+        for future in as_completed(futures):
+            nb_name, table_id = futures[future]
+            try:
+                future.result()
+                conformed_statuses[table_id] = "SUCCESS"
+                print(f"[MASTER] Fact table ID {table_id} loaded successfully.")
+            except Exception as e:
+                print(f"[MASTER ERROR] Fact table ID {table_id} ({nb_name}) failed: {e}")
+                fact_failures.append((table_id, e))
 
-    print("[MASTER] Running Fact Payment Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_payment_dev", 1800, common_args)
-    conformed_statuses[18] = "SUCCESS"
-
-    print("[MASTER] Running Fact Cancellation Ingestion...")
-    mssparkutils.notebook.run("nb_gold_load_fact_cancellation_dev", 1800, common_args)
-    conformed_statuses[19] = "SUCCESS"
+    if fact_failures:
+        raise Exception(f"Failed to load facts: {[f[0] for f in fact_failures]}")
 
     # 5. Validation Check Suite
     print("[MASTER] Running Validation Checks...")
-    mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
+    try:
+        mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
+    except Exception as val_err:
+        active_fact_ids = [int(row["id"]) for row in dim_fact_config if row["table_type"] == "FACT"]
+        for fact_id in active_fact_ids:
+            conformed_statuses[fact_id] = "FAILED"
+        raise val_err
 
     # 6. Post-Ingestion Source Status Resolution
     print("[MASTER] Running Source Success Matrix Resolution...")

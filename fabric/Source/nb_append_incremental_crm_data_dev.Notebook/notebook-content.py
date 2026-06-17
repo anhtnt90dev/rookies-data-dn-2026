@@ -8,14 +8,17 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "14b073f3-0eb9-4315-8d49-155c39392779",
+# META       "default_lakehouse": "a667e77c-0848-4e2e-90dc-502057b719c0",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "21e1cea5-9786-4ce5-aa47-1d8255b69b82",
+# META       "default_lakehouse_workspace_id": "fe74f781-d77f-46e7-accd-2e57689ef181",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "14b073f3-0eb9-4315-8d49-155c39392779"
+# META           "id": "a667e77c-0848-4e2e-90dc-502057b719c0"
 # META         }
 # META       ]
+# META     },
+# META     "warehouse": {
+# META       "known_warehouses": []
 # META     }
 # META   }
 # META }
@@ -29,11 +32,11 @@ from decimal import Decimal
 
 # =========================
 # Incremental mock data
-# From 2025-05-26 to 2025-06-06
+# From 2026-05-26 to 2026-06-01
 # =========================
 
-incremental_start_date = datetime(2025, 5, 26, 0, 0, 0)
-incremental_end_date = datetime(2025, 6, 6, 12, 0, 0)
+incremental_start_date = datetime(2026, 5, 26, 0, 0, 0)
+incremental_end_date = datetime(2026, 6, 1, 12, 0, 0)
 
 # Number of new records
 new_record_count = 200

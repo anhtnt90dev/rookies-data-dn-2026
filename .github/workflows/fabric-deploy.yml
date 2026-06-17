@@ -1,0 +1,96 @@
+name: Deploy Fabric 
+on:
+  # Auto deploy only after merge into dev
+  push:
+    branches:
+      - dev
+    paths:
+      - fabric/**
+  # Manual deployment
+  workflow_dispatch:
+    inputs:
+      deploy_branch:
+        description: "Branch to deploy"
+        required: true
+        type: choice
+        options:
+          - dev
+          - feature/*
+          - main
+
+      target_environment:
+        description: "Fabric environment"
+        required: true
+        type: choice
+        options:
+          - DEV
+          - TEST
+          - PROD
+
+permissions:
+  contents: read
+env:
+  ITEMS_IN_SCOPE: '["Notebook","DataPipeline","Lakehouse","SemanticModel","Report","VariableLibrary"]'
+
+jobs:
+  DeployToFabric:
+    name: Deploy Fabric Workspace
+    runs-on: ubuntu-latest
+    environment:
+      ${{ 
+        github.event_name == 'workflow_dispatch' 
+        && inputs.target_environment
+        || 'DEV'
+      }}
+
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+        with:
+          ref: |
+
+            ${{ 
+              github.event_name == 'workflow_dispatch'
+              && inputs.deploy_branch
+              || github.ref_name
+            }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fabric-cicd azure-identity
+
+      - name: Resolve workspace
+        id: workspace
+        run: |
+          if [[ "${{ inputs.target_environment }}" == "PROD" ]]; then
+
+            echo "workspace=${{ secrets.PROD_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          elif [[ "${{ inputs.target_environment }}" == "TEST" ]]; then
+
+            echo "workspace=${{ secrets.TEST_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          else
+            echo "workspace=${{ secrets.DEV_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          fi
+      - name: Deploy Fabric
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+        run: |
+          python .deploy/deploy-to-fabric.py \
+          --aztenantid "$AZURE_TENANT_ID" \
+          --azclientid "$AZURE_CLIENT_ID" \
+          --azspsecret "$AZURE_CLIENT_SECRET" \
+          --workspaceid "${{ steps.workspace.outputs.workspace }}" \
+          --items_in_scope '${{ env.ITEMS_IN_SCOPE }}' \
+          --target_env "${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}"

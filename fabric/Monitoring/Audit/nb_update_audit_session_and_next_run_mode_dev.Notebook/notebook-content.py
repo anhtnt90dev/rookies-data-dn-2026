@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "14b073f3-0eb9-4315-8d49-155c39392779",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "21e1cea5-9786-4ce5-aa47-1d8255b69b82",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "14b073f3-0eb9-4315-8d49-155c39392779"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -34,7 +34,10 @@ batch_id = ""
 
 # CELL ********************
 
-batch_id = int(batch_id)
+if batch_id is None or str(batch_id).strip() == "":
+    raise ValueError("The 'batch_id' parameter must be provided as a non-empty integer.")
+else:
+    batch_id = int(batch_id)
 
 # METADATA ********************
 
@@ -44,10 +47,6 @@ batch_id = int(batch_id)
 # META }
 
 # CELL ********************
-
-error_message = "Bronze layer failed. Pipeline will run in RECOVERY mode next time."
-
-safe_error = error_message.replace("'", "''")
 
 spark.sql(f"""
     UPDATE cfg.next_run_mode
@@ -61,14 +60,10 @@ spark.sql(f"""
 spark.sql(f"""
 UPDATE log.audit_session
 SET session_status = 'FAILED',
-    error_code = 'BRONZE_LAYER_FAILED',
-    error_message = '{safe_error}',
     session_finished = current_timestamp(),
     updated_at = current_timestamp()
 WHERE id = '{session_id}'
 """)
-
-raise Exception(error_message)
 
 # METADATA ********************
 

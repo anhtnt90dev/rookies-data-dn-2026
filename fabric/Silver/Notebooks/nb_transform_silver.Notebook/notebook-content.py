@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -195,7 +195,7 @@ batch_id = p_batch_id
 
 # CELL ********************
 
-print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_id={batch_id}")
+# print(f"[SETUP] Bronze → Silver notebook initialised | env={run_env} | batch_id={batch_id}")
 
 # METADATA ********************
 
@@ -259,11 +259,11 @@ def load_mapping_json(mapping_path: str) -> dict:
             f"[MAPPING] Mapping file '{prefixed_path}' is missing required keys: {missing_keys}"
         )
 
-    print(
-        f"[MAPPING] Loaded mapping | source={mapping['source_table']} "
-        f"| target={mapping['target_table']} "
-        f"| columns={len(mapping['columns'])}"
-    )
+    # print(
+    #     f"[MAPPING] Loaded mapping | source={mapping['source_table']} "
+    #     f"| target={mapping['target_table']} "
+    #     f"| columns={len(mapping['columns'])}"
+    # )
     return mapping
 
 # METADATA ********************
@@ -334,10 +334,10 @@ def read_bronze_table(
         )
 
     source_row_count: int = bronze_df.count()
-    print(
-        f"[BRONZE] Read {source_row_count:,} row(s) from '{source_table_name}' "
-        f"(load_type={load_type})"
-    )
+    # print(
+    #     f"[BRONZE] Read {source_row_count:,} row(s) from '{source_table_name}' "
+    #     f"(load_type={load_type})"
+    # )
     return bronze_df
 
 # METADATA ********************
@@ -435,8 +435,8 @@ def apply_column_transformations(
             f"[TRANSFORM] Column resolution failed for '{source_table_name}': {analysis_error}"
         )
 
-    print(f"[TRANSFORM] Mapped columns   : {mapped_columns}")
-    print(f"[TRANSFORM] Null-expression  : {null_columns}")
+    # print(f"[TRANSFORM] Mapped columns   : {mapped_columns}")
+    # print(f"[TRANSFORM] Null-expression  : {null_columns}")
     return mapped_silver_df
 
 # METADATA ********************
@@ -521,10 +521,10 @@ def deduplicate_within_batch(input_df: DataFrame, primary_key_columns: list[str]
 
     pre_count: int = input_df.count()
     post_count: int = deduped_df.count()
-    print(
-        f"[DEDUP] Within-batch deduplication: {pre_count:,} → {post_count:,} rows "
-        f"(removed {pre_count - post_count:,} duplicate(s)) on keys={primary_key_columns}"
-    )
+    # print(
+    #     f"[DEDUP] Within-batch deduplication: {pre_count:,} → {post_count:,} rows "
+    #     f"(removed {pre_count - post_count:,} duplicate(s)) on keys={primary_key_columns}"
+    # )
     return deduped_df
 
 
@@ -576,10 +576,10 @@ def deduplicate_against_silver(
 
     pre_count: int = incoming_df.count()
     changed_count: int = changed_df.count()
-    print(
-        f"[DEDUP] Silver hash comparison: {pre_count:,} incoming → {changed_count:,} changed "
-        f"(skipped {pre_count - changed_count:,} unchanged record(s))"
-    )
+    # print(
+    #     f"[DEDUP] Silver hash comparison: {pre_count:,} incoming → {changed_count:,} changed "
+    #     f"(skipped {pre_count - changed_count:,} unchanged record(s))"
+    # )
     return changed_df
 
 # METADATA ********************
@@ -829,10 +829,10 @@ def log_invalid_batch_records(
         .mode("append") \
         .saveAsTable(INVALID_RECORD_TABLE)
 
-    print(
-        f"[DQ LOG] Logged {log_df.count():,} invalid record errors "
-        f"to log.invalid_record"
-    )
+    # print(
+    #     f"[DQ LOG] Logged {log_df.count():,} invalid record errors "
+    #     f"to log.invalid_record"
+    # )
 
 # METADATA ********************
 
@@ -1002,11 +1002,11 @@ def run_dq_validation(
                 # Append to failure conditions list to make validation active
                 failure_conditions.append(failure_col)
 
-                print(
-                    f"[DQ] Registered rule "
-                    f"| column='{column_name}' "
-                    f"| validator='{func_name}'"
-                )
+                # print(
+                #     f"[DQ] Registered rule "
+                #     f"| column='{column_name}' "
+                #     f"| validator='{func_name}'"
+                # )
 
     # ------------------------------------------------------------------
     # Short-circuit: no rules configured
@@ -1068,12 +1068,12 @@ def run_dq_validation(
     rejected_row_count: int = df_rejected.count()
     valid_row_count: int = df_valid.count()
 
-    print(
-        f"[DQ] Validation complete "
-        f"| source={source_table} "
-        f"| valid={valid_row_count:,} "
-        f"| rejected={rejected_row_count:,}"
-    )
+    # print(
+    #     f"[DQ] Validation complete "
+    #     f"| source={source_table} "
+    #     f"| valid={valid_row_count:,} "
+    #     f"| rejected={rejected_row_count:,}"
+    # )
 
     # After df_rejected is created
     error_rows = (
@@ -1083,18 +1083,18 @@ def run_dq_validation(
         .collect()
     )
 
-    for row in error_rows:
-        reason_str: str = row[DQ_FAILURE_REASON_COLUMN] or ""
-        # Each segment is "column_name::reason_error"; extract unique column names
-        failed_columns = [
-            segment.split("::")[0].strip()
-            for segment in reason_str.split(" | ")
-            if "::" in segment
-        ]
-        print(
-            f"[DQ] Failed columns={failed_columns} "
-            f"| Reason='{reason_str}'"
-        )
+    # for row in error_rows:
+    #     reason_str: str = row[DQ_FAILURE_REASON_COLUMN] or ""
+    #     # Each segment is "column_name::reason_error"; extract unique column names
+    #     failed_columns = [
+    #         segment.split("::")[0].strip()
+    #         for segment in reason_str.split(" | ")
+    #         if "::" in segment
+    #     ]
+    #     print(
+    #         f"[DQ] Failed columns={failed_columns} "
+    #         f"| Reason='{reason_str}'"
+    #     )
 
     return df_valid, df_rejected, rejected_row_count
 
@@ -1219,10 +1219,10 @@ def write_silver_merge(
         for col_name in valid_df.columns
     }
 
-    print(
-        f"[SILVER MERGE] Merging {valid_df.count():,} row(s) into '{silver_table_name}' "
-        f"on condition: {merge_condition}"
-    )
+    # print(
+    #     f"[SILVER MERGE] Merging {valid_df.count():,} row(s) into '{silver_table_name}' "
+    #     f"on condition: {merge_condition}"
+    # )
 
     (
         silver_delta_table.alias("target")
@@ -1294,16 +1294,15 @@ WATERMARK_COLUMN: str = config_row.get("watermark_column") or ""
 SILVER_TRANSFORM_NAME: str = config_row.get("silver_transform_name") or ""
 QUARANTINE_TABLE_NAME: str = f"{QUARANTINE_SCHEMA}.{SILVER_TABLE_NAME.split('.')[-1]}"
 
-print(
-    f"[STEP 1] Config resolved:\n"
-    f"  bronze_table      = {BRONZE_TABLE_NAME}\n"
-    f"  silver_table      = {SILVER_TABLE_NAME}\n"
-    f"  mapping_path      = {MAPPING_PATH}\n"
-    f"  primary_key       = {PRIMARY_KEY_COLUMNS}\n"
-    f"  watermark_column  = {WATERMARK_COLUMN}\n"
-    f"  run_mode          = {current_run_mode}\n"
-    f"  load_type         = {resolved_load_type}"
-)
+# print(
+#     f"[STEP 1] Config resolved:\n"
+#     f"  bronze_table      = {BRONZE_TABLE_NAME}\n"
+#     f"  silver_table      = {SILVER_TABLE_NAME}\n"
+#     f"  mapping_path      = {MAPPING_PATH}\n"
+#     f"  primary_key       = {PRIMARY_KEY_COLUMNS}\n"
+#     f"  watermark_column  = {WATERMARK_COLUMN}\n"
+#     f"  load_type         = {resolved_load_type}"
+# )
 
 # METADATA ********************
 
@@ -1339,35 +1338,8 @@ COLUMN_WATERMARK_VALUE:str = "watermark_value"
 
 # CELL ********************
 
-# DUMP START SESSION PIPELINE LOG
-# try:
-#     session_id_dump = start_pipeline_session(
-#         pipeline_name="TEST_SILVER_LAYER",
-#         pipeline_run_id="PL_01",
-#         batch_id=batch_id,
-#         run_mode=current_run_mode,
-#     )
-
-#     print(f"[AUDIT] Started table layer session")
-# except Exception as audit_start_error:
-#     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
-
-
-
 session_id = p_session_id
 pipeline_run_id = p_pipeline_run_id
-
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-print(p_session_id)
 
 # METADATA ********************
 
@@ -1391,7 +1363,7 @@ try:
         batch_id=batch_id,
         load_type=resolved_load_type.upper(),
     )
-    print(f"[AUDIT] Started table layer session | table_session_id={table_session_id}")
+    # print(f"[AUDIT] Started table layer session | table_session_id={table_session_id}")
 except Exception as audit_start_error:
     print(f"[AUDIT] Warning — Could not start audit session: {audit_start_error}")
 
@@ -1418,9 +1390,9 @@ try:
     # -----------------------------------------------------------------------
     #— Load JSON Mapping File
     # -----------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("Loading Bronze-to-Silver mapping JSON")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print("Loading Bronze-to-Silver mapping JSON")
+    # print("=" * 70)
 
     mapping: dict = load_mapping_json(MAPPING_PATH)
     column_mappings: list[dict] = mapping["columns"]
@@ -1428,9 +1400,9 @@ try:
     # -----------------------------------------------------------------------
     # STEP 3 — Read Bronze Source Table
     # -----------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print(" Reading Bronze source table")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print(" Reading Bronze source table")
+    # print("=" * 70)
 
     bronze_df: DataFrame = read_bronze_table(
         source_table_name=BRONZE_TABLE_NAME,
@@ -1442,9 +1414,9 @@ try:
     # -----------------------------------------------------------------------
     # STEP 4 — Apply Column Transformations
     # -----------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print(" Applying column transformations")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print(" Applying column transformations")
+    # print("=" * 70)
 
     mapped_silver_df: DataFrame = apply_column_transformations(
         bronze_df=bronze_df,
@@ -1455,9 +1427,9 @@ try:
     # -----------------------------------------------------------------------
     # DEDUPLICATION — Hash-based within batch + against Silver layer
     # -----------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print("DEDUP  | Deduplicating records")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print("DEDUP  | Deduplicating records")
+    # print("=" * 70)
 
     # Compute row hash for change detection
     hashed_silver_df: DataFrame = compute_row_hash(
@@ -1471,26 +1443,14 @@ try:
         primary_key_columns=PRIMARY_KEY_COLUMNS,
     )
 
-    # Skip records already in Silver with the same hash (no data change)
-    # Only applies to incremental loads — full load always overwrites
-    if resolved_load_type == LOAD_TYPE_INCREMENTAL:
-        deduped_final_df: DataFrame = deduplicate_against_silver(
-            incoming_df=deduped_batch_df,
-            silver_table_name=SILVER_TABLE_NAME,
-            primary_key_columns=PRIMARY_KEY_COLUMNS,
-        )
-    else:
-        deduped_final_df = deduped_batch_df
-
-    # Drop the internal hash column before writing to Silver
-    mapped_silver_df_final: DataFrame = deduped_final_df.drop("__row_hash")
+    mapped_silver_df_final: DataFrame = deduped_batch_df.drop("__row_hash")
 
     # -----------------------------------------------------------------------
     # STEP 5 — Data Quality (DQ) Validation
     # -----------------------------------------------------------------------IN
-    print("\n" + "=" * 70)
-    print(" Running Data Quality validation")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print(" Running Data Quality validation")
+    # print("=" * 70)
 
     # DQ rules are defined per table. In production these would be loaded
     # from a DQ config table or JSON file. For now, define a base set of
@@ -1531,9 +1491,9 @@ try:
         # -------------------------------------------------------------------
         # STEP 6 — Write to Silver (FULL LOAD or MERGE)
         # -------------------------------------------------------------------
-        print("\n" + "=" * 70)
-        print("| Writing to Silver layer")
-        print("=" * 70)
+        # print("\n" + "=" * 70)
+        # print("| Writing to Silver layer")
+        # print("=" * 70)
 
         write_stats: dict
 
@@ -1554,10 +1514,10 @@ try:
         target_row_count = inserted_row_count + updated_row_count
         pipeline_status = STATUS_SUCCESS
 
-        print(
-            f"Silver write complete: "
-            f"inserted={inserted_row_count:,} | updated={updated_row_count:,}"
-        )
+        # print(
+        #     f"Silver write complete: "
+        #     f"inserted={inserted_row_count:,} | updated={updated_row_count:,}"
+        # )
 
 except Exception as pipeline_error:
     # Capture the full traceback for audit logging
@@ -1572,9 +1532,9 @@ finally:
     # -----------------------------------------------------------------------
     # STEP 7 — Write Audit Log (always runs, even on failure)
     # -----------------------------------------------------------------------
-    print("\n" + "=" * 70)
-    print(" Writing audit log")
-    print("=" * 70)
+    # print("\n" + "=" * 70)
+    # print(" Writing audit log")
+    # print("=" * 70)
 
     is_final_step: bool = False  # Silver is the middle step for pipeline
 
@@ -1598,12 +1558,9 @@ finally:
                 is_retryable=True if pipeline_status == STATUS_FAILED else False,
                 write_detail=True,
             )
-            print(
-                f"[AUDIT] Session closed | status={pipeline_status} "
-                f"| table_session_id={table_session_id}"
-            )
         else:
             print("[AUDIT] No table_session_id — skipping finish_table_layer call.")
+        
     except Exception as audit_finish_error:
         # Audit failure must NOT raise — log only
         print(
@@ -1636,25 +1593,24 @@ finally:
 # ---------------------------------------------------------------------------
 # SUMMARY — print final execution summary for observability
 # ---------------------------------------------------------------------------
-print("\n" + "=" * 70)
-print("PIPELINE SUMMARY")
-print("=" * 70)
-print(f"  Notebook          : nb_ingest_bronze_silver_dev")
-print(f"  Environment       : {run_env}")
-print(f"  Session ID        : {session_id}")
-print(f"  Batch ID          : {batch_id}")
-print(f"  Run mode          : {current_run_mode}")
-print(f"  Load type         : {resolved_load_type}")
-print(f"  Source (Bronze)   : {BRONZE_TABLE_NAME}")
-print(f"  Target (Silver)   : {SILVER_TABLE_NAME}")
-print(f"  Source rows read  : {source_row_count:,}")
-print(f"  Rows inserted     : {inserted_row_count:,}")
-print(f"  Rows updated      : {updated_row_count:,}")
-print(f"  Rows rejected     : {rejected_row_count:,}")
-print(f"  Final status      : {pipeline_status}")
-if error_message:
-    print(f"  Error             : {error_message[:200]}...")
-print("=" * 70)
+# print("\n" + "=" * 70)
+# print("PIPELINE SUMMARY")
+# print("=" * 70)
+# print(f"  Notebook          : nb_ingest_bronze_silver_dev")
+# print(f"  Environment       : {run_env}")
+# print(f"  Session ID        : {session_id}")
+# print(f"  Batch ID          : {batch_id}")
+# print(f"  Load type         : {resolved_load_type}")
+# print(f"  Source (Bronze)   : {BRONZE_TABLE_NAME}")
+# print(f"  Target (Silver)   : {SILVER_TABLE_NAME}")
+# print(f"  Source rows read  : {source_row_count:,}")
+# print(f"  Rows inserted     : {inserted_row_count:,}")
+# print(f"  Rows updated      : {updated_row_count:,}")
+# print(f"  Rows rejected     : {rejected_row_count:,}")
+# print(f"  Final status      : {pipeline_status}")
+# if error_message:
+#     print(f"  Error             : {error_message[:200]}...")
+# print("=" * 70)
 
 # METADATA ********************
 
@@ -1669,7 +1625,6 @@ summary = {
     "notebook": "nb_ingest_bronze_silver_dev",
     "session_id": session_id,
     "batch_id": batch_id,
-    "run_mode": current_run_mode,
     "load_type": resolved_load_type,
     "source_table": BRONZE_TABLE_NAME,
     "target_table": SILVER_TABLE_NAME,

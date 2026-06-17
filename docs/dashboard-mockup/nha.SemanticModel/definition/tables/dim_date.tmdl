@@ -1,0 +1,152 @@
+table dim_date
+	lineageTag: f62c0e48-84e1-47d0-bf65-9cc72c9e92f9
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 9050f865-2131-4380-ba86-98a1b6d657a9
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column full_date
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 7ac7aefa-10d8-4b12-80c4-a6a7678c9197
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column day_number
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: a452ac29-18ba-4886-8fa5-fed9d32f8a72
+		summarizeBy: sum
+		sourceColumn: day_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column day_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: c0331bbf-50bf-4062-a681-3e0b6dd9e203
+		summarizeBy: none
+		sourceColumn: day_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column week_number
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: f28d03a4-7a16-4a87-a0a2-994c92479736
+		summarizeBy: sum
+		sourceColumn: week_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_number
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 385a8d1c-f37c-4327-8282-92fed3a5ab59
+		summarizeBy: sum
+		sourceColumn: month_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column month_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: fc3acfa3-1792-40c0-9d5c-53f498f1873b
+		summarizeBy: none
+		sourceColumn: month_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column quarter_number
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 0539366c-6e15-4838-8427-40eb6b2425d5
+		summarizeBy: sum
+		sourceColumn: quarter_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_number
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 7f8659fd-5e74-4ea1-88b5-f50265537d4d
+		summarizeBy: sum
+		sourceColumn: year_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column year_month
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: cbf7d220-f14e-470f-bcbc-55edaf266c21
+		summarizeBy: none
+		sourceColumn: year_month
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_weekend
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 2c45ad5a-7625-4aa7-a869-ea2ca15a9626
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = Automatic
+
+	hierarchy 'full_date Hierarchy'
+		lineageTag: a9070ca3-01a0-4b34-8625-d72ef7848803
+
+		level full_date
+			lineageTag: c45791c2-cc72-4f74-ab80-7c2606c0374b
+			column: full_date
+
+		level month_number
+			lineageTag: 53f2d3d0-02fd-4eae-bac4-74377326d109
+			column: month_number
+
+		level quarter_number
+			lineageTag: 4c25cde0-f23b-492e-b0ce-5e2b312aa949
+			column: quarter_number
+
+		level week_number
+			lineageTag: 6e017db6-a792-4a78-97ba-b58f75efaf0b
+			column: week_number
+
+		level year_month
+			lineageTag: 67f34739-4735-4ae3-8d62-76569dd7de96
+			column: year_month
+
+		level year_number
+			lineageTag: 4a49bbac-420b-48f0-8585-04889c6ded6a
+			column: year_number
+
+		level day_number
+			lineageTag: a03a6bef-8b46-44b4-ad5b-3ee1c90c062c
+			column: day_number
+
+	partition dim_date = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_date = Source{[Schema="gold",Item="dim_date"]}[Data]
+				in
+				    gold_dim_date
+

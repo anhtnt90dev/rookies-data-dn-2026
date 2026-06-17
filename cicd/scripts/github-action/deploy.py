@@ -92,14 +92,14 @@ print(f"Repository directory: {repository_directory}")
 print(repository_directory)
 
 # convert the item types argument into a valid list
-item_types = args.items_in_scope.strip("[]").split(",")
+list_item_types = ["Notebook","DataPipeline","Lakehouse","SemanticModel","Report","VariableLibrary"]
 
 # Initialize the FabricWorkspace object with the required parameters
 target_workspace = FabricWorkspace(
     workspace_id=wks_id,
     environment=tgtenv,
     repository_directory=repository_directory,
-    item_type_in_scope=item_types,
+    item_type_in_scope=list_item_types,
     token_credential=token_credential,
 )
 

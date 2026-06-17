@@ -32,7 +32,7 @@ on:
 permissions:
   contents: read
 env:
-  ITEMS_IN_SCOPE: ["Notebook","DataPipeline","Lakehouse","SemanticModel","Report","VariableLibrary"]
+  ITEMS_IN_SCOPE: ${{ secrets.ITEMS_IN_SCOPE }}
 
 jobs:
   DeployToFabric:

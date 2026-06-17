@@ -85,7 +85,7 @@ from delta.tables import DeltaTable
 # ---------------------------------------------------------------------------
 
 # Pipeline session identifier for audit tracing
-session_id: str = "TEST DEPLOY YOUR KNOW BRO"
+session_id: str = "TEST DEPLOY TEST ROUND 3"
 
 # Environment tag: 'dev' | 'staging' | 'prod'
 run_env: str = "dev"

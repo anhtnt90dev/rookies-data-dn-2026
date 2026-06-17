@@ -34,6 +34,7 @@ parser.add_argument('--azclientid',type=str, help= 'SP client ID')
 parser.add_argument('--azspsecret',type=str, help= 'SP secret')
 parser.add_argument('--target_env',type=str, help= 'target environment')
 parser.add_argument('--workspaceid',type=str, help= 'Optional: workspace GUID to deploy to')
+parser.add_argument('--workspacename',type=str, help= 'Optional: workspace display name to resolve to GUID')
 
 parser.add_argument('--items_in_scope',type=str, help= 'Defines the item types to be deployed')
 args = parser.parse_args()
@@ -47,11 +48,8 @@ print(f'Target environment set to {tgtenv}')
 
 # determine the target workspace using the variable group which stores the target workspace name in a variable with the naming convention "[tgtenv]WorkspaceName"
 ws_name = f'{tgtenv}WorkspaceName'
-print(f'Variable group to determine workspace is set to {ws_name}')
-
-# define workspace name to be deployed to based on value in variable group based on target environment name. This variable group is not linked to a Key Vault hence the values can be access through os.environ 
-workspace_name = os.environ[ws_name.upper()]
-print(f'Obtaining GUID for {workspace_name}')
+ws_env_var = ws_name.upper()
+print(f'Variable group to determine workspace is set to {ws_name} (env: {ws_env_var})')
 
 resource = 'https://api.fabric.microsoft.com/'
 scope = f'{resource}.default'
@@ -60,17 +58,38 @@ token = token_credential.get_token(scope)
 if args.workspaceid:
     wks_id = args.workspaceid
     print(f"Using workspace id provided via argument: {wks_id}")
+elif args.workspacename:
+    print(f"Resolving workspace name provided via argument: {args.workspacename}")
+    lookup_response = get_workspace_id(args.workspacename, token)
+    if lookup_response.startswith("Error"):
+        errmsg = f"{lookup_response}. Workspace name passed via --workspacename may be incorrect."
+        raise ValueError(errmsg)
+    wks_id = lookup_response
+    print(f"Workspace ID for {args.workspacename} set to {wks_id}")
 else:
+    # try environment variable fallback
+    workspace_name = os.environ.get(ws_env_var)
+    if not workspace_name:
+        raise KeyError(f"Required environment variable '{ws_env_var}' not found. Set it or pass --workspaceid/--workspacename.")
+    print(f'Obtaining GUID for {workspace_name}')
     lookup_response = get_workspace_id(workspace_name, token)
     if lookup_response.startswith("Error"):
-        errmsg=f"{lookup_response}. Perhaps workspace name is set incorrectly in the variable group of does not map to environment name + 'WorkspaceName'"
+        errmsg=f"{lookup_response}. Perhaps workspace name is set incorrectly in the variable group or does not map to environment name + 'WorkspaceName'"
         raise ValueError(errmsg)
     else:
         wks_id = lookup_response
         print(f"Workspace ID for {workspace_name} set to {wks_id}")
 
+
 # set repo folder based on the variable group value of gitDirectory
-repository_directory = os.environ["GITDIRECTORY"]
+repository_directory = os.path.join(
+    os.getenv("GITHUB_WORKSPACE", os.getcwd()),
+    "fabric"
+)
+
+print(f"Repository directory: {repository_directory}")
+
+print(repository_directory)
 
 # convert the item types argument into a valid list
 item_types = args.items_in_scope.strip("[]").split(",")
@@ -88,4 +107,4 @@ print(f'Publish branch to workspace...')
 publish_all_items(target_workspace)
 
 # Unpublish orphaned items from the workspace
-# unpublish_all_orphan_items(target_workspace)
+unpublish_all_orphan_items(target_workspace)

@@ -192,19 +192,19 @@ export async function POST(request: Request) {
   }
 
   // Production Config
-  // Agent uses Dashboard-02 (published by rookie12 with RLS), Customer uses original dashboard
+  // Customer uses Dashboard-01, Agent uses Dashboard-02 (both published by rookie12 with RLS)
   const prodConfig = {
     tenantId: process.env.AZURE_TENANT_ID,
     clientId: process.env.AZURE_CLIENT_ID,
     clientSecret: process.env.AZURE_CLIENT_SECRET,
     workspaceId: dashboardType === "customer" 
-      ? process.env.POWERBI_WORKSPACE_ID_CUSTOMER 
+      ? process.env.POWERBI_WORKSPACE_ID_DASHBOARD01 
       : process.env.POWERBI_WORKSPACE_ID_DASHBOARD02,
     reportId: dashboardType === "customer" 
-      ? process.env.POWERBI_REPORT_ID_CUSTOMER 
+      ? process.env.POWERBI_REPORT_ID_DASHBOARD01 
       : process.env.POWERBI_REPORT_ID_DASHBOARD02,
     datasetId: dashboardType === "customer" 
-      ? process.env.POWERBI_DATASET_ID_CUSTOMER 
+      ? process.env.POWERBI_DATASET_ID_DASHBOARD01 
       : process.env.POWERBI_DATASET_ID_DASHBOARD02,
     upperId,
     role

@@ -1,10 +1,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  gap: 24px;
+  padding: 16px 24px;
+  gap: 16px;
   flex: 1;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .header {
@@ -27,11 +27,13 @@
 }
 
 .iframeContainer {
-  flex: 1;
-  padding: 8px;
+  padding: 0;
   animation: fadeIn 0.8s ease-out;
   overflow: hidden;
   display: flex;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
 }
 
 .iframeContainer iframe {

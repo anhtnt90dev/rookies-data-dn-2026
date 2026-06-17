@@ -40,6 +40,8 @@ export default function AgentDashboard() {
         // 1 = Embed Token, 0 = AAD Token
         const tokenTypeEmbed = 1;
 
+        const { models } = await import("powerbi-client");
+
         if (data.devMode) {
           // WORKAROUND: Without Azure Credentials, powerbi-client-react will crash.
           // For Dev Mode, we fall back to a standard iframe.
@@ -58,6 +60,10 @@ export default function AgentDashboard() {
             accessToken: data.accessToken,
             tokenType: tokenTypeEmbed,
             settings: {
+              layoutType: models.LayoutType.Custom,
+              customLayout: {
+                displayOption: models.DisplayOption.FitToWidth
+              },
               panes: {
                 filters: { expanded: false, visible: false },
                 pageNavigation: { visible: true }

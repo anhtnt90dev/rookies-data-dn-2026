@@ -82,6 +82,18 @@ jobs:
             echo "workspace=${{ secrets.DEV_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
 
           fi
+      - name: Update Notebook Metadata
+        env:
+          DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}
+          FABRIC_WORKSPACE_DEV_ID: ${{ secrets.FABRIC_WORKSPACE_DEV_ID }}
+          FABRIC_LAKEHOUSE_DEV_ID: ${{ secrets.FABRIC_LAKEHOUSE_DEV_ID }}
+          FABRIC_LAKEHOUSE_DEV_NAME: ${{ secrets.FABRIC_LAKEHOUSE_DEV_NAME }}
+          FABRIC_WORKSPACE_PROD_ID: ${{ secrets.FABRIC_WORKSPACE_PROD_ID }}
+          FABRIC_LAKEHOUSE_PROD_ID: ${{ secrets.FABRIC_LAKEHOUSE_PROD_ID }}
+          FABRIC_LAKEHOUSE_PROD_NAME: ${{ secrets.FABRIC_LAKEHOUSE_PROD_NAME }}
+        run: |
+          export DEPLOY_ENV=$(echo "$DEPLOY_ENV" | tr '[:upper:]' '[:lower:]')
+          python cicd/scripts/github-action/update_fabric_metadata.py
       - name: Deploy Fabric
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

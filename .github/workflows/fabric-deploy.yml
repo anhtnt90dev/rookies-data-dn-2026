@@ -1,12 +1,12 @@
 name: Deploy Fabric 
 on:
   # Auto deploy only after merge into dev
-  pull_request:
+  push:
     branches:
-      - dev
+      - feature/us-7-cicd
     paths:
       - fabric/**
-    types: [closed]
+    # types: [closed]
 
   # Manual deployment
   workflow_dispatch:

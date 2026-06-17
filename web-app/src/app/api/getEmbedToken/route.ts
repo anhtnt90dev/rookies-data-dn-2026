@@ -1,11 +1,54 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
+// Helper: fetch dataset details to understand datasource type
+async function fetchDatasetInfo(accessToken: string, workspaceId: string, datasetId: string) {
+  try {
+    console.log("[DEBUG] Fetching dataset info...");
+    const url = `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/datasets/${datasetId}`;
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const ds = res.data;
+    console.log("[DEBUG] Dataset Info:", JSON.stringify({
+      name: ds.name,
+      configuredBy: ds.configuredBy,
+      defaultMode: ds.defaultMode,          // Import, DirectQuery, Push, Streaming, Direct Lake...
+      isEffectiveIdentityRequired: ds.isEffectiveIdentityRequired,
+      isEffectiveIdentityRolesRequired: ds.isEffectiveIdentityRolesRequired,
+      isOnPremGatewayRequired: ds.isOnPremGatewayRequired,
+      addRowsAPIEnabled: ds.addRowsAPIEnabled,
+    }, null, 2));
+    return ds;
+  } catch (err: any) {
+    console.error("[DEBUG] Failed to fetch dataset info:", err.response?.data || err.message);
+    return null;
+  }
+}
+
+// Helper: fetch datasources for a dataset
+async function fetchDatasources(accessToken: string, workspaceId: string, datasetId: string) {
+  try {
+    console.log("[DEBUG] Fetching datasources for dataset...");
+    const url = `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/datasets/${datasetId}/datasources`;
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    console.log("[DEBUG] Datasources:", JSON.stringify(res.data.value, null, 2));
+    return res.data.value;
+  } catch (err: any) {
+    console.error("[DEBUG] Failed to fetch datasources:", err.response?.data || err.message);
+    return null;
+  }
+}
+
 async function generatePowerBIToken(config: any) {
   const { tenantId, clientId, clientSecret, workspaceId, reportId, datasetId, upperId, role } = config;
 
   console.log("=== START POWER BI TOKEN GENERATION ===");
-  console.log(`Target: User=${upperId}, Role=${role}, Workspace=${workspaceId}, Dataset=${datasetId}`);
+  console.log(`Target: User=${upperId}, Role=${role}`);
+  console.log(`Config: Workspace=${workspaceId}, Report=${reportId}, Dataset=${datasetId}`);
+  console.log(`Tenant=${tenantId}, ClientId=${clientId}, Secret=${clientSecret ? "***" + clientSecret.slice(-4) : "MISSING"}`);
 
   try {
     // 1. Get Entra ID Auth Token
@@ -25,52 +68,96 @@ async function generatePowerBIToken(config: any) {
     const accessToken = authResponse.data.access_token;
     console.log("Step 1 Success: Received Access Token.");
 
+    // 1.5 [DEBUG] Fetch dataset info & datasources to understand the datasource type
+    const datasetInfo = await fetchDatasetInfo(accessToken, workspaceId, datasetId);
+    const datasources = await fetchDatasources(accessToken, workspaceId, datasetId);
+    
+    if (datasetInfo) {
+      console.log(`[DEBUG] Dataset mode: ${datasetInfo.defaultMode}`);
+      console.log(`[DEBUG] isEffectiveIdentityRequired: ${datasetInfo.isEffectiveIdentityRequired}`);
+      console.log(`[DEBUG] isEffectiveIdentityRolesRequired: ${datasetInfo.isEffectiveIdentityRolesRequired}`);
+    }
+
     // 2. Get Power BI Embed Token
     console.log("Step 2: Requesting Embed Token from Power BI REST API...");
     const embedTokenUrl = `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/reports/${reportId}/GenerateToken`;
     
-    const embedPayload = {
+    const embedPayloadWithRLS = {
       accessLevel: "View",
-      // identities: [
-      //   {
-      //     username: upperId,
-      //     roles: [role],
-      //     datasets: [datasetId]
-      //   }
-      // ]
+      identities: [
+        {
+          username: upperId,
+          roles: [role],
+          datasets: [datasetId]
+        }
+      ]
     };
     
-    console.log("Embed Payload:", JSON.stringify(embedPayload, null, 2));
+    console.log("Embed Payload (with RLS):", JSON.stringify(embedPayloadWithRLS, null, 2));
 
-    const embedResponse = await axios.post(
-      embedTokenUrl,
-      embedPayload,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
+    let embedToken: string;
+    let rlsApplied = true;
+
+    try {
+      const embedResponse = await axios.post(
+        embedTokenUrl,
+        embedPayloadWithRLS,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+          }
         }
-      }
-    );
+      );
+      console.log("Step 2 Success: Received Embed Token WITH RLS.");
+      embedToken = embedResponse.data.token;
+    } catch (rlsError: any) {
+      const errorCode = rlsError.response?.data?.error?.code;
+      const errorMsg = rlsError.response?.data?.error?.message;
+      console.warn(`⚠️ RLS embed token failed: ${errorCode} - ${errorMsg}`);
 
-    console.log("Step 2 Success: Received Embed Token.");
-    const embedToken = embedResponse.data.token;
+      // If it's the specific "not supported for this datasource" error, retry WITHOUT identities
+      if (errorCode === "InvalidRequest" && errorMsg?.includes("not supported for this datasource")) {
+        console.warn("⚠️ Retrying WITHOUT RLS identities (dashboard will show ALL data)...");
+        const embedPayloadNoRLS = { accessLevel: "View" };
+        
+        const fallbackResponse = await axios.post(
+          embedTokenUrl,
+          embedPayloadNoRLS,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json"
+            }
+          }
+        );
+        console.log("Step 2 Success: Received Embed Token WITHOUT RLS (fallback).");
+        embedToken = fallbackResponse.data.token;
+        rlsApplied = false;
+      } else {
+        // Different error, re-throw
+        throw rlsError;
+      }
+    }
+
     const embedUrl = `https://app.powerbi.com/reportEmbed?reportId=${reportId}&groupId=${workspaceId}`;
 
-    console.log("=== END POWER BI TOKEN GENERATION ===");
+    console.log(`=== END POWER BI TOKEN GENERATION (RLS applied: ${rlsApplied}) ===`);
     return {
       accessToken: embedToken,
       embedUrl,
-      embedReportId: reportId
+      embedReportId: reportId,
+      rlsApplied
     };
   } catch (error: any) {
     console.error("=== POWER BI API ERROR ===");
     if (error.response) {
       console.error("Status:", error.response.status);
-      console.error("Headers:", error.response.headers);
-      console.error("Data:", JSON.stringify(error.response.data, null, 2));
+      console.error("Error Code:", error.response.data?.error?.code);
+      console.error("Error Message:", error.response.data?.error?.message);
+      console.error("Full Error Data:", JSON.stringify(error.response.data, null, 2));
     } else {
-      console.error("Message:", error.message);
+      console.error("Non-HTTP Error:", error.message);
     }
     console.error("==========================");
     throw error;
@@ -105,13 +192,20 @@ export async function POST(request: Request) {
   }
 
   // Production Config
+  // Agent uses Dashboard-02 (published by rookie12 with RLS), Customer uses original dashboard
   const prodConfig = {
     tenantId: process.env.AZURE_TENANT_ID,
     clientId: process.env.AZURE_CLIENT_ID,
     clientSecret: process.env.AZURE_CLIENT_SECRET,
-    workspaceId: dashboardType === "customer" ? process.env.POWERBI_WORKSPACE_ID_CUSTOMER : process.env.POWERBI_WORKSPACE_ID_AGENT,
-    reportId: dashboardType === "customer" ? process.env.POWERBI_REPORT_ID_CUSTOMER : process.env.POWERBI_REPORT_ID_AGENT,
-    datasetId: dashboardType === "customer" ? process.env.POWERBI_DATASET_ID_CUSTOMER : process.env.POWERBI_DATASET_ID_AGENT,
+    workspaceId: dashboardType === "customer" 
+      ? process.env.POWERBI_WORKSPACE_ID_CUSTOMER 
+      : process.env.POWERBI_WORKSPACE_ID_DASHBOARD02,
+    reportId: dashboardType === "customer" 
+      ? process.env.POWERBI_REPORT_ID_CUSTOMER 
+      : process.env.POWERBI_REPORT_ID_DASHBOARD02,
+    datasetId: dashboardType === "customer" 
+      ? process.env.POWERBI_DATASET_ID_CUSTOMER 
+      : process.env.POWERBI_DATASET_ID_DASHBOARD02,
     upperId,
     role
   };

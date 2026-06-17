@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TD
     subgraph GD1["Phase 1: Setup"]
-        A1["Power BI Desktop:<br/>Create UserRole<br/>[UserEmail] = USERNAME()<br/>Publish Report<br/>Get WORKSPACE_ID<br/>and REPORT_ID"]
+        A1["Power BI Desktop:<br/>Create UserRole<br/>[UserEmail] = USERPRINCIPALNAME()<br/>Publish Report<br/>Get WORKSPACE_ID<br/>and REPORT_ID"]
         A2["Azure App Registration:<br/>Get TENANT_ID<br/>CLIENT_ID<br/>CLIENT_SECRET<br/>Add Service Principal<br/>to Workspace"]
         A1 --- A2
     end
@@ -48,7 +48,7 @@ Before writing any code, you need to complete the required configuration in both
 Example:
 
 ```DAX
-[UserEmail] = USERNAME()
+[UserEmail] = USERPRINCIPALNAME()
 ```
 
 5. Publish the report to a shared Workspace (do not use **My Workspace**).
@@ -57,6 +57,7 @@ After publishing, collect the following information from the report URL:
 
 * **WORKSPACE_ID**
 * **REPORT_ID**
+* **DATASET_ID**
 
 ### 2. Create an App Registration in Azure Portal (Service Principal)
 
@@ -237,3 +238,100 @@ By following this process, the system ensures that:
 * Data access is secure and centrally managed.
 * Users do not need direct access to Power BI Service.
 * The entire report access process is fully automated.
+
+# Power BI RLS Embedding — Sequence Diagram Summary
+ 
+Sequence diagram for the full Power BI RLS embedding flow, divided into 7 steps.
+ 
+## Step 1 — Login
+ 
+User sends email and password to Backend. Backend saves user identity into session.
+ 
+## Step 2 — Open View Report
+ 
+User opens the report page. Backend starts 3 automatic steps to get the token.
+ 
+## Step 3A — Get AAD Access Token
+ 
+Backend uses `CLIENT_ID`, `CLIENT_SECRET`, and `TENANT_ID` to request an AAD Access Token from Azure AD.
+ 
+## Step 3B — Get Embed URL
+ 
+Backend uses the AAD Token to call Power BI and get back the `Embed URL` and `Dataset ID`.
+ 
+## Step 3C — Generate Embed Token with RLS
+ 
+Backend sends a `generateToken` request to Power BI with the user's `identity` (email) and `role` (UserRole). Power BI applies RLS and returns a locked Embed Token.
+ 
+## Step 4 — Return Result to Frontend
+ 
+Backend sends `{ reportId, embedUrl, embedToken }` to Frontend.
+ 
+## Step 5 — Render Report
+ 
+Frontend uses the Power BI JS SDK to call `powerbi.embed()`. Power BI sends back data already filtered by RLS and shows the dashboard to the user.
+ 
+---
+ 
+## Sequence Diagram (Mermaid)
+ 
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant B as Web Backend
+  participant A as Azure AD
+  participant P as Power BI
+  participant F as Frontend
+ 
+  rect rgb(225, 245, 238)
+    Note over U,F: Step 1 - Login
+    U->>B: POST /login (email, password)
+    B-->>U: 200 OK - session saved
+  end
+ 
+  rect rgb(238, 237, 254)
+    Note over U,F: Step 2 - Open View Report page
+    U->>B: GET /report
+  end
+ 
+  rect rgb(250, 238, 218)
+    Note over B,A: Step 3A - Get Azure AD token
+    B->>A: POST /oauth2/token (CLIENT_ID, CLIENT_SECRET, TENANT_ID)
+    A-->>B: AAD Access Token
+  end
+ 
+  rect rgb(250, 236, 231)
+    Note over B,P: Step 3B - Get Embed URL
+    B->>P: GET /reports/{reportId} (Bearer token)
+    P-->>B: Embed URL + Dataset ID
+  end
+ 
+  rect rgb(230, 241, 251)
+    Note over B,P: Step 3C - Generate Embed Token with RLS
+    B->>P: POST /generateToken (identity: email, role: UserRole)
+    P-->>B: Embed Token (RLS applied)
+  end
+ 
+  rect rgb(234, 243, 222)
+    Note over B,F: Step 4 - Send token to Frontend
+    B->>F: reportId + embedUrl + embedToken
+  end
+ 
+  rect rgb(251, 234, 240)
+    Note over F,P: Step 5 - Render report
+    F->>P: powerbi.embed(config)
+    P-->>F: Report data (filtered by RLS)
+    F-->>U: Show dashboard (data filtered by user)
+  end
+```
+ 
+---
+ 
+## Notes
+ 
+- Steps 3A, 3B, and 3C run automatically on the Backend. The user does not see them.
+- `CLIENT_SECRET` is never sent to the Frontend. It stays on the Backend only.
+- The Embed Token contains the user identity and role inside. Power BI uses this to filter data automatically.
+- The Embed Token is valid for about 1 hour. After that, the Backend needs to request a new one.
+- `-->>`  means response (dashed line). `->>`  means request (solid line).

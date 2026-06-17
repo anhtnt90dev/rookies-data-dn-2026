@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "14b073f3-0eb9-4315-8d49-155c39392779",
+# META       "default_lakehouse": "a667e77c-0848-4e2e-90dc-502057b719c0",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "21e1cea5-9786-4ce5-aa47-1d8255b69b82",
+# META       "default_lakehouse_workspace_id": "fe74f781-d77f-46e7-accd-2e57689ef181",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "14b073f3-0eb9-4315-8d49-155c39392779"
+# META           "id": "a667e77c-0848-4e2e-90dc-502057b719c0"
 # META         }
 # META       ]
 # META     }
@@ -22,9 +22,8 @@
 
 # PARAMETERS CELL ********************
 
-session_id = ""
-batch_id = ""
-layer = ""
+result = ""
+run_mode = ""
 
 # METADATA ********************
 
@@ -35,78 +34,10 @@ layer = ""
 
 # CELL ********************
 
-batch_id = int(batch_id)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-from pyspark.sql import functions as F
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-def update_next_run_mode_recovery(batch_id: int, session_id: str):
-    spark.sql(f"""
-        UPDATE cfg.next_run_mode
-        SET next_run_mode = 'RECOVERY',
-            batch_id = {batch_id},
-            session_id = '{session_id}',
-            updated_at = current_timestamp()
-    """)
-
-
-def update_audit_session_failed(session_id: str, error_message: str):
-    safe_error = str(error_message).replace("'", "''")
-
-    spark.sql(f"""
-        UPDATE log.audit_session
-        SET session_status = 'FAILED',
-            error_code = 'BRONZE_GATE_FAILED',
-            error_message = '{safe_error}',
-            session_finished = current_timestamp(),
-            updated_at = current_timestamp()
-        WHERE id = '{session_id}'
-    """)
-
-
-audit_df = (
-    spark.table("log.audit_table_session")
-    .where(
-        (F.col("session_id") == F.lit(session_id))
-        & (F.col("batch_id") == F.lit(batch_id))
+if run_mode =="NEW" and result == "NO_DATA":
+    raise Exception(
+       "Bronze validation failed: no data was loaded during NEW execution."
     )
-)
-
-invalid_df = audit_df.where(
-    ~F.col("bronze_status").isin("SUCCESS", "SKIPPED")
-)
-
-invalid_count = invalid_df.count()
-
-if invalid_count > 0:
-    error_message = (
-        f"{layer} gate failed. "
-        f"{invalid_count} table(s) are not SUCCESS/SKIPPED."
-    )
-
-    update_next_run_mode_recovery(batch_id, session_id)
-    update_audit_session_failed(session_id, error_message)
-
-    raise Exception(error_message)
-
-print(f"{layer} gate passed. All tables are SUCCESS or SKIPPED.")
 
 # METADATA ********************
 

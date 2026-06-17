@@ -1,0 +1,162 @@
+table dim_customer
+	lineageTag: 9ef3345b-a31d-41fa-adaa-0c9031d47739
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 314b50fd-e246-4a75-a53f-877d4a55a84f
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 8c9163bd-35a0-4af9-858c-46e0a9b66e26
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column full_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 983909cb-c74b-4332-859b-a3a6a3e6a7d5
+		summarizeBy: none
+		sourceColumn: full_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column gender
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 8fe3f29b-407c-4d97-9187-af26d714f0af
+		summarizeBy: none
+		sourceColumn: gender
+
+		annotation SummarizationSetBy = Automatic
+
+	column dob
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 98d0351e-8e66-425d-b0b5-41a09a17a382
+		summarizeBy: none
+		sourceColumn: dob
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column phone_number
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 24e0989e-ffb3-4105-881f-6570a4b5c85f
+		summarizeBy: none
+		sourceColumn: phone_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column email
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 905fe48e-efb9-4eb0-a222-8f2fe22b1111
+		summarizeBy: none
+		sourceColumn: email
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 9d093b27-46bc-458b-aebb-a013cef1f3ba
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column district
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 0b2ca851-9d05-4756-90e8-7f1a3d02f1de
+		summarizeBy: none
+		sourceColumn: district
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_from
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 3e2de4d9-b0e1-4d56-a4d3-2fc2397cd819
+		summarizeBy: none
+		sourceColumn: effective_from
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_to
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 2b6b0c70-0021-480e-9b61-0e1025095917
+		summarizeBy: none
+		sourceColumn: effective_to
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 5e281cf3-ab65-4b41-8750-68c238c4b3cc
+		summarizeBy: none
+		sourceColumn: is_current
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 32808be2-a395-4192-b3b0-103b0c6e88a2
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 7715438c-46d1-4ea3-878f-536660f89232
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_customer = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_customer = Source{[Schema="gold",Item="dim_customer"]}[Data]
+				in
+				    gold_dim_customer
+

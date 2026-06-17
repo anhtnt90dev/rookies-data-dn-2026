@@ -52,13 +52,11 @@ print(f'Variable group to determine workspace is set to {ws_name}')
 workspace_name = os.environ[ws_name.upper()]
 print(f'Obtaining GUID for {workspace_name}')
 
-# generating the token used to call the Fabric REST API
 resource = 'https://api.fabric.microsoft.com/'
 scope = f'{resource}.default'
 print(f'scope set to {scope}')
 token = token_credential.get_token(scope)
 
-# call the workspace ID lookup function
 lookup_response = get_workspace_id(workspace_name, token)
 if lookup_response.startswith("Error"):
     errmsg=f"{lookup_response}. Perhaps workspace name is set incorrectly in the variable group of does not map to environment name + 'WorkspaceName'"
@@ -82,9 +80,8 @@ target_workspace = FabricWorkspace(
     token_credential=token_credential,
 )
 
-# Publish items to the workspace
 print(f'Publish branch to workspace...')
 publish_all_items(target_workspace)
 
 # Unpublish orphaned items from the workspace
-unpublish_all_orphan_items(target_workspace)
+# unpublish_all_orphan_items(target_workspace)

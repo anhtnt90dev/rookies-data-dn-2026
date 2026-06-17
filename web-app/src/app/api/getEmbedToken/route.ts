@@ -4,55 +4,79 @@ import axios from "axios";
 async function generatePowerBIToken(config: any) {
   const { tenantId, clientId, clientSecret, workspaceId, reportId, datasetId, upperId, role } = config;
 
-  // 1. Get Entra ID Auth Token
-  const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
-  const tokenParams = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: clientId,
-    client_secret: clientSecret,
-    scope: "https://analysis.windows.net/powerbi/api/.default"
-  });
+  console.log("=== START POWER BI TOKEN GENERATION ===");
+  console.log(`Target: User=${upperId}, Role=${role}, Workspace=${workspaceId}, Dataset=${datasetId}`);
 
-  const authResponse = await axios.post(tokenUrl, tokenParams.toString(), {
-    headers: { "Content-Type": "application/x-www-form-urlencoded" }
-  });
+  try {
+    // 1. Get Entra ID Auth Token
+    console.log("Step 1: Requesting Access Token from Entra ID...");
+    const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+    const tokenParams = new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+      scope: "https://analysis.windows.net/powerbi/api/.default"
+    });
 
-  const accessToken = authResponse.data.access_token;
+    const authResponse = await axios.post(tokenUrl, tokenParams.toString(), {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    });
 
-  // 2. Get Power BI Embed Token
-  const embedTokenUrl = `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/reports/${reportId}/GenerateToken`;
+    const accessToken = authResponse.data.access_token;
+    console.log("Step 1 Success: Received Access Token.");
 
-  const embedPayload = {
-    accessLevel: "View",
-    identities: [
+    // 2. Get Power BI Embed Token
+    console.log("Step 2: Requesting Embed Token from Power BI REST API...");
+    const embedTokenUrl = `https://api.powerbi.com/v1.0/myorg/groups/${workspaceId}/reports/${reportId}/GenerateToken`;
+    
+    const embedPayload = {
+      accessLevel: "View",
+      // identities: [
+      //   {
+      //     username: upperId,
+      //     roles: [role],
+      //     datasets: [datasetId]
+      //   }
+      // ]
+    };
+    
+    console.log("Embed Payload:", JSON.stringify(embedPayload, null, 2));
+
+    const embedResponse = await axios.post(
+      embedTokenUrl,
+      embedPayload,
       {
-        username: upperId,
-        roles: [role],
-        datasets: [datasetId]
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
+        }
       }
-    ]
-  };
+    );
 
-  const embedResponse = await axios.post(
-    embedTokenUrl,
-    embedPayload,
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      }
+    console.log("Step 2 Success: Received Embed Token.");
+    const embedToken = embedResponse.data.token;
+    const embedUrl = `https://app.powerbi.com/reportEmbed?reportId=${reportId}&groupId=${workspaceId}`;
+
+    console.log("=== END POWER BI TOKEN GENERATION ===");
+    return {
+      accessToken: embedToken,
+      embedUrl,
+      embedReportId: reportId
+    };
+  } catch (error: any) {
+    console.error("=== POWER BI API ERROR ===");
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Headers:", error.response.headers);
+      console.error("Data:", JSON.stringify(error.response.data, null, 2));
+    } else {
+      console.error("Message:", error.message);
     }
-  );
-
-  const embedToken = embedResponse.data.token;
-  const embedUrl = `https://app.powerbi.com/reportEmbed?reportId=${reportId}&groupId=${workspaceId}`;
-
-  return {
-    accessToken: embedToken,
-    embedUrl,
-    embedReportId: reportId
-  };
+    console.error("==========================");
+    throw error;
+  }
 }
+
 
 export async function POST(request: Request) {
   let userId = "";

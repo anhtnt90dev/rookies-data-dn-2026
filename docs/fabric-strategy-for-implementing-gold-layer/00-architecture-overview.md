@@ -1,6 +1,6 @@
 # 00 - Gold Layer Architecture Overview
 
-This document defines the high-level architecture, team responsibilities, and notebook structures for the redesigned **Gold Layer** implementation in Microsoft Fabric. 
+This document defines the high-level architecture, medallion data flow, team responsibilities, and notebook layouts for the redesigned **Gold Layer** implementation in Microsoft Fabric.
 
 ---
 
@@ -64,7 +64,7 @@ graph TD
 
 ## 3. Directory and Notebook Structure
 
-All operational logic for the Gold Layer is kept in the dedicated `fabric/Gold/Notebooks/` directory. The redesigned notebooks are organized as follows:
+All operational logic for the Gold Layer is kept in the dedicated `fabric/Gold/Notebooks/` directory. The notebooks are organized as follows:
 
 ```text
 fabric/Gold/Notebooks/
@@ -78,23 +78,36 @@ fabric/Gold/Notebooks/
 ├── nb_gold_load_fact_payment_dev          # Ingests fact_payment resolving dim keys
 ├── nb_gold_load_fact_cancellation_dev     # Ingests fact_cancellation resolving dim keys
 ├── nb_gold_validate_reconciliation_dev    # Performs post-ingestion validation & data quality check suite
-└── nb_gold_master_load_dev                # Master orchestrator driver running the sequential workflow
+└── nb_gold_master_load_dev                # Master orchestrator driver running the parallel workflow
 ```
 
 ---
 
-## 4. Sequential Execution Order
+## 4. Parallel Orchestration Stages
 
-The master orchestrator notebook (`nb_gold_master_load_dev`) executes the ingestion steps sequentially in a single execution thread to prevent capacity pressure. The execution path is defined as:
+The master orchestrator notebook (`nb_gold_master_load_dev`) executes the ingestion steps in parallel stages to optimize runtime while preserving relational integrity:
 
-1.  **Date Dimension Setup** (`nb_gold_load_dim_date_dev`): Populates calendar entries and ensures Unknown member rows (`-1`) are created.
-2.  **SCD1 Dimension Loading** (`nb_gold_load_scd1_dimensions_dev`): Updates Type 1 conformed dimensions.
-3.  **SCD2 Dimension Loading** (`nb_gold_load_scd2_dimensions_dev`): Generates and expires Type 2 versioned dimension rows.
-4.  **Fact Ingestion** (Executed sequentially by Fact table dependency):
-    *   `fact_quotation`
-    *   `fact_quotation_item`
-    *   `fact_policy`
-    *   `fact_payment`
-    *   `fact_cancellation`
-5.  **Validation Check** (Executed by `nb_gold_validate_reconciliation_dev` running data quality & reconciliation checks).
-6.  **Semantic Model Refresh** (Power BI data modeling ready).
+1. **Stage 1 (Parallel Dimensions)**:
+   - Populates calendar setup (`nb_gold_load_dim_date_dev`), 9 SCD1 dimensions, and 4 SCD2 dimensions concurrently.
+   - Concurrency is throttled to `max_workers = 15`.
+   - Halts if any dimension fails, preventing fact tables from joining on incorrect/outdated keys.
+2. **Stage 2 (Parallel Facts)**:
+   - Executes once all dimensions finish successfully.
+   - Populates `fact_quotation`, `fact_quotation_item`, `fact_policy`, `fact_payment`, and `fact_cancellation` concurrently.
+   - Concurrency is throttled to `max_workers = 5`.
+3. **Stage 3 (Validation Suite)**:
+   - Executes `nb_gold_validate_reconciliation_dev` sequentially to run data quality, grain uniqueness, and key checks.
+4. **Post-Ingestion Audit**:
+   - Resolves source table status, updates audit logging tables, and resets the next run mode to `NEW`.
+
+---
+
+## 5. Documentation Roadmap
+
+To understand the full Gold Layer implementation and deployment strategy, please read the documentation files in the following sequential order:
+1. **[00 - Gold Layer Architecture Overview](./00-architecture-overview.md)** (This document)
+2. **[01 - Orchestration and Concurrency Specification](./01-orchestration-and-concurrency.md)**
+3. **[02 - Dimension Loading Specifications](./02-dimension-loading-specs.md)**
+4. **[03 - Fact Loading Specifications](./03-fact-loading-specs.md)**
+5. **[04 - Audit and Validation Specifications](./04-audit-and-validation.md)**
+6. **[05 - Ingestion Run Modes and Recovery Specifications](./05-pipeline-recovery-and-run-modes.md)**

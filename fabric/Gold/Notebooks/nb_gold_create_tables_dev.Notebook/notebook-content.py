@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "cba514ff-c21c-439e-8107-a08eaa64b6b6",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "5ecef2dc-d236-47a7-919f-bfca6cd08ec0"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -443,6 +443,38 @@
 # MAGIC     deleted_at                TIMESTAMP,
 # MAGIC     delete_batch_id           STRING
 # MAGIC ) USING DELTA;
+
+# METADATA ********************
+
+# META {
+# META   "language": "sparksql",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+# MAGIC %%sql
+# MAGIC 
+# MAGIC TRUNCATE TABLE gold.dim_date;
+# MAGIC TRUNCATE TABLE gold.dim_customer;
+# MAGIC TRUNCATE TABLE gold.dim_agent;
+# MAGIC TRUNCATE TABLE gold.dim_provider;
+# MAGIC TRUNCATE TABLE gold.dim_package;
+# MAGIC TRUNCATE TABLE gold.dim_coverage;
+# MAGIC TRUNCATE TABLE gold.dim_quotation;
+# MAGIC TRUNCATE TABLE gold.dim_policy;
+# MAGIC TRUNCATE TABLE gold.dim_quotation_status;
+# MAGIC TRUNCATE TABLE gold.dim_policy_status;
+# MAGIC TRUNCATE TABLE gold.dim_payment_status;
+# MAGIC TRUNCATE TABLE gold.dim_payment_method;
+# MAGIC TRUNCATE TABLE gold.dim_cancellation_reason;
+# MAGIC TRUNCATE TABLE gold.dim_vehicle;
+# MAGIC 
+# MAGIC TRUNCATE TABLE gold.fact_quotation;
+# MAGIC TRUNCATE TABLE gold.fact_quotation_item;
+# MAGIC TRUNCATE TABLE gold.fact_policy;
+# MAGIC TRUNCATE TABLE gold.fact_payment;
+# MAGIC TRUNCATE TABLE gold.fact_cancellation;
 
 # METADATA ********************
 

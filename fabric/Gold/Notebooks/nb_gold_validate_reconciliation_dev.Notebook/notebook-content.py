@@ -56,9 +56,43 @@ run_mode = str(run_mode).upper()
 
 # Helper to retrieve table_session_id for a given target table
 def get_table_session_id(dim_fact_table_id: int) -> str:
+    # Map conformed ID to source ID dynamically under Option 2
+    try:
+        df_tables = spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
+        mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
+        src_tables = spark.table("cfg.source_table").select("id", "source_name").collect()
+        
+        df_names = {row["id"]: row["table_name"] for row in df_tables}
+        src_names = {row["id"]: row["source_name"] for row in src_tables}
+        
+        from collections import defaultdict
+        df_to_srcs = defaultdict(list)
+        for row in mappings:
+            df_id = int(row["dim_fact_table_id"])
+            src_id = int(row["source_table_id"])
+            df_to_srcs[df_id].append(src_id)
+            
+        dim_fact_to_source = {}
+        for df_id, src_ids in df_to_srcs.items():
+            df_name = df_names.get(df_id, "").lower()
+            matched_id = None
+            for s_id in src_ids:
+                s_name = src_names.get(s_id, "").lower()
+                s_norm = s_name[:-1] if s_name.endswith('s') else s_name
+                if s_norm in df_name:
+                    if matched_id is None or len(s_norm) > len(src_names.get(matched_id, "")):
+                        matched_id = s_id
+            dim_fact_to_source[df_id] = matched_id if matched_id is not None else src_ids[0]
+
+        source_id = dim_fact_to_source.get(dim_fact_table_id)
+    except Exception:
+        source_id = None
+
+    if not source_id:
+        return None
     try:
         rows = spark.table("log.audit_table_session") \
-            .where((F.col("batch_id") == F.lit(batch_id)) & (F.col("source_table_id") == F.lit(dim_fact_table_id))) \
+            .where((F.col("batch_id") == F.lit(batch_id)) & (F.col("source_table_id") == F.lit(source_id))) \
             .orderBy(F.col("created_at").desc()) \
             .select("id") \
             .limit(1) \
@@ -75,7 +109,9 @@ def validate_fact_table(
     fk_mappings: dict, # col_name -> dimension_table
     date_keys: list[str],
     silver_table_name: str,
-    metric_cols: list[str] # col_name in gold vs expression/col_name in silver
+    metric_cols: list[str], # col_name in gold vs expression/col_name in silver
+    fk_bk_mappings: dict = {}, # col_name -> business_key_col (e.g. "customer_key" -> "customer_id")
+    scd2_temporal_mappings: dict = {} # col_name -> (dim_table, tx_date_col)
 ):
     table_session_id = get_table_session_id(dim_fact_table_id)
     is_temp_session = False
@@ -252,6 +288,77 @@ def validate_fact_table(
             finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
         raise Exception(err_msg)
 
+    # 7. Unresolved Keys Check (Zero Tolerance for -1 when Business Key is present)
+    for fk_col, bk_col in fk_bk_mappings.items():
+        unresolved = batch_gold_df.filter(
+            (F.col(fk_col) == -1) & 
+            F.col(bk_col).isNotNull() & 
+            (F.col(bk_col) != "Unknown") & 
+            (F.col(bk_col) != "")
+        )
+        unresolved_count = unresolved.count()
+        if unresolved_count > 0:
+            err_msg = f"Zero Tolerance Unresolved Key Check Failed: Column {fk_col} has {unresolved_count} rows resolved to -1 (Unknown) despite having a valid Business Key '{bk_col}'."
+            print(f"[ERROR] {err_msg}")
+            sample_unresolved = unresolved.limit(1).collect()[0]
+            log_invalid_record(
+                table_session_id=table_session_id,
+                layer="GOLD",
+                target_table=table_name,
+                record_key=str(sample_unresolved[grain_cols[0]]),
+                raw_data=str(sample_unresolved.asDict()),
+                error_reason=err_msg,
+                error_column=fk_col,
+                error_type=ErrorType.RULE
+            )
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="UNRESOLVED_KEY_VIOLATION", error_message=err_msg)
+            raise Exception(err_msg)
+
+    # 8. Temporal Integrity / Pre-existence Rule Check (SCD2 dimensions)
+    for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
+        dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
+        if dim_table == "gold.dim_cancellation_reason":
+            dim_pk = "cancellation_reason_key"
+            
+        dim_df = spark.table(dim_table).select(dim_pk, "effective_from")
+        
+        # Resolve date keys to full_date using gold.dim_date
+        fact_with_date = batch_gold_df.alias("g").join(
+            spark.table("gold.dim_date").select("date_key", F.col("full_date").alias("tx_date")).alias("dt"),
+            on=F.col("g." + tx_date_col) == F.col("dt.date_key"),
+            how="inner"
+        )
+        
+        temporal_violations = fact_with_date.alias("f").join(
+            dim_df.alias("d"),
+            on=F.col("f." + fk_col) == F.col("d." + dim_pk),
+            how="inner"
+        ).filter(
+            (F.col("f." + fk_col) != -1) & 
+            (F.col("f." + tx_date_col) != -1) & 
+            (F.col("f.tx_date") < F.col("d.effective_from").cast("date"))
+        )
+        
+        viol_count = temporal_violations.count()
+        if viol_count > 0:
+            err_msg = f"Temporal Integrity Check Failed: Found {viol_count} rows in {table_name} where transaction date is prior to dimension registration date (effective_from) for {fk_col}."
+            print(f"[ERROR] {err_msg}")
+            sample_viol = temporal_violations.limit(1).collect()[0]
+            log_invalid_record(
+                table_session_id=table_session_id,
+                layer="GOLD",
+                target_table=table_name,
+                record_key=str(sample_viol[grain_cols[0]]),
+                raw_data=str(sample_viol.asDict()),
+                error_reason=err_msg,
+                error_column=fk_col,
+                error_type="TEMPORAL_MISMATCH_ERROR"
+            )
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="TEMPORAL_INTEGRITY_FAILED", error_message=err_msg)
+            raise Exception(err_msg)
+
     print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
 
 # ---------------------------------------------------------------------------
@@ -274,14 +381,26 @@ validate_fact_table(
     },
     date_keys=["quotation_date_key", "quotation_expiry_date_key"],
     silver_table_name="silver.quotation",
-    metric_cols=["premium_amount"]
+    metric_cols=["premium_amount"],
+    fk_bk_mappings={
+        "quotation_key": "quotation_id",
+        "customer_key": "customer_id",
+        "agent_key": "agent_id",
+        "provider_key": "provider_code"
+    },
+    scd2_temporal_mappings={
+        "customer_key": ("gold.dim_customer", "quotation_date_key"),
+        "agent_key": ("gold.dim_agent", "quotation_date_key"),
+        "provider_key": ("gold.dim_provider", "quotation_date_key"),
+        "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
+    }
 )
 
 # 2. fact_quotation_item (ID: 16)
 validate_fact_table(
     table_name="gold.fact_quotation_item",
     dim_fact_table_id=16,
-    grain_cols=["quotation_id", "coverage_key"], # logic check using coverage_key on gold side as business key
+    grain_cols=["quotation_id", "coverage_key"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
         "customer_key": "gold.dim_customer",
@@ -294,7 +413,16 @@ validate_fact_table(
     },
     date_keys=["quotation_date_key"],
     silver_table_name="silver.quotation_item",
-    metric_cols=["coverage_amount", "deductible_amount"]
+    metric_cols=["coverage_amount", "deductible_amount"],
+    fk_bk_mappings={
+        "quotation_key": "quotation_id"
+    },
+    scd2_temporal_mappings={
+        "customer_key": ("gold.dim_customer", "quotation_date_key"),
+        "agent_key": ("gold.dim_agent", "quotation_date_key"),
+        "provider_key": ("gold.dim_provider", "quotation_date_key"),
+        "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
+    }
 )
 
 # 3. fact_policy (ID: 17)
@@ -314,7 +442,19 @@ validate_fact_table(
     },
     date_keys=["issued_date_key", "policy_start_date_key", "policy_end_date_key"],
     silver_table_name="silver.policy",
-    metric_cols=["premium_amount"]
+    metric_cols=["premium_amount"],
+    fk_bk_mappings={
+        "policy_key": "policy_id",
+        "quotation_key": "quotation_id",
+        "customer_key": "customer_id",
+        "provider_key": "provider_code"
+    },
+    scd2_temporal_mappings={
+        "customer_key": ("gold.dim_customer", "policy_start_date_key"),
+        "provider_key": ("gold.dim_provider", "policy_start_date_key"),
+        "agent_key": ("gold.dim_agent", "policy_start_date_key"),
+        "vehicle_key": ("gold.dim_vehicle", "policy_start_date_key")
+    }
 )
 
 # 4. fact_payment (ID: 18)
@@ -332,7 +472,15 @@ validate_fact_table(
     },
     date_keys=["payment_date_key", "issued_date_key"],
     silver_table_name="silver.payment",
-    metric_cols=["payment_amount"]
+    metric_cols=["payment_amount"],
+    fk_bk_mappings={
+        "policy_key": "policy_id"
+    },
+    scd2_temporal_mappings={
+        "customer_key": ("gold.dim_customer", "payment_date_key"),
+        "provider_key": ("gold.dim_provider", "payment_date_key"),
+        "vehicle_key": ("gold.dim_vehicle", "payment_date_key")
+    }
 )
 
 # 5. fact_cancellation (ID: 19)
@@ -349,7 +497,15 @@ validate_fact_table(
     },
     date_keys=["cancellation_date_key"],
     silver_table_name="silver.cancellation",
-    metric_cols=["refund_amount"]
+    metric_cols=["refund_amount"],
+    fk_bk_mappings={
+        "policy_key": "policy_id"
+    },
+    scd2_temporal_mappings={
+        "customer_key": ("gold.dim_customer", "cancellation_date_key"),
+        "provider_key": ("gold.dim_provider", "cancellation_date_key"),
+        "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
+    }
 )
 
 # METADATA ********************

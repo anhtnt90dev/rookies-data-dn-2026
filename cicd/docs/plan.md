@@ -73,7 +73,7 @@ Xây dựng CI/CD pipeline dựa trên:
 
 ------------------------------------------------------------------------
 
-# 4. Kiến trúc tổng quan
+# 4. Kiến trúc 
 
     Feature Branch
 
@@ -127,7 +127,7 @@ Xây dựng CI/CD pipeline dựa trên:
 
 ------------------------------------------------------------------------
 
-# 5. Thành phần kiến trúc
+# 5. Thành phần 
 
   Thành phần           Vai trò
   -------------------- -----------------------------------------------
@@ -492,3 +492,5 @@ Cần kiểm tra compatibility của các artifact:
 -   Semantic Model
 
 trước khi đưa production.
+
+

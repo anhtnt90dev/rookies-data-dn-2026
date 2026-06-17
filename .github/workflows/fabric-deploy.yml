@@ -60,7 +60,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
@@ -101,7 +101,7 @@ jobs:
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
         run: |
-          python .deploy/deploy-to-fabric.py \
+          python cicd/scripts/deploy.py \
           --aztenantid "$AZURE_TENANT_ID" \
           --azclientid "$AZURE_CLIENT_ID" \
           --azspsecret "$AZURE_CLIENT_SECRET" \

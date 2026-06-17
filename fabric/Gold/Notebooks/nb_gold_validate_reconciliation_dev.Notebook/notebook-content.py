@@ -46,7 +46,7 @@
 
 session_id = ""
 batch_id = ""
-run_mode = "NEW"
+run_mode = ""
 
 # METADATA ********************
 

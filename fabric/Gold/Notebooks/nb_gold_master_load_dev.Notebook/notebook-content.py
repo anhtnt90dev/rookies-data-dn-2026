@@ -35,7 +35,7 @@
 
 p_session_id = ""
 p_batch_id = ""
-p_run_mode = "NEW"
+p_run_mode = ""
 
 # METADATA ********************
 

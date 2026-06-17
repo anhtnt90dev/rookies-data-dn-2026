@@ -33,6 +33,7 @@ parser.add_argument('--aztenantid',type=str, help= 'tenant ID')
 parser.add_argument('--azclientid',type=str, help= 'SP client ID')
 parser.add_argument('--azspsecret',type=str, help= 'SP secret')
 parser.add_argument('--target_env',type=str, help= 'target environment')
+parser.add_argument('--workspaceid',type=str, help= 'Optional: workspace GUID to deploy to')
 
 parser.add_argument('--items_in_scope',type=str, help= 'Defines the item types to be deployed')
 args = parser.parse_args()
@@ -56,14 +57,17 @@ resource = 'https://api.fabric.microsoft.com/'
 scope = f'{resource}.default'
 print(f'scope set to {scope}')
 token = token_credential.get_token(scope)
-
-lookup_response = get_workspace_id(workspace_name, token)
-if lookup_response.startswith("Error"):
-    errmsg=f"{lookup_response}. Perhaps workspace name is set incorrectly in the variable group of does not map to environment name + 'WorkspaceName'"
-    raise ValueError(errmsg)
+if args.workspaceid:
+    wks_id = args.workspaceid
+    print(f"Using workspace id provided via argument: {wks_id}")
 else:
-    wks_id = lookup_response
-    print(f"Workspace ID for {workspace_name} set to {wks_id}")
+    lookup_response = get_workspace_id(workspace_name, token)
+    if lookup_response.startswith("Error"):
+        errmsg=f"{lookup_response}. Perhaps workspace name is set incorrectly in the variable group of does not map to environment name + 'WorkspaceName'"
+        raise ValueError(errmsg)
+    else:
+        wks_id = lookup_response
+        print(f"Workspace ID for {workspace_name} set to {wks_id}")
 
 # set repo folder based on the variable group value of gitDirectory
 repository_directory = os.environ["GITDIRECTORY"]

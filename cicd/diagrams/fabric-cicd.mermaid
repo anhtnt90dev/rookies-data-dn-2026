@@ -1,0 +1,15 @@
+flowchart TD
+  A["Developer<br> (feature branch)"] -->|Create PR| B["Pull Request"]
+  B --> C["CI: Validate PR<br>lint, unit tests, artifact checks"]
+  C -->|If OK| D["Merge to main"]
+  D --> E["CD: GitHub Actions<br>trigger on push to main"]
+  E --> F["Resolve target workspace<br>env secrets / parameter.yml"]
+  F --> G["Prepare artifacts<br>update notebook metadata / replace GUIDs"]
+  G --> H["fabric-cicd: publish_all_items()<br>publish items from /fabric"]
+  H --> I["Test Workspace<br>run smoke tests"]
+  I --> J{Manual Approval Required?}
+  J -->|Yes| K["Approval Gate<br>GitHub Environment reviewers"]
+  K --> L["Deploy to Prod Workspace<br>fabric-cicd publish"]
+  J -->|No| L
+  L --> M["Post-deploy checks<br>smoke tests, audit logs"]
+  M --> N["Done / Audit trail in Actions"]

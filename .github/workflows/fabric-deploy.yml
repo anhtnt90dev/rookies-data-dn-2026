@@ -45,6 +45,7 @@ jobs:
       - name: Checkout selected branch
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: |
 
             ${{ 
@@ -52,6 +53,71 @@ jobs:
               && inputs.deploy_branch
               || github.ref_name
             }}
+
+      - name: Check Lint For Notebook files
+        continue-on-error: true
+        run: |
+          WARN=false
+          FILES=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
+
+          if [ -z "$FILES" ]; then
+            echo "No notebook-content.py files found in fabric/. Skipping lint."
+            exit 0
+          fi
+
+          for FILE in $FILES; do
+            echo ""
+            echo "══════════════════════════════════════════"
+            echo "  Checking: $FILE"
+            echo "══════════════════════════════════════════"
+
+            ERRORS=0
+
+            if ! grep -q '^# Fabric notebook source' "$FILE"; then
+              echo "  WARN — missing '# Fabric notebook source' header."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '^# METADATA \*\*\*\*' "$FILE"; then
+              echo "  WARN — missing '# METADATA ****' block."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"default_lakehouse_workspace_id"' "$FILE"; then
+              echo "  WARN — missing 'default_lakehouse_workspace_id' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"default_lakehouse"' "$FILE"; then
+              echo "  WARN — missing 'default_lakehouse' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"name": "synapse_pyspark"' "$FILE"; then
+              echo "  WARN — kernel_info must use 'synapse_pyspark'."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if [ "$ERRORS" -eq 0 ]; then
+              echo "   OK"
+            else
+              echo "  $ERRORS warning(s) — $FILE"
+              WARN=true
+            fi
+          done
+
+          echo ""
+          if [ "$WARN" = "true" ]; then
+            echo "════════════════════════════════════════════════"
+            echo "  Lint WARNINGS found — deployment continues."
+            echo "════════════════════════════════════════════════"
+            exit 1   # caught by continue-on-error; annotated but not blocking
+          fi
+
+          echo "════════════════════════════════════════════════"
+          echo "   Lint PASSED — all notebook files look good."
+          echo "════════════════════════════════════════════════"
+      # ─────────────────────────────────────────────────────────────────────────
 
       - name: Setup Python
         uses: actions/setup-python@v5

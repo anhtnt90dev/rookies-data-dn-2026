@@ -57,22 +57,43 @@ jobs:
               || github.ref_name
             }}
 
+      - name: Detect changed notebook-content.py files
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual run: scan all notebook-content.py files in fabric/
+            CHANGED=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
+          else
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+              | grep -E '^fabric/.*notebook-content\.py$' || true)
+          fi
+
+          echo "Changed notebook files:"
+          echo "$CHANGED"
+
+          CHANGED_ENCODED=$(echo "$CHANGED" | tr '\n' '|')
+          echo "files=$CHANGED_ENCODED" >> $GITHUB_OUTPUT
+          echo "count=$(echo "$CHANGED" | grep -c 'notebook-content' || echo 0)" >> $GITHUB_OUTPUT
+
       - name: Check Lint For Notebook files
+        if: steps.changed.outputs.count != '0'
         continue-on-error: true
         run: |
           WARN=false
-          FILES=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
-
-          if [ -z "$FILES" ]; then
-            echo "No notebook-content.py files found in fabric/. Skipping lint."
-            exit 0
-          fi
+          FILES=$(echo "${{ steps.changed.outputs.files }}" | tr '|' '\n' | grep -v '^$')
 
           for FILE in $FILES; do
             echo ""
             echo "══════════════════════════════════════════"
             echo "  Checking: $FILE"
             echo "══════════════════════════════════════════"
+
+            if [ ! -f "$FILE" ]; then
+              echo "  SKIP — file deleted or not found."
+              continue
+            fi
 
             ERRORS=0
 

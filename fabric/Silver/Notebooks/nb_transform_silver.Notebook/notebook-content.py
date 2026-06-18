@@ -85,10 +85,14 @@ from delta.tables import DeltaTable
 # ---------------------------------------------------------------------------
 
 # Pipeline session identifier for audit tracing
-session_id: str = "TEST DEPLOY TEST ROUND 4"
+session_id: str = ""
 
 # Environment tag: 'dev' | 'staging' | 'prod'
 run_env: str = "dev"
+RUN_EYY ="s"
+
+__af = "1"
+A1_af = "1"
 
 # Override load type at runtime: 'full' | 'incremental' | '' (use cfg value)
 force_load_type: str = "incremental"

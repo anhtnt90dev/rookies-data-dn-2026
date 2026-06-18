@@ -1550,7 +1550,7 @@ def update_table_layer_status_batch(
 pre_ingest_results = [
     {
         "source_table_id": cfg["id"],
-        "status": AuditStatus.FAILED.value,
+        "status": AuditStatus.RUNNING.value,
     }
     for cfg in config_load_tables
 ]

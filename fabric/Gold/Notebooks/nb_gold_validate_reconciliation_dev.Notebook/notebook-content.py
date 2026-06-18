@@ -67,7 +67,7 @@ run_mode = str(run_mode).upper()
 
 # Helper to retrieve table_session_id for a given target table
 def get_table_session_id(dim_fact_table_id: int) -> str:
-    # Map conformed ID to source ID dynamically under Option 2
+    # Map conformed ID to source ID dynamically
     try:
         df_tables = spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
         mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
@@ -112,6 +112,23 @@ def get_table_session_id(dim_fact_table_id: int) -> str:
     except Exception:
         return None
 
+from pyspark.sql.window import Window
+
+def latest_by_key(df, key_col: str, order_col: str = "updated_at"):
+    # Check for actual ordering column dynamically
+    actual_order_col = None
+    for col in [order_col, "last_updated_at", "last_updated", "created_at"]:
+        if col in df.columns:
+            actual_order_col = col
+            break
+            
+    if actual_order_col:
+        w = Window.partitionBy(key_col).orderBy(F.col(actual_order_col).desc_nulls_last())
+        return df.withColumn("_rn", F.row_number().over(w)) \
+            .where(F.col("_rn") == 1) \
+            .drop("_rn")
+    return df.dropDuplicates([key_col])
+
 # Validation runner for a fact table
 def validate_fact_table(
     table_name: str,
@@ -122,7 +139,8 @@ def validate_fact_table(
     silver_table_name: str,
     metric_cols: list[str], # col_name in gold vs expression/col_name in silver
     fk_bk_mappings: dict = {}, # col_name -> business_key_col (e.g. "customer_key" -> "customer_id")
-    scd2_temporal_mappings: dict = {} # col_name -> (dim_table, tx_date_col)
+    scd2_temporal_mappings: dict = {}, # col_name -> (dim_table, tx_date_col)
+    silver_grain_cols: list[str] = None
 ):
     table_session_id = get_table_session_id(dim_fact_table_id)
     is_temp_session = False
@@ -134,252 +152,354 @@ def validate_fact_table(
     print(f"[VALIDATE] Starting QA check suite for {table_name}...")
     gold_df = spark.table(table_name)
 
-    # 1. Grain Uniqueness Check
     # We only check records inserted/updated in the current batch
     batch_gold_df = gold_df.where(F.col("_batch_id") == F.lit(str(batch_id)))
-    grain_dups = batch_gold_df.groupBy(*grain_cols).count().filter("count > 1")
-    dup_count = grain_dups.count()
-    if dup_count > 0:
-        err_msg = f"Grain Uniqueness Check Failed: Found {dup_count} duplicate rows at grain {grain_cols}."
-        print(f"[ERROR] {err_msg}")
-        # Log to invalid_record
-        sample_dup = grain_dups.limit(1).collect()[0]
-        log_invalid_record(
-            table_session_id=table_session_id,
-            layer="GOLD",
-            target_table=table_name,
-            record_key=str(sample_dup[grain_cols[0]]),
-            raw_data=str(sample_dup.asDict()),
-            error_reason=err_msg,
-            error_column=grain_cols[0],
-            error_type=ErrorType.RULE
-        )
-        if not is_temp_session:
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="GRAIN_UNIQUENESS_FAILED", error_message=err_msg)
-        raise Exception(err_msg)
 
-    # 2. Foreign Key Integrity Check
-    for fk_col, dim_table in fk_mappings.items():
-        # Join to find records where fk is not -1 and does not resolve in dimension
-        dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
-        # Handles special key names
-        if dim_table == "gold.dim_cancellation_reason":
-            dim_pk = "cancellation_reason_key"
-        
-        dim_df = spark.table(dim_table).select(dim_pk)
-        orphaned = batch_gold_df.alias("g").join(
-            dim_df.alias("d"),
-            on=F.col("g." + fk_col) == F.col("d." + dim_pk),
-            how="left"
-        ).filter((F.col("g." + fk_col) != -1) & F.col("d." + dim_pk).isNull())
+    # Enrich batch_gold_df with parent business keys if missing in Gold schema, sourcing from Silver lineage
+    if table_name == "gold.fact_quotation":
+        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
+        batch_gold_df = batch_gold_df.join(veh_df, on="customer_id", how="left")
+    elif table_name == "gold.fact_quotation_item":
+        q_df = latest_by_key(spark.table("silver.quotation"), "quotation_id").select("quotation_id", "customer_id", "agent_id", "provider_code")
+        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
+        parent_df = q_df.join(veh_df, on="customer_id", how="left")
+        batch_gold_df = batch_gold_df.join(parent_df, on="quotation_id", how="left")
+    elif table_name == "gold.fact_policy":
+        q_df = latest_by_key(spark.table("silver.quotation"), "quotation_id").select("quotation_id", "agent_id")
+        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
+        batch_gold_df = batch_gold_df.join(q_df, on="quotation_id", how="left")
+        batch_gold_df = batch_gold_df.join(veh_df, on="customer_id", how="left")
+    elif table_name in ["gold.fact_payment", "gold.fact_cancellation"]:
+        pol_df = latest_by_key(spark.table("silver.policy"), "policy_id").select("policy_id", "customer_id", "provider_code")
+        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
+        parent_df = pol_df.join(veh_df, on="customer_id", how="left")
+        batch_gold_df = batch_gold_df.join(parent_df, on="policy_id", how="left")
 
-        orphaned_count = orphaned.count()
-        if orphaned_count > 0:
-            err_msg = f"Foreign Key Integrity Check Failed: Column {fk_col} has {orphaned_count} orphaned keys mapping to {dim_table}."
-            print(f"[ERROR] {err_msg}")
-            sample_orphaned = orphaned.limit(1).collect()[0]
-            log_invalid_record(
-                table_session_id=table_session_id,
-                layer="GOLD",
-                target_table=table_name,
-                record_key=str(sample_orphaned[grain_cols[0]]),
-                raw_data=str(sample_orphaned.asDict()),
-                error_reason=err_msg,
-                error_column=fk_col,
-                error_type=ErrorType.RULE
-            )
-            if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="FK_INTEGRITY_FAILED", error_message=err_msg)
-            raise Exception(err_msg)
+    batch_gold_df = batch_gold_df.cache()
 
-    # 3. Date Key Validity Check
-    dim_date_keys = spark.table("gold.dim_date").select("date_key")
-    for date_key_col in date_keys:
-        orphaned_dates = batch_gold_df.alias("g").join(
-            dim_date_keys.alias("d"),
-            on=F.col("g." + date_key_col) == F.col("d.date_key"),
-            how="left"
-        ).filter((F.col("g." + date_key_col) != -1) & F.col("d.date_key").isNull())
-
-        orphaned_date_count = orphaned_dates.count()
-        if orphaned_date_count > 0:
-            err_msg = f"Date Key Validity Check Failed: Column {date_key_col} has {orphaned_date_count} date keys not resolving in dim_date."
-            print(f"[ERROR] {err_msg}")
-            sample_orphaned_date = orphaned_dates.limit(1).collect()[0]
-            log_invalid_record(
-                table_session_id=table_session_id,
-                layer="GOLD",
-                target_table=table_name,
-                record_key=str(sample_orphaned_date[grain_cols[0]]),
-                raw_data=str(sample_orphaned_date.asDict()),
-                error_reason=err_msg,
-                error_column=date_key_col,
-                error_type=ErrorType.RULE
-            )
-            if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="DATE_KEY_VALIDITY_FAILED", error_message=err_msg)
-            raise Exception(err_msg)
-
-    # 4. Row Count Reconciliation Check
-    # Count of active batch records in silver table (deduplicated)
+    # Prepare deterministic Silver reconciliation dataset (sourcing only the current batch)
     silver_df = spark.table(silver_table_name).where(F.col("_batch_id") == F.lit(str(batch_id)))
-    # For count, we reconcile against deduplicated silver table on business keys
-    silver_grain_cols = [c if c != "coverage_key" else "coverage_type" for c in grain_cols]
-    silver_count = silver_df.dropDuplicates(silver_grain_cols).count()
-    gold_count = batch_gold_df.count()
+    resolved_silver_grain_cols = silver_grain_cols or grain_cols
     
-    if gold_count != silver_count:
-        err_msg = f"Row Count Reconciliation Failed: Gold count ({gold_count}) does not match deduplicated Silver count ({silver_count}) for batch_id={batch_id}."
-        print(f"[ERROR] {err_msg}")
-        log_invalid_record(
-            table_session_id=table_session_id,
-            layer="GOLD",
-            target_table=table_name,
-            record_key="N/A",
-            raw_data=f"{{'gold_count': {gold_count}, 'silver_count': {silver_count}}}",
-            error_reason=err_msg,
-            error_column="row_count",
-            error_type=ErrorType.RULE
-        )
-        if not is_temp_session:
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="ROW_COUNT_RECONCILIATION_FAILED", error_message=err_msg)
-        raise Exception(err_msg)
-
-    # 5. Metric Reconciliation Check
-    for metric_col in metric_cols:
-        # Reconcile sum of metrics, zeroing out metrics for soft-deleted records in Silver if column exists
-        if "is_deleted" in silver_df.columns:
-            silver_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
-        else:
-            silver_metric_sum_col = F.sum(F.coalesce(F.col(metric_col), F.lit(0.00)))
+    actual_order_col = None
+    for col in ["updated_at", "last_updated_at", "last_updated", "created_at"]:
+        if col in silver_df.columns:
+            actual_order_col = col
+            break
             
-        silver_metric_sum = silver_df.select(silver_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
-        silver_metric_sum = float(silver_metric_sum) if silver_metric_sum is not None else 0.00
+    if actual_order_col:
+        w = Window.partitionBy(*resolved_silver_grain_cols).orderBy(F.col(actual_order_col).desc_nulls_last())
+        silver_recon_df = silver_df.withColumn("_rn", F.row_number().over(w)) \
+            .where(F.col("_rn") == 1) \
+            .drop("_rn")
+    else:
+        silver_recon_df = silver_df.dropDuplicates(resolved_silver_grain_cols)
+        
+    silver_recon_df = silver_recon_df.cache()
+    try:
+        # 1. Grain Uniqueness Check
+        # We only check records inserted/updated in the current batch
+        grain_dups = batch_gold_df.groupBy(*grain_cols).count().filter("count > 1")
+        dup_count = grain_dups.count()
+        if dup_count > 0:
+            err_msg = f"Grain Uniqueness Check Failed: Found {dup_count} duplicate rows at grain {grain_cols}."
+            print(f"[ERROR] {err_msg}")
+            # Log to invalid_record
+            sample_dup = grain_dups.limit(1).collect()[0]
+            log_invalid_record(
+                table_session_id=table_session_id,
+                layer="GOLD",
+                target_table=table_name,
+                record_key=str(sample_dup[grain_cols[0]]),
+                raw_data=str(sample_dup.asDict()),
+                error_reason=err_msg,
+                error_column=grain_cols[0],
+                error_type=ErrorType.RULE
+            )
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="GRAIN_UNIQUENESS_FAILED", error_message=err_msg)
+            raise Exception(err_msg)
 
-        gold_metric_sum = batch_gold_df.select(F.sum(metric_col).alias("metric_sum")).collect()[0]["metric_sum"]
-        gold_metric_sum = float(gold_metric_sum) if gold_metric_sum is not None else 0.00
+        # 2. Foreign Key Integrity Check
+        for fk_col, dim_table in fk_mappings.items():
+            # Join to find records where fk is not -1 and does not resolve in dimension
+            dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
+            # Handles special key names
+            if dim_table == "gold.dim_cancellation_reason":
+                dim_pk = "cancellation_reason_key"
+            
+            dim_df = spark.table(dim_table).select(dim_pk)
+            orphaned = batch_gold_df.alias("g").join(
+                dim_df.alias("d"),
+                on=F.col("g." + fk_col) == F.col("d." + dim_pk),
+                how="left"
+            ).filter((F.col("g." + fk_col) != -1) & F.col("d." + dim_pk).isNull())
 
-        variance = abs(silver_metric_sum - gold_metric_sum)
-        if variance > 0.01:
-            err_msg = f"Metric Reconciliation Failed for {metric_col}: Silver sum = {silver_metric_sum:.2f}, Gold sum = {gold_metric_sum:.2f}, variance = {variance:.4f} exceeds threshold 0.01."
+            orphaned_count = orphaned.count()
+            if orphaned_count > 0:
+                err_msg = f"Foreign Key Integrity Check Failed: Column {fk_col} has {orphaned_count} orphaned keys mapping to {dim_table}."
+                print(f"[ERROR] {err_msg}")
+                sample_orphaned = orphaned.limit(1).collect()[0]
+                log_invalid_record(
+                    table_session_id=table_session_id,
+                    layer="GOLD",
+                    target_table=table_name,
+                    record_key=str(sample_orphaned[grain_cols[0]]),
+                    raw_data=str(sample_orphaned.asDict()),
+                    error_reason=err_msg,
+                    error_column=fk_col,
+                    error_type=ErrorType.RULE
+                )
+                if not is_temp_session:
+                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="FK_INTEGRITY_FAILED", error_message=err_msg)
+                raise Exception(err_msg)
+
+        # 3. Date Key Validity Check
+        dim_date_keys = F.broadcast(spark.table("gold.dim_date").select("date_key"))
+        for date_key_col in date_keys:
+            orphaned_dates = batch_gold_df.alias("g").join(
+                dim_date_keys.alias("d"),
+                on=F.col("g." + date_key_col) == F.col("d.date_key"),
+                how="left"
+            ).filter((F.col("g." + date_key_col) != -1) & F.col("d.date_key").isNull())
+
+            orphaned_date_count = orphaned_dates.count()
+            if orphaned_date_count > 0:
+                err_msg = f"Date Key Validity Check Failed: Column {date_key_col} has {orphaned_date_count} date keys not resolving in dim_date."
+                print(f"[ERROR] {err_msg}")
+                sample_orphaned_date = orphaned_dates.limit(1).collect()[0]
+                log_invalid_record(
+                    table_session_id=table_session_id,
+                    layer="GOLD",
+                    target_table=table_name,
+                    record_key=str(sample_orphaned_date[grain_cols[0]]),
+                    raw_data=str(sample_orphaned_date.asDict()),
+                    error_reason=err_msg,
+                    error_column=date_key_col,
+                    error_type=ErrorType.RULE
+                )
+                if not is_temp_session:
+                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="DATE_KEY_VALIDITY_FAILED", error_message=err_msg)
+                raise Exception(err_msg)
+
+        # 4. Row Count Reconciliation Check
+        # Count of active batch records in silver table (using deterministic deduplicated dataset)
+        silver_count = silver_recon_df.count()
+        gold_count = batch_gold_df.count()
+        
+        if gold_count != silver_count:
+            err_msg = f"Row Count Reconciliation Failed: Gold count ({gold_count}) does not match deduplicated Silver count ({silver_count}) for batch_id={batch_id}."
             print(f"[ERROR] {err_msg}")
             log_invalid_record(
                 table_session_id=table_session_id,
                 layer="GOLD",
                 target_table=table_name,
                 record_key="N/A",
-                raw_data=f"{{'gold_sum': {gold_metric_sum}, 'silver_sum': {silver_metric_sum}, 'variance': {variance}}}",
+                raw_data=f"{{'gold_count': {gold_count}, 'silver_count': {silver_count}}}",
                 error_reason=err_msg,
-                error_column=metric_col,
+                error_column="row_count",
                 error_type=ErrorType.RULE
             )
             if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="METRIC_RECONCILIATION_FAILED", error_message=err_msg)
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="ROW_COUNT_RECONCILIATION_FAILED", error_message=err_msg)
             raise Exception(err_msg)
 
-    # 6. Soft Delete Auditing Check
-    # Check that deleted records have valid metadata fields
-    corrupt_deletes = batch_gold_df.filter((F.col("is_deleted") == True) & (F.col("deleted_at").isNull() | F.col("delete_batch_id").isNull()))
-    corrupt_delete_count = corrupt_deletes.count()
-    if corrupt_delete_count > 0:
-        err_msg = f"Soft Delete Auditing Check Failed: Found {corrupt_delete_count} deleted rows with missing delete metadata."
-        print(f"[ERROR] {err_msg}")
-        sample_corrupt = corrupt_deletes.limit(1).collect()[0]
-        log_invalid_record(
-            table_session_id=table_session_id,
-            layer="GOLD",
-            target_table=table_name,
-            record_key=str(sample_corrupt[grain_cols[0]]),
-            raw_data=str(sample_corrupt.asDict()),
-            error_reason=err_msg,
-            error_column="deleted_at/delete_batch_id",
-            error_type=ErrorType.RULE
-        )
-        if not is_temp_session:
-            finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
-        raise Exception(err_msg)
+        # 5. Metric Reconciliation Check
+        for metric_col in metric_cols:
+            # Reconcile sum of metrics, zeroing out metrics for soft-deleted records in Silver if column exists
+            if "is_deleted" in silver_recon_df.columns:
+                silver_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
+            else:
+                silver_metric_sum_col = F.sum(F.coalesce(F.col(metric_col), F.lit(0.00)))
+                
+            silver_metric_sum = silver_recon_df.select(silver_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
+            silver_metric_sum = float(silver_metric_sum) if silver_metric_sum is not None else 0.00
 
-    # 7. Unresolved Keys Check (Zero Tolerance for -1 when Business Key is present)
-    for fk_col, bk_col in fk_bk_mappings.items():
-        unresolved = batch_gold_df.filter(
-            (F.col(fk_col) == -1) & 
-            F.col(bk_col).isNotNull() & 
-            (F.col(bk_col) != "Unknown") & 
-            (F.col(bk_col) != "")
-        )
-        unresolved_count = unresolved.count()
-        if unresolved_count > 0:
-            err_msg = f"Zero Tolerance Unresolved Key Check Failed: Column {fk_col} has {unresolved_count} rows resolved to -1 (Unknown) despite having a valid Business Key '{bk_col}'."
+            if "is_deleted" in batch_gold_df.columns:
+                gold_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
+            else:
+                gold_metric_sum_col = F.sum(F.coalesce(F.col(metric_col), F.lit(0.00)))
+
+            gold_metric_sum = batch_gold_df.select(gold_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
+            gold_metric_sum = float(gold_metric_sum) if gold_metric_sum is not None else 0.00
+
+            variance = abs(silver_metric_sum - gold_metric_sum)
+            if variance > 0.01:
+                err_msg = f"Metric Reconciliation Failed for {metric_col}: Silver sum = {silver_metric_sum:.2f}, Gold sum = {gold_metric_sum:.2f}, variance = {variance:.4f} exceeds threshold 0.01."
+                print(f"[ERROR] {err_msg}")
+                log_invalid_record(
+                    table_session_id=table_session_id,
+                    layer="GOLD",
+                    target_table=table_name,
+                    record_key="N/A",
+                    raw_data=f"{{'gold_sum': {gold_metric_sum}, 'silver_sum': {silver_metric_sum}, 'variance': {variance}}}",
+                    error_reason=err_msg,
+                    error_column=metric_col,
+                    error_type=ErrorType.RULE
+                )
+                if not is_temp_session:
+                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="METRIC_RECONCILIATION_FAILED", error_message=err_msg)
+                raise Exception(err_msg)
+
+        # 6. Soft Delete Auditing Check
+        # Check that deleted records have valid metadata fields
+        corrupt_deletes = batch_gold_df.filter((F.col("is_deleted") == True) & (F.col("deleted_at").isNull() | F.col("delete_batch_id").isNull()))
+        corrupt_delete_count = corrupt_deletes.count()
+        if corrupt_delete_count > 0:
+            err_msg = f"Soft Delete Auditing Check Failed: Found {corrupt_delete_count} deleted rows with missing delete metadata."
             print(f"[ERROR] {err_msg}")
-            sample_unresolved = unresolved.limit(1).collect()[0]
+            sample_corrupt = corrupt_deletes.limit(1).collect()[0]
             log_invalid_record(
                 table_session_id=table_session_id,
                 layer="GOLD",
                 target_table=table_name,
-                record_key=str(sample_unresolved[grain_cols[0]]),
-                raw_data=str(sample_unresolved.asDict()),
+                record_key=str(sample_corrupt[grain_cols[0]]),
+                raw_data=str(sample_corrupt.asDict()),
                 error_reason=err_msg,
-                error_column=fk_col,
+                error_column="deleted_at/delete_batch_id",
                 error_type=ErrorType.RULE
             )
             if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="UNRESOLVED_KEY_VIOLATION", error_message=err_msg)
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
             raise Exception(err_msg)
 
-    # 8. Temporal Integrity / Pre-existence Rule Check (SCD2 dimensions)
-    for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
-        dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
-        if dim_table == "gold.dim_cancellation_reason":
-            dim_pk = "cancellation_reason_key"
+        # 7. Unresolved Keys Check (Zero Tolerance for -1 when Business Key is present)
+        for fk_col, bk_col in fk_bk_mappings.items():
+            unresolved = batch_gold_df.filter(
+                (F.col(fk_col) == -1) & 
+                F.col(bk_col).isNotNull() & 
+                (F.col(bk_col) != "Unknown") & 
+                (F.col(bk_col) != "")
+            )
+            unresolved_count = unresolved.count()
+            if unresolved_count > 0:
+                err_msg = f"Zero Tolerance Unresolved Key Check Failed: Column {fk_col} has {unresolved_count} rows resolved to -1 (Unknown) despite having a valid Business Key '{bk_col}'."
+                print(f"[ERROR] {err_msg}")
+                sample_unresolved = unresolved.limit(1).collect()[0]
+                log_invalid_record(
+                    table_session_id=table_session_id,
+                    layer="GOLD",
+                    target_table=table_name,
+                    record_key=str(sample_unresolved[grain_cols[0]]),
+                    raw_data=str(sample_unresolved.asDict()),
+                    error_reason=err_msg,
+                    error_column=fk_col,
+                    error_type=ErrorType.RULE
+                )
+                if not is_temp_session:
+                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="UNRESOLVED_KEY_VIOLATION", error_message=err_msg)
+                raise Exception(err_msg)
+
+        # 8. Temporal Integrity / Pre-existence Rule Check (SCD2 dimensions)
+        for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
+            dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
+            if dim_table == "gold.dim_cancellation_reason":
+                dim_pk = "cancellation_reason_key"
+                
+            dim_df = spark.table(dim_table).select(dim_pk, "effective_from")
             
-        dim_df = spark.table(dim_table).select(dim_pk, "effective_from")
-        
-        # Resolve date keys to full_date using gold.dim_date
-        fact_with_date = batch_gold_df.alias("g").join(
-            spark.table("gold.dim_date").select("date_key", F.col("full_date").alias("tx_date")).alias("dt"),
-            on=F.col("g." + tx_date_col) == F.col("dt.date_key"),
-            how="inner"
-        )
-        
-        temporal_violations = fact_with_date.alias("f").join(
-            dim_df.alias("d"),
-            on=F.col("f." + fk_col) == F.col("d." + dim_pk),
-            how="inner"
-        ).filter(
-            (F.col("f." + fk_col) != -1) & 
-            (F.col("f." + tx_date_col) != -1) & 
-            (F.col("f.tx_date") < F.col("d.effective_from").cast("date"))
-        )
-        
-        viol_count = temporal_violations.count()
-        if viol_count > 0:
-            err_msg = f"Temporal Integrity Check Failed: Found {viol_count} rows in {table_name} where transaction date is prior to dimension registration date (effective_from) for {fk_col}."
-            print(f"[ERROR] {err_msg}")
-            sample_viol = temporal_violations.limit(1).collect()[0]
-            log_invalid_record(
-                table_session_id=table_session_id,
-                layer="GOLD",
-                target_table=table_name,
-                record_key=str(sample_viol[grain_cols[0]]),
-                raw_data=str(sample_viol.asDict()),
-                error_reason=err_msg,
-                error_column=fk_col,
-                error_type="TEMPORAL_MISMATCH_ERROR"
+            # Resolve date keys to full_date using gold.dim_date
+            fact_with_date = batch_gold_df.alias("g").join(
+                F.broadcast(spark.table("gold.dim_date").select("date_key", F.col("full_date").alias("tx_date"))).alias("dt"),
+                on=F.col("g." + tx_date_col) == F.col("dt.date_key"),
+                how="inner"
             )
-            if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="TEMPORAL_INTEGRITY_FAILED", error_message=err_msg)
-            raise Exception(err_msg)
+            
+            # Filter early: push down filters for -1 keys before join
+            fact_filtered = fact_with_date.filter((F.col(fk_col) != -1) & (F.col(tx_date_col) != -1))
+            dim_filtered = dim_df.filter(F.col(dim_pk) != -1)
 
-    print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
+            temporal_violations = fact_filtered.alias("f").join(
+                F.broadcast(dim_filtered).alias("d"),
+                on=F.col("f." + fk_col) == F.col("d." + dim_pk),
+                how="inner"
+            ).filter(
+                F.col("f.tx_date") < F.col("d.effective_from").cast("date")
+            )
+            
+            viol_count = temporal_violations.count()
+            if viol_count > 0:
+                err_msg = f"Temporal Integrity Check Failed: Found {viol_count} rows in {table_name} where transaction date is prior to dimension registration date (effective_from) for {fk_col}."
+                print(f"[ERROR] {err_msg}")
+                sample_viol = temporal_violations.limit(1).collect()[0]
+                log_invalid_record(
+                    table_session_id=table_session_id,
+                    layer="GOLD",
+                    target_table=table_name,
+                    record_key=str(sample_viol[grain_cols[0]]),
+                    raw_data=str(sample_viol.asDict()),
+                    error_reason=f"TEMPORAL_MISMATCH_ERROR: {err_msg}",
+                    error_column=fk_col,
+                    error_type=ErrorType.RULE
+                )
+                if not is_temp_session:
+                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="TEMPORAL_INTEGRITY_FAILED", error_message=err_msg)
+                raise Exception(err_msg)
+
+        print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
+    finally:
+        batch_gold_df.unpersist()
+        silver_recon_df.unpersist()
 
 # ---------------------------------------------------------------------------
 # Sequenced Execution of Audits
 # ---------------------------------------------------------------------------
 
-# 1. fact_quotation (ID: 15)
-validate_fact_table(
+import json
+
+# Query active fact tables from the configuration table dynamically
+fact_table_df = spark.table("cfg.dim_fact_table").where(F.col("table_type") == "FACT")
+fact_table_rows = fact_table_df.collect()
+
+# Create table name to (id, is_active) mapping
+fact_name_to_info = {row["table_name"].lower(): (int(row["id"]), bool(row["is_active"])) for row in fact_table_rows}
+
+# Initialize validation statuses for active fact tables
+validation_statuses = {f_id: "SUCCESS" for f_name, (f_id, is_act) in fact_name_to_info.items() if is_act}
+validation_errors = {}
+
+def run_validation_safely(
+    table_name: str,
+    grain_cols: list[str],
+    fk_mappings: dict,
+    date_keys: list[str],
+    silver_table_name: str,
+    metric_cols: list[str],
+    fk_bk_mappings: dict = {},
+    scd2_temporal_mappings: dict = {},
+    silver_grain_cols: list[str] = None
+):
+    entity_name = table_name.split(".")[-1].lower()
+    fact_info = fact_name_to_info.get(entity_name)
+    if not fact_info:
+        print(f"[WARNING] Table {table_name} is not registered in cfg.dim_fact_table. Skipping validation.")
+        return
+        
+    fact_id, is_active = fact_info
+    if not is_active:
+        print(f"[INFO] Table {table_name} is inactive. Skipping validation.")
+        return
+        
+    try:
+        validate_fact_table(
+            table_name=table_name,
+            dim_fact_table_id=fact_id,
+            grain_cols=grain_cols,
+            fk_mappings=fk_mappings,
+            date_keys=date_keys,
+            silver_table_name=silver_table_name,
+            metric_cols=metric_cols,
+            fk_bk_mappings=fk_bk_mappings,
+            scd2_temporal_mappings=scd2_temporal_mappings,
+            silver_grain_cols=silver_grain_cols
+        )
+    except Exception as e:
+        validation_statuses[fact_id] = "FAILED"
+        validation_errors[fact_id] = str(e)
+
+# 1. fact_quotation
+run_validation_safely(
     table_name="gold.fact_quotation",
-    dim_fact_table_id=15,
     grain_cols=["quotation_id"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
@@ -397,7 +517,8 @@ validate_fact_table(
         "quotation_key": "quotation_id",
         "customer_key": "customer_id",
         "agent_key": "agent_id",
-        "provider_key": "provider_code"
+        "provider_key": "provider_code",
+        "vehicle_key": "vehicle_id"
     },
     scd2_temporal_mappings={
         "customer_key": ("gold.dim_customer", "quotation_date_key"),
@@ -407,11 +528,11 @@ validate_fact_table(
     }
 )
 
-# 2. fact_quotation_item (ID: 16)
-validate_fact_table(
+# 2. fact_quotation_item
+run_validation_safely(
     table_name="gold.fact_quotation_item",
-    dim_fact_table_id=16,
     grain_cols=["quotation_id", "coverage_key"],
+    silver_grain_cols=["quotation_id", "coverage_type"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
         "customer_key": "gold.dim_customer",
@@ -426,7 +547,11 @@ validate_fact_table(
     silver_table_name="silver.quotation_item",
     metric_cols=["coverage_amount", "deductible_amount"],
     fk_bk_mappings={
-        "quotation_key": "quotation_id"
+        "quotation_key": "quotation_id",
+        "customer_key": "customer_id",
+        "agent_key": "agent_id",
+        "provider_key": "provider_code",
+        "vehicle_key": "vehicle_id"
     },
     scd2_temporal_mappings={
         "customer_key": ("gold.dim_customer", "quotation_date_key"),
@@ -436,10 +561,9 @@ validate_fact_table(
     }
 )
 
-# 3. fact_policy (ID: 17)
-validate_fact_table(
+# 3. fact_policy
+run_validation_safely(
     table_name="gold.fact_policy",
-    dim_fact_table_id=17,
     grain_cols=["policy_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -458,7 +582,9 @@ validate_fact_table(
         "policy_key": "policy_id",
         "quotation_key": "quotation_id",
         "customer_key": "customer_id",
-        "provider_key": "provider_code"
+        "provider_key": "provider_code",
+        "agent_key": "agent_id",
+        "vehicle_key": "vehicle_id"
     },
     scd2_temporal_mappings={
         "customer_key": ("gold.dim_customer", "policy_start_date_key"),
@@ -468,10 +594,9 @@ validate_fact_table(
     }
 )
 
-# 4. fact_payment (ID: 18)
-validate_fact_table(
+# 4. fact_payment
+run_validation_safely(
     table_name="gold.fact_payment",
-    dim_fact_table_id=18,
     grain_cols=["payment_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -485,7 +610,10 @@ validate_fact_table(
     silver_table_name="silver.payment",
     metric_cols=["payment_amount"],
     fk_bk_mappings={
-        "policy_key": "policy_id"
+        "policy_key": "policy_id",
+        "customer_key": "customer_id",
+        "provider_key": "provider_code",
+        "vehicle_key": "vehicle_id"
     },
     scd2_temporal_mappings={
         "customer_key": ("gold.dim_customer", "payment_date_key"),
@@ -494,10 +622,9 @@ validate_fact_table(
     }
 )
 
-# 5. fact_cancellation (ID: 19)
-validate_fact_table(
+# 5. fact_cancellation
+run_validation_safely(
     table_name="gold.fact_cancellation",
-    dim_fact_table_id=19,
     grain_cols=["cancellation_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -510,7 +637,10 @@ validate_fact_table(
     silver_table_name="silver.cancellation",
     metric_cols=["refund_amount"],
     fk_bk_mappings={
-        "policy_key": "policy_id"
+        "policy_key": "policy_id",
+        "customer_key": "customer_id",
+        "provider_key": "provider_code",
+        "vehicle_key": "vehicle_id"
     },
     scd2_temporal_mappings={
         "customer_key": ("gold.dim_customer", "cancellation_date_key"),
@@ -518,6 +648,9 @@ validate_fact_table(
         "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
     }
 )
+
+# Exit returning status map in JSON
+mssparkutils.notebook.exit(json.dumps(validation_statuses))
 
 # METADATA ********************
 

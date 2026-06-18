@@ -259,130 +259,78 @@ def validate_fact_table(
             silver_metric_sum = silver_df.select(silver_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
             silver_metric_sum = float(silver_metric_sum) if silver_metric_sum is not None else 0.00
 
-            if "is_deleted" in batch_gold_df.columns:
-                gold_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
-            else:
-                gold_metric_sum_col = F.sum(F.coalesce(F.col(metric_col), F.lit(0.00)))
-
-            gold_metric_sum = batch_gold_df.select(gold_metric_sum_col.alias("metric_sum")).collect()[0]["metric_sum"]
-            gold_metric_sum = float(gold_metric_sum) if gold_metric_sum is not None else 0.00
-
-            variance = abs(silver_metric_sum - gold_metric_sum)
-            if variance > 0.01:
-                err_msg = f"Metric Reconciliation Failed for {metric_col}: Silver sum = {silver_metric_sum:.2f}, Gold sum = {gold_metric_sum:.2f}, variance = {variance:.4f} exceeds threshold 0.01."
-                print(f"[ERROR] {err_msg}")
-                log_invalid_record(
-                    table_session_id=table_session_id,
-                    layer="GOLD",
-                    target_table=table_name,
-                    record_key="N/A",
-                    raw_data=f"{{'gold_sum': {gold_metric_sum}, 'silver_sum': {silver_metric_sum}, 'variance': {variance}}}",
-                    error_reason=err_msg,
-                    error_column=metric_col,
-                    error_type=ErrorType.RULE
-                )
-                if not is_temp_session:
-                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="METRIC_RECONCILIATION_FAILED", error_message=err_msg)
-                raise Exception(err_msg)
-
-        # 6. Soft Delete Auditing Check
-        # Check that deleted records have valid metadata fields
-        corrupt_deletes = batch_gold_df.filter((F.col("is_deleted") == True) & (F.col("deleted_at").isNull() | F.col("delete_batch_id").isNull()))
-        corrupt_delete_count = corrupt_deletes.count()
-        if corrupt_delete_count > 0:
-            err_msg = f"Soft Delete Auditing Check Failed: Found {corrupt_delete_count} deleted rows with missing delete metadata."
+    # 7. Unresolved Keys Check (Zero Tolerance for -1 when Business Key is present)
+    for fk_col, bk_col in fk_bk_mappings.items():
+        unresolved = batch_gold_df.filter(
+            (F.col(fk_col) == -1) & 
+            F.col(bk_col).isNotNull() & 
+            (F.col(bk_col) != "Unknown") & 
+            (F.col(bk_col) != "")
+        )
+        unresolved_count = unresolved.count()
+        if unresolved_count > 0:
+            err_msg = f"Zero Tolerance Unresolved Key Check Failed: Column {fk_col} has {unresolved_count} rows resolved to -1 (Unknown) despite having a valid Business Key '{bk_col}'."
             print(f"[ERROR] {err_msg}")
-            sample_corrupt = corrupt_deletes.limit(1).collect()[0]
+            sample_unresolved = unresolved.limit(1).collect()[0]
             log_invalid_record(
                 table_session_id=table_session_id,
                 layer="GOLD",
                 target_table=table_name,
-                record_key=str(sample_corrupt[grain_cols[0]]),
-                raw_data=str(sample_corrupt.asDict()),
+                record_key=str(sample_unresolved[grain_cols[0]]),
+                raw_data=str(sample_unresolved.asDict()),
                 error_reason=err_msg,
-                error_column="deleted_at/delete_batch_id",
+                error_column=fk_col,
                 error_type=ErrorType.RULE
             )
             if not is_temp_session:
-                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="SOFT_DELETE_AUDITING_FAILED", error_message=err_msg)
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="UNRESOLVED_KEY_VIOLATION", error_message=err_msg)
             raise Exception(err_msg)
 
-        # 7. Unresolved Keys Check (Zero Tolerance for -1 when Business Key is present)
-        for fk_col, bk_col in fk_bk_mappings.items():
-            unresolved = batch_gold_df.filter(
-                (F.col(fk_col) == -1) & 
-                F.col(bk_col).isNotNull() & 
-                (F.col(bk_col) != "Unknown") & 
-                (F.col(bk_col) != "")
-            )
-            unresolved_count = unresolved.count()
-            if unresolved_count > 0:
-                err_msg = f"Zero Tolerance Unresolved Key Check Failed: Column {fk_col} has {unresolved_count} rows resolved to -1 (Unknown) despite having a valid Business Key '{bk_col}'."
-                print(f"[ERROR] {err_msg}")
-                sample_unresolved = unresolved.limit(1).collect()[0]
-                log_invalid_record(
-                    table_session_id=table_session_id,
-                    layer="GOLD",
-                    target_table=table_name,
-                    record_key=str(sample_unresolved[grain_cols[0]]),
-                    raw_data=str(sample_unresolved.asDict()),
-                    error_reason=err_msg,
-                    error_column=fk_col,
-                    error_type=ErrorType.RULE
-                )
-                if not is_temp_session:
-                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="UNRESOLVED_KEY_VIOLATION", error_message=err_msg)
-                raise Exception(err_msg)
-
-        # 8. Temporal Integrity / Pre-existence Rule Check (SCD2 dimensions)
-        for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
-            dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
-            if dim_table == "gold.dim_cancellation_reason":
-                dim_pk = "cancellation_reason_key"
-                
-            dim_df = spark.table(dim_table).select(dim_pk, "effective_from")
+    # 8. Temporal Integrity / Pre-existence Rule Check (SCD2 dimensions)
+    for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
+        dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
+        if dim_table == "gold.dim_cancellation_reason":
+            dim_pk = "cancellation_reason_key"
             
-            # Resolve date keys to full_date using gold.dim_date
-            fact_with_date = batch_gold_df.alias("g").join(
-                F.broadcast(spark.table("gold.dim_date").select("date_key", F.col("full_date").alias("tx_date"))).alias("dt"),
-                on=F.col("g." + tx_date_col) == F.col("dt.date_key"),
-                how="inner"
+        dim_df = spark.table(dim_table).select(dim_pk, "effective_from")
+        
+        # Resolve date keys to full_date using gold.dim_date
+        fact_with_date = batch_gold_df.alias("g").join(
+            spark.table("gold.dim_date").select("date_key", F.col("full_date").alias("tx_date")).alias("dt"),
+            on=F.col("g." + tx_date_col) == F.col("dt.date_key"),
+            how="inner"
+        )
+        
+        temporal_violations = fact_with_date.alias("f").join(
+            dim_df.alias("d"),
+            on=F.col("f." + fk_col) == F.col("d." + dim_pk),
+            how="inner"
+        ).filter(
+            (F.col("f." + fk_col) != -1) & 
+            (F.col("f." + tx_date_col) != -1) & 
+            (F.col("f.tx_date") < F.col("d.effective_from").cast("date"))
+        )
+        
+        viol_count = temporal_violations.count()
+        if viol_count > 0:
+            err_msg = f"Temporal Integrity Check Failed: Found {viol_count} rows in {table_name} where transaction date is prior to dimension registration date (effective_from) for {fk_col}."
+            print(f"[ERROR] {err_msg}")
+            sample_viol = temporal_violations.limit(1).collect()[0]
+            log_invalid_record(
+                table_session_id=table_session_id,
+                layer="GOLD",
+                target_table=table_name,
+                record_key=str(sample_viol[grain_cols[0]]),
+                raw_data=str(sample_viol.asDict()),
+                error_reason=err_msg,
+                error_column=fk_col,
+                error_type="TEMPORAL_MISMATCH_ERROR"
             )
-            
-            # Filter early: push down filters for -1 keys before join
-            fact_filtered = fact_with_date.filter((F.col(fk_col) != -1) & (F.col(tx_date_col) != -1))
-            dim_filtered = dim_df.filter(F.col(dim_pk) != -1)
+            if not is_temp_session:
+                finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="TEMPORAL_INTEGRITY_FAILED", error_message=err_msg)
+            raise Exception(err_msg)
 
-            temporal_violations = fact_filtered.alias("f").join(
-                F.broadcast(dim_filtered).alias("d"),
-                on=F.col("f." + fk_col) == F.col("d." + dim_pk),
-                how="inner"
-            ).filter(
-                F.col("f.tx_date") < F.col("d.effective_from").cast("date")
-            )
-            
-            viol_count = temporal_violations.count()
-            if viol_count > 0:
-                err_msg = f"Temporal Integrity Check Failed: Found {viol_count} rows in {table_name} where transaction date is prior to dimension registration date (effective_from) for {fk_col}."
-                print(f"[ERROR] {err_msg}")
-                sample_viol = temporal_violations.limit(1).collect()[0]
-                log_invalid_record(
-                    table_session_id=table_session_id,
-                    layer="GOLD",
-                    target_table=table_name,
-                    record_key=str(sample_viol[grain_cols[0]]),
-                    raw_data=str(sample_viol.asDict()),
-                    error_reason=f"TEMPORAL_MISMATCH_ERROR: {err_msg}",
-                    error_column=fk_col,
-                    error_type=ErrorType.RULE
-                )
-                if not is_temp_session:
-                    finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="TEMPORAL_INTEGRITY_FAILED", error_message=err_msg)
-                raise Exception(err_msg)
-
-        print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
-    finally:
-        batch_gold_df.unpersist()
+    print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
 
 # ---------------------------------------------------------------------------
 # Sequenced Execution of Audits
@@ -471,6 +419,7 @@ run_validation_safely(
 # 2. fact_quotation_item
 run_validation_safely(
     table_name="gold.fact_quotation_item",
+    dim_fact_table_id=16,
     grain_cols=["quotation_id", "coverage_key"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",

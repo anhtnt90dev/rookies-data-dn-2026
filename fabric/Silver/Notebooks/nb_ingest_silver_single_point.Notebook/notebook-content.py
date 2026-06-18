@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
+# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
+# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
+# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
 # META         }
 # META       ]
 # META     }
@@ -46,16 +46,11 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-
-
-
 import re
 import time
 import uuid
 from enum import Enum
 from dataclasses import dataclass
-
-
 
 # METADATA ********************
 
@@ -66,10 +61,10 @@ from dataclasses import dataclass
 
 # PARAMETERS CELL ********************
 
-p_pipeline_run_id = "14a8ca6f-0b1b-412b-b8eb"
-p_session_id= "217d9cf9-b990-4adb-84bc-d78c0b4ee10b"
-p_batch_id="20260618145813"
-p_list_config_load_table = "[{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":2,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"agents\",\"source_location\":\"dbo.agents\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"agent_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/agent.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/agent.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.agent\",\"silver_table_name\":\"silver.agent\",\"load_sequence\":2,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":3,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"insurance_providers\",\"source_location\":\"dbo.insurance_providers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"provider_code\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/insurance_provider.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/provider.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.insurance_provider\",\"silver_table_name\":\"silver.provider\",\"load_sequence\":3,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":5,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"quotation\",\"source_location\":\"dbo.quotation\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"quotation_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/quotation.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/quotation.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.quotation\",\"silver_table_name\":\"silver.quotation\",\"load_sequence\":5,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":6,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"quotation_item\",\"source_location\":\"dbo.quotation_item\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"quotation_item_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/quotation_item.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/quotation_item.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.quotation_item\",\"silver_table_name\":\"silver.quotation_item\",\"load_sequence\":6,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":7,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"policy\",\"source_location\":\"Files/landing/policy_system/policy\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"policy_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/policy.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/policy.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.policy\",\"silver_table_name\":\"silver.policy\",\"load_sequence\":7,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":8,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"cancellation\",\"source_location\":\"Files/landing/policy_system/cancellation\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"cancellation_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/cancellation.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/cancellation.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.cancellation\",\"silver_table_name\":\"silver.cancellation\",\"load_sequence\":8,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":9,\"source_system\":\"payment_system\",\"source_type\":\"file\",\"source_name\":\"payment\",\"source_location\":\"Files/landing/payment_system/payment\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"payment_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/payment.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/payment.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.payment\",\"silver_table_name\":\"silver.payment\",\"load_sequence\":9,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"}]"
+p_pipeline_run_id = ""
+p_session_id= ""
+p_batch_id=""
+p_list_config_load_table = ""
 
 # METADATA ********************
 
@@ -82,29 +77,6 @@ p_list_config_load_table = "[{\"id\":1,\"source_system\":\"crm_system\",\"source
 
 session_id = p_session_id
 pipeline_run_id = p_pipeline_run_id
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-# json_string = json.dumps(p_list_config_load_table)
-# print(json_string)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-# %run nb_audit_logging_helper_dev
 
 # METADATA ********************
 
@@ -163,7 +135,6 @@ LAYER_COLUMN_MAP: dict[Layer, LayerColumns] = {
 AUDIT_TABLE_SESSION_TABLE = "log.audit_table_session"
 AUDIT_DETAIL_TABLE = "log.audit_detail"
 
-
 # METADATA ********************
 
 # META {
@@ -178,16 +149,6 @@ def require_layer(layer: str) -> str:
     if layer_value not in {item.value for item in Layer}:
         raise ValueError("layer must be BRONZE, SILVER, or GOLD")
     return layer_value
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
 
 # METADATA ********************
 
@@ -1690,148 +1651,6 @@ def new_audit_id() -> str:
 
 # CELL ********************
 
-AUDIT_DETAIL_SCHEMA = StructType([
-
-    StructField(
-        "id",
-        StringType(),
-        False
-    ),
-
-    StructField(
-        "table_session_id",
-        StringType(),
-        False
-    ),
-
-    StructField(
-        "attempt_no",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "detail_status",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "layer",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "watermark_before",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "watermark_after",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "source_row_count",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "target_row_count",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "inserted_row",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "updated_row",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "deleted_row",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "rejected_row",
-        IntegerType(),
-        True
-    ),
-
-    StructField(
-        "error_message",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "error_type",
-        StringType(),
-        True
-    ),
-
-    StructField(
-        "is_retryable",
-        BooleanType(),
-        True
-    ),
-
-    StructField(
-        "duration_ms",
-        LongType(),
-        True
-    ),
-
-    StructField(
-        "sla_target_ms",
-        LongType(),
-        True
-    ),
-
-    StructField(
-        "sla_breached",
-        BooleanType(),
-        True
-    )
-])
-
-
-
-
-
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-print(table_results)
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
 audit_updates = [
     {
         "source_table_id": r["source_table_id"],
@@ -1864,36 +1683,6 @@ except Exception as _audit_finish_err:
             f"[AUDIT] Warning — finish_table_layer_batch failed for"
             f"{_audit_finish_err}"
         )
-
-# METADATA ********************
-
-# META {
-# META   "language": "python",
-# META   "language_group": "synapse_pyspark"
-# META }
-
-# CELL ********************
-
-updated_records = (
-    spark.table(AUDIT_TABLE_SESSION_TABLE)
-    .filter(
-        (F.col("session_id") == p_session_id)
-        & (
-            F.col("source_table_id").isin(
-                [r["source_table_id"] for r in table_results]
-            )
-        )
-    )
-    .select(
-        "id",
-
-        "source_table_id",
-        "updated_at",
-    )
-    .collect()
-)
-
-
 
 # METADATA ********************
 

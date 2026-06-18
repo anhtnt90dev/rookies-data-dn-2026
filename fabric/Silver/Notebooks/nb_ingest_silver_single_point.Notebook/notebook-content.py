@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
+# META       "default_lakehouse": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
+# META       "default_lakehouse_workspace_id": "d7a45747-6b09-483f-b813-8aee84a3afc6",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
+# META           "id": "59e55d5a-c0cc-429c-8dcb-068cfbec22d2"
 # META         }
 # META       ]
 # META     }
@@ -67,8 +67,8 @@ from dataclasses import dataclass
 # PARAMETERS CELL ********************
 
 p_pipeline_run_id = "14a8ca6f-0b1b-412b-b8eb"
-p_session_id= "258bd566-6072-4fe9-9721-7a5066e0dc77"
-p_batch_id="20260617130422"
+p_session_id= "217d9cf9-b990-4adb-84bc-d78c0b4ee10b"
+p_batch_id="20260618145813"
 p_list_config_load_table = "[{\"id\":1,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"customers\",\"source_location\":\"dbo.customers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"customer_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/customer.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/customer.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.customer\",\"silver_table_name\":\"silver.customer\",\"load_sequence\":1,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":2,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"agents\",\"source_location\":\"dbo.agents\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"agent_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/agent.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/agent.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.agent\",\"silver_table_name\":\"silver.agent\",\"load_sequence\":2,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":3,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"insurance_providers\",\"source_location\":\"dbo.insurance_providers\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"provider_code\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/insurance_provider.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/provider.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.insurance_provider\",\"silver_table_name\":\"silver.provider\",\"load_sequence\":3,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":5,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"quotation\",\"source_location\":\"dbo.quotation\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"quotation_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/quotation.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/quotation.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.quotation\",\"silver_table_name\":\"silver.quotation\",\"load_sequence\":5,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":6,\"source_system\":\"crm_system\",\"source_type\":\"database\",\"source_name\":\"quotation_item\",\"source_location\":\"dbo.quotation_item\",\"source_format\":\"table\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"quotation_item_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/quotation_item.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/quotation_item.json\",\"silver_transform_name\":null,\"watermark_column\":\"updated_date\",\"bronze_table_name\":\"bronze.quotation_item\",\"silver_table_name\":\"silver.quotation_item\",\"load_sequence\":6,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":7,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"policy\",\"source_location\":\"Files/landing/policy_system/policy\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"policy_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/policy.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/policy.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.policy\",\"silver_table_name\":\"silver.policy\",\"load_sequence\":7,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":8,\"source_system\":\"policy_system\",\"source_type\":\"file\",\"source_name\":\"cancellation\",\"source_location\":\"Files/landing/policy_system/cancellation\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"cancellation_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/cancellation.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/cancellation.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.cancellation\",\"silver_table_name\":\"silver.cancellation\",\"load_sequence\":8,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"},{\"id\":9,\"source_system\":\"payment_system\",\"source_type\":\"file\",\"source_name\":\"payment\",\"source_location\":\"Files/landing/payment_system/payment\",\"source_format\":\"json\",\"delimiter\":null,\"load_type\":\"FULL\",\"primary_key\":\"payment_id\",\"source_to_bronze_mapping_path\":\"Files/config/mapping/source-to-bronze/payment.json\",\"bronze_to_silver_mapping_path\":\"Files/config/mapping/bronze-to-silver/payment.json\",\"silver_transform_name\":null,\"watermark_column\":\"last_updated\",\"bronze_table_name\":\"bronze.payment\",\"silver_table_name\":\"silver.payment\",\"load_sequence\":9,\"is_active\":true,\"created_at\":\"2026-06-17T12:52:57.087947\",\"updated_at\":\"2026-06-17T12:52:57.087947\"}]"
 
 # METADATA ********************
@@ -188,100 +188,6 @@ def require_layer(layer: str) -> str:
 
 # CELL ********************
 
-def update_table_layer_status_batch(
-    session_id: str,
-    layer: Layer,
-    table_results: list[dict],
-    audit_table: str = AUDIT_TABLE_SESSION_TABLE,
-) -> dict:
-    """
-    Batch update audit table layer status for all ingested tables.
-    Returns: dict[source_table_id -> table_session_id]
-    """
-
-    if not table_results:
-        print("[AUDIT] No table results to update")
-        return {}
-
-
-    if isinstance(layer, str):
-        try:
-            layer = Layer(layer)
-        except Exception:
-            raise ValueError(f"Invalid layer: {layer}")
-
-
-    layer_columns = LAYER_COLUMN_MAP[layer]
-
-    layer_started_column = layer_columns.started
-    layer_ended_column = layer_columns.ended
-    layer_status_column = layer_columns.status
-
-
-    schema = StructType([
-        StructField("session_id", StringType(), True),
-        StructField("source_table_id", StringType(), True),
-        StructField("source_table_name", StringType(), True),
-        StructField("table_session_status", StringType(), True),
-        StructField("layer_status", StringType(), True),
-        StructField("load_type", StringType(), True),
-        StructField("error_code", StringType(), True),
-        StructField("error_message", StringType(), True)
-    ])
-
-    records = []
-    for r in table_results:
-        records.append({
-            "session_id": str(session_id),
-            "source_table_id": str(r["source_table_id"]),
-            "source_table_name": r.get("bronze_table_name"),
-            "table_session_status": AuditStatus.RUNNING.value,
-            "layer_status": AuditStatus.RUNNING.value,
-            "load_type": r.get("load_type", "FULL"),
-            "error_code": None,
-            "error_message": None,
-        })
-
-    df = spark.createDataFrame(records, schema=schema)
-
-    # ----------------------------
-    # DELTA TABLE
-    # ----------------------------
-    delta_table = DeltaTable.forName(spark, audit_table)
-
-    # ----------------------------
-    # MERGE BATCH UPDATE
-    # ----------------------------
-    (
-        delta_table.alias("t")
-        .merge(
-            df.alias("s"),
-            """
-            t.session_id = s.session_id
-            AND t.source_table_id = s.source_table_id
-            """
-        )
-        .whenMatchedUpdate(set={
-            "table_session_status": F.lit(AuditStatus.RUNNING.value),
-            layer_status_column: F.lit(AuditStatus.RUNNING.value),
-            layer_started_column: F.current_timestamp(),
-            layer_ended_column: F.lit(None),
-            "error_code": F.lit(None),
-            "error_message": F.lit(None),
-            "load_type": F.col("s.load_type"),
-            "updated_at": F.current_timestamp(),
-        })
-        .execute()
-    )
-
-    result_map = {
-        r["source_table_id"]: None
-        for r in table_results
-    }
-
-    print(f"[AUDIT] Batch updated {len(table_results)} tables for layer={layer}")
-
-    return result_map
 
 # METADATA ********************
 
@@ -1554,22 +1460,142 @@ print("=" * 70)
 
 # CELL ********************
 
-# ── PHASE 1: Mark all tables as RUNNING before ingestion ──
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+layer_columns = LAYER_COLUMN_MAP[Layer.SILVER]
+
+layer_status_column = layer_columns.status
+layer_started_column = layer_columns.started
+layer_ended_column = layer_columns.ended
+
+def update_table_layer_status_batch(
+    session_id: str,
+    layer: Layer,
+    table_results: list[dict],
+    audit_table: str = AUDIT_TABLE_SESSION_TABLE,
+):
+    """
+    Batch update audit status for a layer.
+
+    """
+
+    if not table_results:
+        print("[AUDIT] No table results to update")
+        return
+
+    if isinstance(layer, str):
+        layer = Layer(layer)
+
+
+
+    # -----------------------------------------
+    # Build source dataframe
+    # -----------------------------------------
+
+    schema = StructType([
+        StructField("session_id", StringType(), False),
+        StructField("source_table_id", LongType(), False),
+        StructField("status", StringType(), False),
+        StructField("error_code", StringType(), True),
+        StructField("error_message", StringType(), True),
+    ])
+
+    records = [
+        {
+            "session_id": str(session_id),
+            "source_table_id": int(r["source_table_id"]),
+            "status": r["status"],
+        }
+        for r in table_results
+    ]
+
+    df = spark.createDataFrame(records, schema=schema)
+
+    # -----------------------------------------
+    # Build update expression
+    # -----------------------------------------
+
+    update_set = {
+        layer_status_column: F.col("s.status"),
+        "updated_at": F.current_timestamp(),
+        "error_message": F.col("s.error_message"),
+        "error_code": F.col("s.error_code"),
+    }
+
+    # RUNNING => set started_at
+    running_condition = f"s.status = '{AuditStatus.RUNNING.value}'"
+
+    # SUCCESS / FAILED => set ended_at
+    finish_condition = (
+        f"s.status IN ("
+        f"'{AuditStatus.SUCCESS.value}', "
+        f"'{AuditStatus.FAILED.value}', "
+        f"'{AuditStatus.SKIPPED.value}'"
+        f")"
+    )   
+
+    delta_table = DeltaTable.forName(spark, audit_table)
+
+    (
+        delta_table.alias("t")
+        .merge(
+            df.alias("s"),
+            """
+            t.session_id = s.session_id
+            AND t.source_table_id = s.source_table_id
+            """
+        )
+        .whenMatchedUpdate(
+            condition=running_condition,
+            set={
+                **update_set,
+                layer_started_column: F.current_timestamp(),
+                layer_ended_column: F.lit(None),
+            }
+        )
+        .whenMatchedUpdate(
+            condition=finish_condition,
+            set={
+                **update_set,
+                layer_ended_column: F.current_timestamp(),
+            }
+        )
+        .execute()
+    )
+
+    print(
+        f"[AUDIT] Batch updated "
+        f"{len(table_results)} tables "
+        f"for layer={layer}"
+    )
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
 pre_ingest_results = [
     {
-        "source_table_id": _cfg["id"],
-        "bronze_table_name": _cfg["bronze_table_name"],
-        "load_type": (
-            force_load_type.upper()
-            if force_load_type
-            else _cfg.get("load_type", "FULL").upper()
-        ),
+        "source_table_id": cfg["id"],
+        "status": AuditStatus.FAILED.value,
     }
-    for _cfg in config_load_tables
+    for cfg in config_load_tables
 ]
 
 update_table_layer_status_batch(
-    session_id=session_id,
+    session_id=p_session_id,
     layer=Layer.SILVER,
     table_results=pre_ingest_results,
 )
@@ -1783,350 +1809,8 @@ AUDIT_DETAIL_SCHEMA = StructType([
 
 
 
-# ============================================================
-# INSERT AUDIT DETAIL
-# ============================================================
-
-def append_audit_detail_batch(
-    detail_df,
-    audit_detail_table= AUDIT_DETAIL_TABLE
-):
-
-    if detail_df.rdd.isEmpty():
-
-        print(
-            "[AUDIT] No audit detail rows"
-        )
-
-        return
 
 
-    final_df = (
-
-        detail_df
-
-        .withColumn(
-            "created_at",
-            F.current_timestamp()
-        )
-
-        .withColumn(
-            "updated_at",
-            F.current_timestamp()
-        )
-
-    )
-
-
-    (
-        final_df
-
-        .write
-
-        .format("delta")
-
-        .mode("append")
-
-        .saveAsTable(
-            audit_detail_table
-        )
-    )
-
-
-    print(
-        f"[AUDIT] Inserted {final_df.count()} audit detail rows"
-    )
-
-
-
-
-# ============================================================
-# FINISH SILVER BATCH
-# ============================================================
-
-def finish_table_layer_batch(
-    session_id: str,
-    table_results: list[dict],
-    audit_table_session_table= AUDIT_TABLE_SESSION_TABLE,
-    audit_detail_table= AUDIT_DETAIL_TABLE
-):
-
-
-    # ========================================================
-    # 1. BUILD SILVER RESULT DATAFRAME
-    # ========================================================
-    source_rows = [
-        Row(
-            source_table_id=str(r["source_table_id"]),
-            silver_status=r.get("status"),
-            error_code=r.get("error_code"),
-            error_message=r.get("error_message"),
-            watermark_after=r.get("watermark_after"),
-            sla_target_ms=r.get("sla_target_ms"),
-            source_row_count=r.get("source_row_count"),
-            target_row_count=r.get("target_row_count"),
-            inserted_row=r.get("inserted_row_count"),
-            updated_row=r.get("updated_row_count"),
-            rejected_row=r.get("rejected_row_count"),
-            error_type=r.get("error_type")
-        )
-        for r in table_results
-    ]
-
-    source_schema = StructType([
-        StructField(
-            "source_table_id",
-            StringType(),
-            False
-        ),
-        StructField(
-            "silver_status",
-            StringType(),
-            True
-        ),
-        StructField(
-            "error_code",
-            StringType(),
-            True
-        ),
-        StructField(
-            "error_message",
-            StringType(),
-            True
-        ),
-        StructField(
-            "watermark_after",
-            StringType(),
-            True
-        ),
-        StructField(
-            "sla_target_ms",
-            LongType(),
-            True
-        ),
-        StructField(
-            "source_row_count",
-            IntegerType(),
-            True
-        ),
-        StructField(
-            "target_row_count",
-            IntegerType(),
-            True
-        ),
-        StructField(
-            "inserted_row",
-            IntegerType(),
-            True
-        ),
-
-        StructField(
-            "updated_row",
-            IntegerType(),
-            True
-        ),
-        StructField(
-            "rejected_row",
-            IntegerType(),
-            True
-        ),
-        StructField(
-            "error_type",
-            StringType(),
-            True
-        )
-    ])
-
-
-    source_df = spark.createDataFrame(
-        source_rows,
-        source_schema
-    )
-
-    # ========================================================
-    # 2. GET EXISTING TABLE 
-    # ========================================================
-    table_session_df = (
-        spark.table(
-            audit_table_session_table
-        )
-        .filter(
-            F.col("session_id") == session_id
-        )
-        .select(
-            F.col("id")
-            .alias(
-                "table_session_id"
-            ),
-            "source_table_id"
-        )
-    )
-
-    # ========================================================
-    # 3. VALIDATE RELATION
-    # ========================================================
-
-    missing_df = (
-        source_df
-        .join(
-            table_session_df,
-            on="source_table_id",
-            how="left"
-        )
-        .filter(
-            F.col("table_session_id")
-            .isNull()
-        )
-    )
-
-    if missing_df.count() > 0:
-        print(
-            "[AUDIT] WARNING — Missing audit_table_session for:"
-        )
-        missing_df.show(
-            False
-        )
-
-
-    # ========================================================
-    # 4. UPDATE SILVER STATUS ONLY
-    # ========================================================
-    source_df.createOrReplaceTempView(
-        "silver_update_source"
-    )
-    
-    spark.sql(
-        f"""
-        MERGE INTO {audit_table_session_table} target
-        USING silver_update_source source
-        ON
-        target.session_id = '{session_id}'
-        AND
-        target.source_table_id =
-        source.source_table_id
-        WHEN MATCHED THEN
-        UPDATE SET
-        target.silver_status =
-        source.silver_status,
-        target.silver_ended_at =
-        current_timestamp(),
-        target.error_code =
-        CASE
-            WHEN source.silver_status =
-            '{AuditStatus.FAILED.value}'
-            THEN source.error_code
-            ELSE NULL
-        END,
-        target.error_message =
-        CASE
-            WHEN source.silver_status =
-            '{AuditStatus.FAILED.value}'
-            THEN source.error_message
-            ELSE NULL
-        END,
-        target.updated_at =
-        current_timestamp()
-        """
-    )
-
-
-
-    # ========================================================
-    # 5. CREATE AUDIT DETAIL DATA
-    # ========================================================
-
-
-    detail_df = (
-        source_df
-        .join(
-            table_session_df,
-            on="source_table_id",
-            how="inner"
-        )
-        .select(
-            F.expr(
-                "uuid()"
-            )
-            .alias(
-                "id"
-            ),
-
-            "table_session_id",
-            F.lit(None)
-            .cast("int")
-            .alias(
-                "attempt_no"
-            ),
-            F.col(
-                "silver_status"
-            )
-            .alias(
-                "detail_status"
-            ),
-            F.lit(
-                "SILVER"
-            )
-            .alias(
-                "layer"
-            ),
-
-            F.lit(None)
-            .cast("string")
-            .alias(
-                "watermark_before"
-            ),
-            "watermark_after",
-            "source_row_count",
-            "target_row_count",
-            "inserted_row",
-            "updated_row",
-            F.lit(0)
-            .alias(
-                "deleted_row"
-            ),
-            "rejected_row",
-            "error_message",
-            "error_type",
-            (
-                F.col("silver_status") == AuditStatus.FAILED.value
-            )
-            .alias(
-                "is_retryable"
-            ),
-
-            F.lit(None)
-            .cast("long")
-            .alias(
-                "duration_ms"
-            ),
-            "sla_target_ms",
-            F.lit(None)
-            .cast("boolean")
-            .alias(
-                "sla_breached"
-            )
-        )
-    )
-
-
-    # ========================================================
-    # 6. INSERT DETAIL
-    # ========================================================
-
-    append_audit_detail_batch(
-        detail_df,
-        audit_detail_table
-    )
-
-
-    print(
-        f"""
-        [AUDIT]
-        Finished SILVER layer
-        session_id={session_id}
-        tables={len(table_results)}
-        """
-    )
 
 # METADATA ********************
 
@@ -2137,9 +1821,30 @@ def finish_table_layer_batch(
 
 # CELL ********************
 
-# Debug: inspect first row keys
-if table_results:
-    print(f"[AUDIT DEBUG] table_results[0] keys: {list(table_results[0].keys())}")
+print(table_results)
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+audit_updates = [
+    {
+        "source_table_id": r["source_table_id"],
+        "status": r["status"],
+        "error_code": (
+            "ERROR"
+            if r.get("error_message")
+            else None
+        ),
+        "error_message": r.get("error_message"),
+    }
+    for r in table_results
+]
 
 # METADATA ********************
 
@@ -2151,12 +1856,225 @@ if table_results:
 # CELL ********************
 
 try:
-    table_sessions = finish_table_layer_batch(session_id=session_id,table_results=table_results)
+    table_sessions = update_table_layer_status_batch(session_id=p_session_id,layer=Layer.SILVER,table_results=audit_updates)
+
+    print(table_sessions)
 except Exception as _audit_finish_err:
         print(
             f"[AUDIT] Warning — finish_table_layer_batch failed for"
             f"{_audit_finish_err}"
         )
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+updated_records = (
+    spark.table(AUDIT_TABLE_SESSION_TABLE)
+    .filter(
+        (F.col("session_id") == p_session_id)
+        & (
+            F.col("source_table_id").isin(
+                [r["source_table_id"] for r in table_results]
+            )
+        )
+    )
+    .select(
+        "id",
+
+        "source_table_id",
+        "updated_at",
+    )
+    .collect()
+)
+
+
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+def append_audit_detail_batch(
+    layer: Layer,
+    table_results: list[dict],
+    updated_records: list[dict],
+    audit_detail_table: str = AUDIT_DETAIL_TABLE,
+):
+    """
+    Append audit detail records for a processing layer.
+
+    Parameters
+    ----------
+    layer : Layer
+        Processing layer (BRONZE/SILVER/GOLD)
+
+    table_results : list[dict]
+        Pipeline execution results.
+
+    updated_records : list[dict]
+        Output returned from update_table_layer_status_batch().
+
+        Expected:
+        [
+            {
+                "id": "<table_session_id>",
+                "source_table_id": 1,
+                ...
+            }
+        ]
+    """
+
+    if not table_results:
+        print("[AUDIT DETAIL] No table results")
+        return
+
+    if not updated_records:
+        print("[AUDIT DETAIL] No updated records")
+        return
+
+    # ---------------------------------------------------------
+    # source_table_id -> table_session_id lookup
+    # ---------------------------------------------------------
+
+    session_lookup = {
+        r["source_table_id"]: r["id"]
+        for r in updated_records
+    }
+
+    # ---------------------------------------------------------
+    # Build rows
+    # ---------------------------------------------------------
+
+    detail_rows = []
+
+    for result in table_results:
+
+        source_table_id = result["source_table_id"]
+
+        table_session_id = session_lookup.get(source_table_id)
+
+        if not table_session_id:
+            print(
+                f"[AUDIT DETAIL] Skip source_table_id="
+                f"{source_table_id} because table_session_id not found"
+            )
+            continue
+
+        detail_rows.append({
+            "id": str(uuid.uuid4()),
+            "table_session_id": str(table_session_id),
+            "detail_status": result.get("status"),
+
+            "source_row_count": result.get("source_row_count"),
+            "inserted_row": result.get("inserted_row_count"),
+            "updated_row": result.get("updated_row_count"),
+
+            # not available from current result
+            "deleted_row": result.get("deleted_row_count", 0),
+
+            "rejected_row": result.get("rejected_row_count"),
+
+            "layer": layer.value
+            if isinstance(layer, Layer)
+            else str(layer),
+
+            "error_message": result.get("error_message"),
+        })
+
+    if not detail_rows:
+        print("[AUDIT DETAIL] No detail rows generated")
+        return
+
+    # ---------------------------------------------------------
+    # Schema
+    # ---------------------------------------------------------
+
+    schema = StructType([
+        StructField("id", StringType(), False),
+        StructField("table_session_id", StringType(), False),
+
+        StructField("detail_status", StringType(), True),
+
+        StructField("source_row_count", IntegerType(), True),
+        StructField("inserted_row", IntegerType(), True),
+        StructField("updated_row", IntegerType(), True),
+        StructField("deleted_row", IntegerType(), True),
+        StructField("rejected_row", IntegerType(), True),
+
+        StructField("layer", StringType(), True),
+
+        StructField("error_message", StringType(), True),
+    ])
+
+    df = spark.createDataFrame(detail_rows, schema=schema)
+
+    df = (
+        df
+        .withColumn("created_at", F.current_timestamp())
+        .withColumn("updated_at", F.current_timestamp())
+    )
+
+    (
+        df.write
+        .format("delta")
+        .mode("append")
+        .saveAsTable(audit_detail_table)
+    )
+
+    print(
+        f"[AUDIT DETAIL] Inserted "
+        f"{len(detail_rows)} detail records "
+        f"for layer={layer}"
+    )
+
+    return detail_rows
+
+# METADATA ********************
+
+# META {
+# META   "language": "python",
+# META   "language_group": "synapse_pyspark"
+# META }
+
+# CELL ********************
+
+try:
+    updated_records = (
+    spark.table(AUDIT_TABLE_SESSION_TABLE)
+    .filter(
+        (F.col("session_id") == p_session_id)
+        & (
+            F.col("source_table_id").isin(
+                [r["source_table_id"] for r in table_results]
+            )
+        )
+    )
+    .select(
+        "id",
+
+        "source_table_id",
+        "updated_at",
+    )
+    .collect()
+    )
+    
+    append_audit_detail_batch(layer=Layer.SILVER,table_results=table_results,updated_records=updated_records)
+except Exception as _audit_finish_err:
+        print(
+            f"[AUDIT] Warning — append_audit_detail_batch failed for"
+            f"{_audit_finish_err}"
+        )
+
 
 # METADATA ********************
 

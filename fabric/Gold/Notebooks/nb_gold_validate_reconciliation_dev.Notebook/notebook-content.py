@@ -388,10 +388,59 @@ def validate_fact_table(
 # Sequenced Execution of Audits
 # ---------------------------------------------------------------------------
 
-# 1. fact_quotation (ID: 15)
-validate_fact_table(
+import json
+
+# Query active fact tables from the configuration table dynamically
+fact_table_df = spark.table("cfg.dim_fact_table").where(F.col("table_type") == "FACT")
+fact_table_rows = fact_table_df.collect()
+
+# Create table name to (id, is_active) mapping
+fact_name_to_info = {row["table_name"].lower(): (int(row["id"]), bool(row["is_active"])) for row in fact_table_rows}
+
+# Initialize validation statuses for active fact tables
+validation_statuses = {f_id: "SUCCESS" for f_name, (f_id, is_act) in fact_name_to_info.items() if is_act}
+validation_errors = {}
+
+def run_validation_safely(
+    table_name: str,
+    grain_cols: list[str],
+    fk_mappings: dict,
+    date_keys: list[str],
+    silver_table_name: str,
+    metric_cols: list[str],
+    fk_bk_mappings: dict = {},
+    scd2_temporal_mappings: dict = {}
+):
+    entity_name = table_name.split(".")[-1].lower()
+    fact_info = fact_name_to_info.get(entity_name)
+    if not fact_info:
+        print(f"[WARNING] Table {table_name} is not registered in cfg.dim_fact_table. Skipping validation.")
+        return
+        
+    fact_id, is_active = fact_info
+    if not is_active:
+        print(f"[INFO] Table {table_name} is inactive. Skipping validation.")
+        return
+        
+    try:
+        validate_fact_table(
+            table_name=table_name,
+            dim_fact_table_id=fact_id,
+            grain_cols=grain_cols,
+            fk_mappings=fk_mappings,
+            date_keys=date_keys,
+            silver_table_name=silver_table_name,
+            metric_cols=metric_cols,
+            fk_bk_mappings=fk_bk_mappings,
+            scd2_temporal_mappings=scd2_temporal_mappings
+        )
+    except Exception as e:
+        validation_statuses[fact_id] = "FAILED"
+        validation_errors[fact_id] = str(e)
+
+# 1. fact_quotation
+run_validation_safely(
     table_name="gold.fact_quotation",
-    dim_fact_table_id=15,
     grain_cols=["quotation_id"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
@@ -419,10 +468,9 @@ validate_fact_table(
     }
 )
 
-# 2. fact_quotation_item (ID: 16)
-validate_fact_table(
+# 2. fact_quotation_item
+run_validation_safely(
     table_name="gold.fact_quotation_item",
-    dim_fact_table_id=16,
     grain_cols=["quotation_id", "coverage_key"],
     fk_mappings={
         "quotation_key": "gold.dim_quotation",
@@ -448,10 +496,9 @@ validate_fact_table(
     }
 )
 
-# 3. fact_policy (ID: 17)
-validate_fact_table(
+# 3. fact_policy
+run_validation_safely(
     table_name="gold.fact_policy",
-    dim_fact_table_id=17,
     grain_cols=["policy_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -480,10 +527,9 @@ validate_fact_table(
     }
 )
 
-# 4. fact_payment (ID: 18)
-validate_fact_table(
+# 4. fact_payment
+run_validation_safely(
     table_name="gold.fact_payment",
-    dim_fact_table_id=18,
     grain_cols=["payment_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -506,10 +552,9 @@ validate_fact_table(
     }
 )
 
-# 5. fact_cancellation (ID: 19)
-validate_fact_table(
+# 5. fact_cancellation
+run_validation_safely(
     table_name="gold.fact_cancellation",
-    dim_fact_table_id=19,
     grain_cols=["cancellation_id"],
     fk_mappings={
         "policy_key": "gold.dim_policy",
@@ -530,6 +575,9 @@ validate_fact_table(
         "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
     }
 )
+
+# Exit returning status map in JSON
+mssparkutils.notebook.exit(json.dumps(validation_statuses))
 
 # METADATA ********************
 

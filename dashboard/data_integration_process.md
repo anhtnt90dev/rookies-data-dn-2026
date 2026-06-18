@@ -99,29 +99,33 @@ Ensure imported tables follow project naming standards and can be mapped correct
 
 | Imported Table Name |
 | ------------------- |
-| gold_dim_customer   |
-| gold_dim_agent      |
-| gold_fact_quotation |
+| gold dim_customer   |
+| gold dim_agent      |
+| gold fact_quotation |
 
-#### Impact
+### Impact
 
 * Existing semantic model mappings cannot be reused directly.
 * Manual table renaming is required.
-* Additional Power Query transformations are needed.
+* Additional Power Query transformations may be needed.
 
-#### Resolution
+### Resolution
 
-Rename imported tables to align with semantic model standards.
+Imported tables were renamed to align with the semantic model naming standards.
 
 ```text
-gold_dim_customer
+gold dim_customer
         ↓
 dim_customer
+
+gold fact_quotation
+        ↓
+fact_quotation
 ```
 
 ### Status
 
-Table naming issues identified and corrected.
+Table naming validation completed successfully.
 
 ---
 
@@ -138,7 +142,7 @@ Review and update:
 * Column names
 * Null values
 * Duplicate records
-* Unused columns
+* Reporting model columns
 * Relationship key columns
 
 ### Data Cleansing Activities
@@ -155,9 +159,9 @@ Mandatory business keys and relationship columns were reviewed to ensure no inva
 
 Duplicate records were identified and removed based on business key definitions to maintain data consistency.
 
-#### Unused Column Removal
+#### Reporting Model Column Exclusion
 
-The following technical and operational metadata columns were identified as unnecessary for reporting and analytics purposes:
+The following technical, lineage, and operational metadata columns are excluded from the Power BI semantic model because they are not required for the current reporting and analytics requirements:
 
 * created_at
 * updated_at
@@ -171,16 +175,22 @@ The following technical and operational metadata columns were identified as unne
 * deleted_at
 * is_deleted
 
-These columns were removed to:
+These columns are excluded to:
 
 * Reduce model complexity.
 * Improve dataset refresh performance.
 * Optimize memory consumption.
 * Expose only business-relevant attributes to report consumers.
 
+> **Note**
+>
+> These columns remain physically present in the Lakehouse Gold tables as part of the canonical Fact and Dimension model.
+>
+> They are excluded only from the Power BI semantic model and can be added back if required for audit, lineage, troubleshooting, or operational reporting purposes.
+
 ### Status
 
-Data structure reviewed, standardized, and cleansed successfully.
+Data structure reviewed, standardized, and prepared successfully.
 
 ---
 
@@ -214,7 +224,7 @@ Data types configured successfully.
 
 ### Objective
 
-Validate data quality and relationship readiness before building the Star Schema model.
+Validate data quality and relationship readiness before building the semantic model.
 
 ### Validation Checklist
 
@@ -228,7 +238,7 @@ Validate data quality and relationship readiness before building the Star Schema
 
 ### Validation Findings
 
-The following issues were identified during validation:
+The following issues were identified during validation.
 
 #### Issue 1 – Policy Key Mapping Mismatch
 
@@ -256,10 +266,10 @@ Initial analysis indicates that the issues originated during the Silver-to-Gold 
 
 ### Investigation Areas
 
-* Surrogate key generation logic.
-* Lookup transformation logic.
-* Fact-to-Dimension key mapping validation.
-* Gold layer table generation process.
+* Surrogate key generation logic
+* Lookup transformation logic
+* Fact-to-Dimension key mapping validation
+* Gold Layer table generation process
 
 ### Status
 
@@ -267,13 +277,13 @@ Data quality issues identified and currently under investigation.
 
 ---
 
-## Step 6 – Create Relationships
+## Step 6 – Configure Semantic Model Relationships
 
 ### Objective
 
-Build the Star Schema model.
+Configure and validate the relationships required by the Power BI semantic model.
 
-### Star Schema Design
+### Semantic Model Design
 
 #### Dimension Tables
 
@@ -288,6 +298,18 @@ Build the Star Schema model.
 
 * fact_quotation
 * fact_policy
+
+> **Note**
+>
+> This document focuses on the data integration process for the **Quotation Conversion and Sales Analytics Dashboard**.
+>
+> The tables and relationships presented below are representative examples used by this dashboard and are not intended to document the complete enterprise semantic model.
+>
+> The project includes additional Fact tables and relationships that are not shown in this document.
+>
+> For the complete Power BI relationship design and enterprise Star Schema model, refer to:
+>
+> [[Power BI Semantic Model Design]](https://github.com/anhtnt90dev/rookies-data-dn-2026/blob/dev/docs/data-modeling/dimensional-design/05-powerbi-relationship-design.md)
 
 ### Planned Relationships
 
@@ -307,7 +329,7 @@ Build the Star Schema model.
 
 ### Current Status
 
-Relationship creation is partially completed.
+Relationship configuration is partially completed.
 
 Several relationships remain pending until the data quality issues identified during validation are resolved.
 
@@ -321,12 +343,12 @@ Verify that the semantic model is ready for reporting and analytics.
 
 ### Validation Checklist
 
-* Tables loaded successfully.
-* Relationships active.
-* No relationship conflicts.
-* Data types validated.
-* KPI measures functioning correctly.
-* Referential integrity confirmed.
+* Tables loaded successfully
+* Relationships active
+* No relationship conflicts
+* Data types validated
+* KPI measures functioning correctly
+* Referential integrity confirmed
 
 ### Current Status
 
@@ -368,45 +390,6 @@ Refresh dashboard data after semantic model validation is completed.
 ### Current Status
 
 Pending completion of data validation and relationship verification.
-
----
-
-# Current Data Flow Status
-
-```text
-Lakehouse
-    │
-    ▼
-Load Tables
-    │
-    ▼
-Validate Structure
-    │
-    ▼
-Prepare Data
-    │
-    ▼
-Validate Data Quality
-    │
-    ├── Policy Key Mapping Mismatch
-    │
-    └── Agent Lookup Failure
-    │
-    ▼
-Investigate Silver → Gold Logic
-    │
-    ▼
-Fix Data Quality Issues
-    │
-    ▼
-Create Relationships
-    │
-    ▼
-Validate Semantic Model
-    │
-    ▼
-Refresh Dashboard
-```
 
 ---
 

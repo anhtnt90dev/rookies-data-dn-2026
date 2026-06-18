@@ -36,9 +36,9 @@ env:
 
 jobs:
   DeployToFabric:
-    if: |
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
-      github.event_name == 'workflow_dispatch'
+    # if: |
+    #   (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+    #   github.event_name == 'workflow_dispatch'
     name: Deploy Fabric Workspace
     runs-on: ubuntu-latest
     environment:

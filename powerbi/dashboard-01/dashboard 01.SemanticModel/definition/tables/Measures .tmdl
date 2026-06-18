@@ -1,0 +1,394 @@
+table 'Measures '
+	lineageTag: 437f0056-7589-43a7-98fc-793adb84f474
+
+	measure 'Total Quotations' = COUNTROWS(fact_quotation)
+		formatString: 0
+		lineageTag: d805fc63-5a23-4744-8904-e999d0e07b83
+
+	measure 'Accepted Quotations' = CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] IN {"ACCEPTED", "CONVERTED"})
+		lineageTag: cacb4ef0-2352-4b51-a00d-20fac0531be3
+
+	measure 'Policies Issued' = COUNTROWS(fact_policy)
+		formatString: 0
+		lineageTag: cb124e25-7846-4645-961a-ecf360cea278
+
+	measure 'Conversion Rate' =
+			
+			DIVIDE(
+			    CALCULATE(
+			        COUNTROWS(fact_quotation),
+			        fact_quotation[converted_flag] = TRUE()
+			    ),
+			    COUNTROWS(fact_quotation),
+			    0
+			)
+		formatString: 0
+		lineageTag: c113b65a-f655-4137-97b2-e3d933fa2631
+
+	measure 'Total Written Premium (VND)' = SUM(fact_policy[premium_amount])
+		formatString: 0
+		lineageTag: 43751592-655d-4211-ad89-6da49afc00cc
+
+	measure 'Collected Premium Revenue' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code] = "PAID")
+		formatString: 0
+		lineageTag: 8b036524-981b-4dd7-ae28-fc47260964bd
+
+	measure 'Avg Written Premium per Policy (VND)' = DIVIDE([Total Written Premium (VND)], [Policies Issued], 0)
+		lineageTag: 563a2d4c-b880-42c3-89fd-c0c61f8d8383
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Active Customers' = CALCULATE(DISTINCTCOUNT(fact_policy[customer_key]), dim_policy_status[policy_status_code] = "ACTIVE")
+		formatString: 0
+		lineageTag: a34df465-52ee-4224-9c4d-32faaa08b8be
+
+	measure 'Policies In Force' = CALCULATE(COUNT(fact_policy[policy_key]), dim_policy_status[policy_status_code] = "ACTIVE")
+		formatString: 0
+		lineageTag: d1c8512e-0c0d-43f8-a93e-aab380dad6b7
+
+	measure 'Funnel Drop-off: Issued → In Force' = [Policies Issued] - [Policies In Force]
+		formatString: 0
+		lineageTag: 289cfb97-cb55-4480-a6f6-bc399175abb0
+
+	measure 'Quotation Count by Month' = CALCULATE([Total Quotations], DATESMTD(dim_date[full_date]))
+		formatString: 0
+		lineageTag: 251f8c59-b672-461e-9d63-cffca98c8fc2
+
+	measure 'Policies Issued by Month' = CALCULATE([Policies Issued], DATESMTD(dim_date[full_date]))
+		formatString: 0
+		lineageTag: be6dd683-d862-4391-9720-0b28ca5256cb
+
+	measure 'Conversion Rate by Month' = CALCULATE([Conversion Rate], DATESMTD(dim_date[full_date]))
+		lineageTag: 7d784dda-175e-40f5-a5d4-08c2c39447ba
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Written Premium by Month' = CALCULATE([Total Written Premium (VND)], DATESMTD(dim_date[full_date]))
+		formatString: 0
+		lineageTag: b601b359-bf7f-4ac8-973e-f2480ccce1b6
+
+	measure 'Rejected + Expired Rate by Month' = DIVIDE(CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] IN {"REJECTED","EXPIRED"}), [Total Quotations], 0) * 100
+		lineageTag: f54130e1-c66f-4cd9-9c51-9279a297bbe1
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quotations PY' =
+			
+			CALCULATE(
+			    [Total Quotations],
+			    SAMEPERIODLASTYEAR(dim_date[full_date])
+			)
+		formatString: 0
+		lineageTag: 14e47955-ef4d-4d91-a7fb-5c9709d169f1
+
+	measure 'Premium PY' = CALCULATE([Total Written Premium (VND)], SAMEPERIODLASTYEAR(dim_date[full_date]))
+		lineageTag: 47896c00-267d-4b7e-91e3-407a92e4e1d2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'YoY Premium Growth %' = DIVIDE([Total Written Premium (VND)] - [Premium PY], [Premium PY], 0) * 100
+		lineageTag: cb6c03e7-5ef1-4e85-b08b-6dc38ea08b69
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'MoM Conversion Rate Change' = VAR curr = [Conversion Rate] VAR prev = CALCULATE([Conversion Rate], DATEADD(dim_date[full_date], -1, MONTH)) RETURN IF(NOT ISBLANK(prev), curr - prev, BLANK())
+		lineageTag: 55e39496-fc7a-4bfe-bc12-293b29965b58
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Conv Rate by Provider' = CALCULATE([Conversion Rate], ALLEXCEPT(dim_provider, dim_provider[provider_code]))
+		lineageTag: 22dd39c7-83bb-4b5f-adbc-dbc1f6cbe3c8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Premium by Provider' = CALCULATE([Avg Written Premium per Policy (VND)], ALLEXCEPT(dim_provider, dim_provider[provider_code]))
+		lineageTag: 9b8a36ca-28e8-4a10-b04d-7197a773eaf4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Volume Share by Provider' = DIVIDE(CALCULATE([Total Quotations], ALLEXCEPT(dim_provider, dim_provider[provider_code])), CALCULATE([Total Quotations], ALL(dim_provider)), 0) * 100
+		lineageTag: f02ef7d5-29f7-4e66-aadd-b37b6736119f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Rejected Quotations' = CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] = "REJECTED")
+		formatString: 0
+		lineageTag: 1f731de9-1232-44d8-9638-5af3eab4ec06
+
+	measure 'Expired Quotations' = CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] = "EXPIRED")
+		formatString: 0
+		lineageTag: edeec729-5ef9-446a-8df6-5afa2015e202
+
+	measure 'Quote-to-Accept Rate' = DIVIDE([Accepted Quotations], [Total Quotations], 0)
+		lineageTag: ff424a65-da01-4742-8267-fd982b469c60
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Quotations by Package' =
+			CALCULATE(
+			    [Total Quotations],
+			    KEEPFILTERS( VALUES(dim_package[package_code]) )
+			)
+		formatString: 0
+		lineageTag: 759a45a0-988f-42f3-be42-f3b5b13ed5c8
+
+	measure 'Policies Issued by Agent' = CALCULATE([Policies Issued], ALLEXCEPT(dim_agent, dim_agent[agent_id]))
+		formatString: 0
+		lineageTag: a689cfa1-5c60-4cea-a508-601725a0d98e
+
+	measure 'Conv Rate by Agent' = CALCULATE([Conversion Rate], ALLEXCEPT(dim_agent, dim_agent[agent_id]))
+		lineageTag: 85fb9781-851e-4bd7-a680-3f77487fa007
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Premium by Agent' = CALCULATE([Avg Written Premium per Policy (VND)], ALLEXCEPT(dim_agent, dim_agent[agent_id]))
+		lineageTag: c0c44dac-cbc4-43fe-b31c-0d8d1c09a2f7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Conv Rate by Region' = CALCULATE([Conversion Rate], ALLEXCEPT(dim_agent, dim_agent[region]))
+		lineageTag: 03e7513c-d425-469e-987c-7633a18f5248
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Agent vs Regional Benchmark' = [Conv Rate by Agent] - [Conv Rate by Region]
+		lineageTag: 8f5c7e49-8a1a-4af7-99aa-ace78f8247f7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Rejected Quotations (Ops View)' = CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] = "REJECTED")
+		formatString: 0
+		lineageTag: bc99b6a0-0dbd-4b8b-b5d8-0d1573863ebd
+
+	measure 'Quotation Age (day)' = AVERAGEX(FILTER(fact_quotation, RELATED(dim_quotation_status[quotation_status_code]) = "QUOTED"), DATEDIFF(RELATED(dim_date[full_date]), TODAY(), DAY))
+		lineageTag: 82a11527-aeaf-4e7b-843a-8914793cb443
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Lost Deal Analysis' = CALCULATE([Total Quotations], dim_quotation_status[quotation_status_code] IN {"REJECTED","EXPIRED"})
+		formatString: 0
+		lineageTag: f8097673-6ccc-4fcd-97a2-9df94a193dea
+
+	measure 'Conversion Rate PY' = CALCULATE([Conversion Rate], SAMEPERIODLASTYEAR(dim_date[full_date]))
+		lineageTag: d0264684-7a55-4c01-9182-b0e8735df66d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'PY Label' =
+			
+			"PY (" & (MAXX(ALL(dim_date), dim_date[year_number]) - 1) & ")"
+		lineageTag: 5ae7646e-fdec-443e-a574-98d05e63032c
+
+	measure 'Top Agent Name (Policies)' = ```
+			
+			MAXX(
+			    TOPN(1,
+			        SUMMARIZE(dim_agent, dim_agent[agent_name],
+			            "pol", [Policies Issued]
+			        ),
+			        [pol], DESC
+			    ),
+			    dim_agent[agent_name]
+			)
+			
+			
+			```
+		lineageTag: d56161ef-2f54-42ba-88bd-5995d44515c7
+
+	measure 'Top Agent Policies Count' =
+			
+			MAXX(
+			    TOPN(1,
+			        SUMMARIZE(dim_agent, dim_agent[agent_name],
+			            "pol", [Policies Issued]
+			        ),
+			        [pol], DESC
+			    ),
+			    [pol]
+			)
+		formatString: 0
+		lineageTag: 36dc60a5-2169-48cb-aa30-de3f1f3aec29
+
+	measure 'Best Conv Rate Agent Name' =
+			
+			MAXX(
+			    TOPN(1,
+			        FILTER(
+			            SUMMARIZE(dim_agent, dim_agent[agent_name],
+			                "cr", [Conv Rate by Agent],
+			                "q",  [Total Quotations]
+			            ),
+			            [q] >= 30        -- minimum volume threshold
+			        ),
+			        [cr], DESC
+			    ),
+			    dim_agent[agent_name]
+			)
+		lineageTag: fe02181a-df15-4951-9249-d644b1e4e96b
+
+	measure 'Best Conv Rate Agent Value' =
+			
+			MAXX(
+			    TOPN(1,
+			        FILTER(
+			            SUMMARIZE(dim_agent, dim_agent[agent_name],
+			                "cr", [Conv Rate by Agent],
+			                "q",  [Total Quotations]
+			            ),
+			            [q] >= 30
+			        ),
+			        [cr], DESC
+			    ),
+			    [cr]
+			)
+		lineageTag: 97c89a38-3ff6-4c5a-9c49-1f32d5908e29
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Conv Rate by City' =
+			
+			CALCULATE(
+			    [Conversion Rate],
+			    ALLEXCEPT(dim_customer, dim_customer[city])
+			)
+		lineageTag: 1eeeb152-3352-4a2a-980f-9c6f78fda47a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Lost Deals by City' =
+			
+			CALCULATE(
+			    [Total Quotations],
+			    dim_quotation_status[quotation_status_code] IN {"REJECTED","EXPIRED"},
+			    ALLEXCEPT(dim_customer, dim_customer[city])
+			)
+		formatString: 0
+		lineageTag: bc61bc3d-fcd0-4a11-b55a-1484135dfc55
+
+	measure 'Rejected by City' =
+			
+			CALCULATE(
+			    [Total Quotations],
+			    dim_quotation_status[quotation_status_code] = "REJECTED",
+			    ALLEXCEPT(dim_customer, dim_customer[city])
+			)
+		formatString: 0
+		lineageTag: 178e7a2c-0ce6-4aa2-a2c4-3ff5fddf427f
+
+	measure 'Expired by City' =
+			
+			CALCULATE(
+			    [Total Quotations],
+			    dim_quotation_status[quotation_status_code] = "EXPIRED",
+			    ALLEXCEPT(dim_customer, dim_customer[city])
+			)
+		formatString: 0
+		lineageTag: a19477b8-fb57-40dc-9113-f2d2346fa3d0
+
+	measure 'Sub YoY Quotation Growth %' =
+			
+			VAR cy = [Total Quotations]
+			VAR py = CALCULATE([Total Quotations], SAMEPERIODLASTYEAR(dim_date[full_date]))
+			VAR growth = DIVIDE(cy - py, py, 0) * 100
+			RETURN
+			    IF(
+			        NOT ISBLANK(py),
+			        FORMAT(growth, "+0.0;-0.0;0.0") & "% YoY vs "
+			            & FORMAT(MAXX(ALL(dim_date), dim_date[year_number]) - 1, "0"),
+			        BLANK()
+			    )
+		lineageTag: 622ab2f2-2a1d-48df-842e-075d976fa228
+
+	measure 'Acceptance Rate' =
+			
+			DIVIDE(
+			    CALCULATE([Total Quotations],
+			        dim_quotation_status[quotation_status_code] IN {"ACCEPTED","CONVERTED"}
+			    ),
+			    [Total Quotations], 0
+			) * 100
+		lineageTag: 44fba7aa-1105-4a1c-a754-40886e477fd9
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Sub Acceptance Rate' =
+			
+			FORMAT([Acceptance Rate], "0.0") & "% Acceptance Rate"
+		lineageTag: b3c28757-4579-4221-9e2e-a8144f870f26
+
+	measure 'Policies Issued Rate' =
+			
+			DIVIDE([Policies Issued], [Total Quotations], 0) * 100
+		lineageTag: 1c5b4453-36a3-4e65-be64-d42dd77bab05
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Sub Issued Rate' = FORMAT([Policies Issued Rate], "0.0") & "% Issued Rate"
+		lineageTag: eeba316d-5de9-41ca-ba0b-40a108f8f618
+
+	measure 'Sub YoY Conv Change' =
+			
+			VAR cy = [Conversion Rate]
+			VAR py = CALCULATE([Conversion Rate], SAMEPERIODLASTYEAR(dim_date[full_date]))
+			VAR delta = cy - py
+			RETURN
+			    IF(
+			        NOT ISBLANK(py),
+			        FORMAT(delta, "+0.0;−0.0;0.0") & " pts YoY vs "
+			            & FORMAT(MAXX(ALL(dim_date), dim_date[year_number]) - 1, "0"),
+			        BLANK()
+			    )
+		lineageTag: a1461cdb-9050-4f61-834d-9c08e3338657
+
+	measure 'Sub YoY Premium Growth %' =
+			
+			VAR cy = [Total Written Premium (VND)]
+			VAR py = CALCULATE([Total Written Premium (VND)], SAMEPERIODLASTYEAR(dim_date[full_date]))
+			VAR growth = DIVIDE(cy - py, py, 0) * 100
+			RETURN
+			    IF(
+			        NOT ISBLANK(py),
+			        FORMAT(growth, "+0.0;-0.0;0.0") & "% YoY vs "
+			            & FORMAT(MAXX(ALL(dim_date), dim_date[year_number]) - 1, "0"),
+			        BLANK()
+			    )
+		lineageTag: 390cc95d-5df1-40be-b0d4-a8c660160718
+
+	measure 'Sub Active Customer Label' =
+			
+			FORMAT([Active Customers], "#,0") & " unique customers"
+		lineageTag: 55844c03-7988-4296-b67b-ad30f165aa76
+
+	measure 'Sub YoY Avg Premium Change' =
+			
+			VAR cy = [Avg Written Premium per Policy (VND)]
+			VAR py = CALCULATE(
+			    DIVIDE(
+			        CALCULATE([Total Written Premium (VND)], SAMEPERIODLASTYEAR(dim_date[full_date])),
+			        CALCULATE([Policies Issued], SAMEPERIODLASTYEAR(dim_date[full_date])),
+			        0
+			    )
+			)
+			VAR delta = DIVIDE(cy - py, py, 0) * 100
+			RETURN
+			    IF(
+			        NOT ISBLANK(py),
+			        FORMAT(delta, "+0.0;-0.0;0.0") & "% vs Prior Year",
+			        BLANK()
+			    )
+		lineageTag: 0ec75bac-00cd-401e-a310-7bdc47d26265
+
+	partition 'Measures ' = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i44FAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Column1", type text}}),
+				    #"Removed Columns" = Table.RemoveColumns(#"Changed Type",{"Column1"})
+				in
+				    #"Removed Columns"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

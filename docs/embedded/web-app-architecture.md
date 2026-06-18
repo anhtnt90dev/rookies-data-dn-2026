@@ -14,45 +14,46 @@ The sequence below illustrates how a user request flows from the browser, throug
 
 ```mermaid
 sequenceDiagram
+    autonumber
+
     actor User
-    participant Frontend as Web App (Frontend)<br/>src/app/login & dashboard
-    participant LoginAPI as Web API (Login)<br/>src/app/api/login
-    participant EmbedAPI as Web API (Embed)<br/>src/app/api/getEmbedToken
-    participant SQL as Fabric SQL Database
+    box  Browser (Client-Side)
+    participant Frontend as Web App
+    end
+
+    box Next.js Backend (Server-Side)
+    participant AuthAPI as /api/login
+    participant EmbedAPI as /api/getEmbedToken
+    end
+
+    participant SQL as Fabric SQL DB
     participant Azure as Microsoft Entra ID
     participant PowerBI as Power BI Service
 
-    User->>Frontend: Enters ID (e.g., AG0001) and clicks Sign In
-    Frontend->>LoginAPI: POST /api/login { userId: "AG0001" }
-    LoginAPI->>SQL: Queries gold.dim_agent or gold.dim_customer
-    SQL-->>LoginAPI: Returns record if authorized
-    LoginAPI-->>Frontend: Returns { success: true, role: "agent" }
-    
-    Frontend->>Frontend: Saves ID to localStorage
-    Frontend->>Frontend: Routes to /dashboard/agent
-    Frontend->>EmbedAPI: POST /api/getEmbedToken { userId: "AG0001" }
+    %% Phase 1
+    Note over User, SQL: PHASE 1: Authentication
+    User->>Frontend: Enter ID (AG0001)
+    Frontend->>AuthAPI: Validate ID
+    AuthAPI->>SQL: Query Database
+    SQL-->>AuthAPI: ID exists
+    AuthAPI-->>Frontend: Success -> Save to localStorage
 
-    rect rgb(240, 248, 255)
-        Note over EmbedAPI, PowerBI: Secure Server-to-Server Communication
-        EmbedAPI->>EmbedAPI: Maps "AG" -> "ROLE_AGENT"
-        EmbedAPI->>Azure: Authenticates Service Principal (Production)
-        Azure-->>EmbedAPI: Returns Azure AD Access Token
-        EmbedAPI->>PowerBI: POST GenerateToken with RLS payload
-        
-        alt Success
-            PowerBI-->>EmbedAPI: Returns secure Embed Token
-        else Permission Error
-            Note over EmbedAPI, PowerBI: Automatic Test Fallback
-            EmbedAPI->>Azure: Authenticates Service Principal (Test)
-            Azure-->>EmbedAPI: Returns Test Azure AD Access Token
-            EmbedAPI->>PowerBI: POST GenerateToken to Test Workspace
-            PowerBI-->>EmbedAPI: Returns Test Embed Token
-        end
-    end
+    %% Phase 2
+    Note over Frontend, PowerBI: PHASE 2: App-Owns-Data Token Flow
+    Frontend->>EmbedAPI: 1. Request Dashboard for AG0001
 
-    EmbedAPI-->>Frontend: Returns Embed Token & Embed URL
-    Frontend->>Frontend: powerbi-client-react SDK initializes
-    Frontend-->>User: Renders secure iframe with filtered data
+    EmbedAPI->>Azure: 2. Authenticate App using Client Secret
+    Azure-->>EmbedAPI: Return Access Token (Full Permissions)
+
+    EmbedAPI->>PowerBI: 3. Request Embed Token with RLS rules (userId=AG0001)
+    PowerBI-->>EmbedAPI: Return Embed Token (Restricted & Locked to AG0001)
+
+    EmbedAPI-->>Frontend: 4. Send Embed Token safely to Browser
+
+    %% Phase 3
+    Note over User, PowerBI: PHASE 3: Secure Rendering
+    Frontend->>PowerBI: Inject Embed Token into secure <iframe>
+    PowerBI-->>User: Render filtered charts directly in iframe
 ```
 
 ---
@@ -71,10 +72,18 @@ The identity provider for our App-Owns-Data setup.
 ### 2. Backend Token Orchestrator (`src/app/api/getEmbedToken/route.ts`)
 A secure Next.js API route that holds the Azure App Registration secrets and communicates with Microsoft APIs.
 - **Role Inference:** Automatically infers the Power BI role based on the prefix (e.g., assigning `ROLE_CUSTOMER` to `CUS` users).
-- **Service Principal Auth:** Reaches out to `login.microsoftonline.com` to obtain a master Access Token.
-- **RLS Payload Generation:** Makes a request to the Power BI `GenerateToken` API, injecting the `identities` array (mapping the exact `userId`, inferred role, and target datasets).
-- **Automatic Test Fallback:** The orchestrator will attempt to generate a token using **Production** credentials first. If Power BI rejects the request (e.g., `PowerBINotAuthorizedException` due to lack of admin permissions), the system automatically catches the error and retries the entire process using the **Test** credentials and Test workspaces configured in the `.env.local` file.
+- **Service Principal Auth (Access Token):** Reaches out to `login.microsoftonline.com` to obtain a master Access Token using the App's Client ID and Secret. This acts as the Application's "VIP Pass" proving identity to Power BI.
+- **RLS Payload Generation (Embed Token):** Uses the Access Token to call the Power BI `GenerateToken` API, injecting an `identities` array (mapping the exact `userId`, inferred role, and target datasets). Power BI then issues a restricted, one-time use "Embed Token" bounded by these RLS rules. This is what's safely sent to the frontend.
+- **Automatic Test Fallback:** The orchestrator will attempt to generate a token using **Production** credentials first. If Power BI rejects the request, the system automatically catches the error and retries the entire process using the **Test** credentials and Test workspaces configured in the `.env.local` file.
 - **Dev Mode:** If no credentials (production or test) are provided, it switches the frontend into a safe "Development Mode" rendering a static mock-up dashboard.
+
+#### Deep Dive: Access Token vs Embed Token Workflow
+To fully understand the App-Owns-Data model, it is critical to distinguish between the two tokens generated in this process:
+
+1. **The Ask (Frontend Request):** The user's browser (`src/app/dashboard/.../page.tsx`) invokes `fetch("/api/getEmbedToken")` with their `userId`. The frontend itself has no Microsoft credentials.
+2. **The App VIP Pass (Access Token):** The backend uses the `Client ID` and `Client Secret` to request an **Access Token** from Microsoft Entra ID. This token is highly privileged and grants the application broad access to the Power BI workspace. **It is never sent to the browser** to prevent data leaks.
+3. **The User Ticket (Embed Token Creation):** The backend uses the privileged Access Token to ask Power BI to print a restricted "ticket" just for this user's session. It sends an RLS payload (e.g., "Grant view access strictly to CUS0001 under ROLE_CUSTOMER"). Power BI processes this and returns an **Embed Token**.
+4. **The Delivery & Render (Frontend Display):** The backend returns this restricted **Embed Token** to the browser. The frontend React component passes it into the `<PowerBIEmbed>` component, which securely opens the Power BI iframe. Even if intercepted by a malicious actor, this token only exposes CUS0001's data and expires quickly.
 
 ### 3. Frontend Dashboard Views (`src/app/dashboard/...`)
 React components representing the final landing pages for the user.

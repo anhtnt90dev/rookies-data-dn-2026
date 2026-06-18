@@ -14,11 +14,11 @@ async function queryFabricSQL(query: string): Promise<any[]> {
 
   return new Promise((resolve, reject) => {
     const rows: any[] = [];
-    
+
     const config = {
       server: server,
       authentication: {
-        type: "azure-active-directory-service-principal" as const,
+        type: "azure-active-directory-service-principal-secret" as const,
         options: {
           clientId: process.env.AZURE_CLIENT_ID!,
           clientSecret: process.env.AZURE_CLIENT_SECRET!,
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     // Try SQL verification
     try {
       console.log(`Verifying ${upperId} in SQL database...`);
-      
+
       let query = "";
       if (role === "customer") {
         query = `SELECT TOP 1 customer_id FROM dim_customer WHERE UPPER(customer_id) = '${upperId}'`;

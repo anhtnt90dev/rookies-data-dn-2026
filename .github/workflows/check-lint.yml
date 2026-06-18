@@ -50,16 +50,21 @@ jobs:
 
           CHANGED_ENCODED=$(echo "$CHANGED" | tr '\n' '|')
           echo "files=$CHANGED_ENCODED" >> $GITHUB_OUTPUT
-          echo "count=$(echo "$CHANGED" | grep -c 'notebook-content' || echo 0)" >> $GITHUB_OUTPUT
+
+          if [ -n "$CHANGED" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Skip — no notebook-content.py changes detected
-        if: steps.changed.outputs.count == '0'
+        if: steps.changed.outputs.has_changes == 'false'
         run: |
           echo "No notebook-content.py files changed inside fabric/**."
           echo "Nothing to lint."
 
       - name: Lint changed notebooks (warning only — never fails pipeline)
-        if: steps.changed.outputs.count != '0'
+        if: steps.changed.outputs.has_changes == 'true'
         # continue-on-error ensures this step is a warning, not a gate
         continue-on-error: true
         run: |

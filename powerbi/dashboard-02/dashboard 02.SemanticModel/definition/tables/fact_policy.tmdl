@@ -1,0 +1,282 @@
+table fact_policy
+	lineageTag: 75358ab7-725c-418e-ade5-5c78857753fe
+
+	column policy_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 761c56e5-ad8b-4478-a027-dc57e3b2d612
+		summarizeBy: none
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_number
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 2f83e4f4-0f95-41cc-a759-6de64cc98be1
+		summarizeBy: none
+		sourceColumn: policy_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 0b74b2f8-3021-4651-ac4a-9f5370388601
+		summarizeBy: none
+		sourceColumn: quotation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: f8981e38-c2f6-425c-ad8e-21b7241e0a69
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 09a9515b-1976-4b98-a061-2212ad0b0f39
+		summarizeBy: none
+		sourceColumn: provider_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 27987224-b9a2-45d8-981c-e72670387883
+		summarizeBy: none
+		sourceColumn: policy_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: da4ac3e2-5baa-4633-ac8a-0753693496e6
+		summarizeBy: none
+		sourceColumn: quotation_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: aa9bdd54-e0d3-4fa1-a1dd-9725dd319534
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: e683f656-43c6-4ea7-8f82-1a4d67e402e7
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 76343ba0-25d2-4a62-b178-86451d8d6300
+		summarizeBy: none
+		sourceColumn: agent_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column package_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: b409a3a1-069e-4622-8586-2072e161098e
+		summarizeBy: none
+		sourceColumn: package_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_status_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: dedcb803-8bcf-45eb-bb1d-d92701ff9c26
+		summarizeBy: none
+		sourceColumn: policy_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column issued_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: aeb20058-9685-4d5b-af7c-93a107818e73
+		summarizeBy: none
+		sourceColumn: issued_date_key
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_start_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 2f46f659-131f-4916-8fb0-d3b1804e65ff
+		summarizeBy: sum
+		sourceColumn: policy_start_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_end_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 9c93f9bb-e493-46b5-80d4-9632e8ccdadf
+		summarizeBy: sum
+		sourceColumn: policy_end_date_key
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 206f3dde-624a-4f65-83c7-ba204dc3cd67
+		summarizeBy: none
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column premium_amount
+		dataType: double
+		sourceProviderType: decimal(18, 2)
+		lineageTag: c1187a15-6499-4aa4-9c5f-aca055989451
+		summarizeBy: sum
+		sourceColumn: premium_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4064138c-af31-409b-8558-be8ba51afc1b
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4521174b-6577-45f0-af86-b5de40a0648a
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column _batch_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: a339f81c-3cd9-494b-aed9-cea9d4ba3f2f
+		summarizeBy: none
+		sourceColumn: _batch_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column _source_system
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 2202d9f5-78c5-4053-ba2c-1174c3656f96
+		summarizeBy: none
+		sourceColumn: _source_system
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_run_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 8eef01f9-015b-4e77-9ace-0f7fea1fdbf5
+		summarizeBy: none
+		sourceColumn: pipeline_run_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_deleted
+		dataType: boolean
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 7fa54825-f269-4b8c-b1b3-8bc22ea06aa4
+		summarizeBy: none
+		sourceColumn: is_deleted
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column deleted_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 83fd91dd-fd4d-4666-bebd-eff5e7375179
+		summarizeBy: none
+		sourceColumn: deleted_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column delete_batch_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 8b9ed602-f77c-48a8-92f4-6733ecf60856
+		summarizeBy: none
+		sourceColumn: delete_batch_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_policy = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_fact_policy = Source{[Schema="gold",Item="fact_policy"]}[Data]
+				in
+				    gold_fact_policy
+

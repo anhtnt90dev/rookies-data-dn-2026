@@ -1,0 +1,138 @@
+name: Lint Fabric Notebooks
+
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - fabric/**
+    types: 
+      - opened
+      - synchronize
+      - reopened
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  LintNotebooks:
+    
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'feature/')
+
+    name: "Lint Notebook Content (Warning Only)"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Detect changed notebook-content.py files in fabric/**
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # On manual run: scan all notebook-content.py files in fabric/
+            CHANGED=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
+          else
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+              | grep -E '^fabric/.*notebook-content\.py$' || true)
+          fi
+
+          echo "Changed notebook files:"
+          echo "$CHANGED"
+
+          CHANGED_ENCODED=$(echo "$CHANGED" | tr '\n' '|')
+          echo "files=$CHANGED_ENCODED" >> $GITHUB_OUTPUT
+
+          if [ -n "$CHANGED" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip — no notebook-content.py changes detected
+        if: steps.changed.outputs.has_changes == 'false'
+        run: |
+          echo "No notebook-content.py files changed inside fabric/**."
+          echo "Nothing to lint."
+
+      - name: Lint changed notebooks (warning only — never fails pipeline)
+        if: steps.changed.outputs.has_changes == 'true'
+        # continue-on-error ensures this step is a warning, not a gate
+        continue-on-error: true
+        run: |
+          WARN=false
+
+          FILES=$(echo "${{ steps.changed.outputs.files }}" | tr '|' '\n' | grep -v '^$')
+
+          for FILE in $FILES; do
+            echo ""
+            echo "══════════════════════════════════════════"
+            echo "  Checking: $FILE"
+            echo "══════════════════════════════════════════"
+
+            if [ ! -f "$FILE" ]; then
+              echo "  SKIP — file deleted or not found."
+              continue
+            fi
+
+            ERRORS=0
+
+            # Check 1: Fabric notebook header
+            if ! grep -q '^# Fabric notebook source' "$FILE"; then
+              echo "  WARN — missing '# Fabric notebook source' header."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check 2: METADATA block
+            if ! grep -q '^# METADATA \*\*\*\*' "$FILE"; then
+              echo "   WARN — missing '# METADATA ****' block."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check 3: default_lakehouse_workspace_id
+            if ! grep -q '"default_lakehouse_workspace_id"' "$FILE"; then
+              echo "  WARN — missing 'default_lakehouse_workspace_id' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check 4: default_lakehouse
+            if ! grep -q '"default_lakehouse"' "$FILE"; then
+              echo "   WARN — missing 'default_lakehouse' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            # Check 5: kernel_info must use synapse_pyspark
+            if ! grep -q '"name": "synapse_pyspark"' "$FILE"; then
+              echo "  WARN — kernel_info must use 'synapse_pyspark'."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if [ "$ERRORS" -eq 0 ]; then
+              echo "  OK"
+            else
+              echo "  $ERRORS warning(s) found in $FILE"
+              WARN=true
+            fi
+          done
+
+          echo ""
+          if [ "$WARN" = "true" ]; then
+            echo "════════════════════════════════════════════════"
+            echo "  Lint finished with WARNINGS — review above."
+            echo "  Pipeline continues regardless."
+            echo "════════════════════════════════════════════════"
+            # Exit 1 here is caught by continue-on-error, surfaced as annotation only
+            exit 1
+          fi
+
+          echo "════════════════════════════════════════════════"
+          echo "  Lint PASSED — all checked files look good."
+          echo "════════════════════════════════════════════════"

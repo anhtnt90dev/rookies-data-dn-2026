@@ -36,9 +36,7 @@ parser.add_argument('--target_env',type=str, help= 'target environment')
 parser.add_argument('--workspaceid',type=str, help= 'Optional: workspace GUID to deploy to')
 parser.add_argument('--workspacename',type=str, help= 'Optional: workspace display name to resolve to GUID')
 
-parser.add_argument('--items_in_scope',type=str, help= 'Defines the item types to be deployed')
 args = parser.parse_args()
-item_types_in_scope = args.items_in_scope
 
 print('Obtaining token...')
 token_credential = ClientSecretCredential(client_id=args.azclientid, client_secret=args.azspsecret, tenant_id=args.aztenantid)

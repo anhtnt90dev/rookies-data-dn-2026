@@ -28,8 +28,6 @@ on:
 
 permissions:
   contents: read
-env:
-  ITEMS_IN_SCOPE: ${{ secrets.ITEMS_IN_SCOPE }}
 
 jobs:
   DeployToFabric:
@@ -207,5 +205,4 @@ jobs:
           --azclientid "$AZURE_CLIENT_ID" \
           --azspsecret "$AZURE_CLIENT_SECRET" \
           --workspaceid "${{ steps.workspace.outputs.workspace }}" \
-          --items_in_scope '${{ env.ITEMS_IN_SCOPE }}' \
           --target_env "${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}"

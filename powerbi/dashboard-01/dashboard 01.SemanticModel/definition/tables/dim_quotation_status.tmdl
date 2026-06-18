@@ -1,0 +1,51 @@
+table dim_quotation_status
+	lineageTag: 5e09e4e5-2072-4476-abc1-0dea815976d7
+
+	column quotation_status_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 53aa32e3-74c0-40a6-94fa-931b625a4062
+		summarizeBy: none
+		sourceColumn: quotation_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_status_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 4af1230c-62d6-47b4-a463-c40b3891759a
+		summarizeBy: none
+		sourceColumn: quotation_status_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 452299c0-961a-46cf-b7ed-afc20409e48e
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 93d11774-faa2-42ab-9d42-1b4f4bf98664
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_quotation_status = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_quotation_status = Source{[Schema="gold",Item="dim_quotation_status"]}[Data]
+				in
+				    gold_dim_quotation_status
+

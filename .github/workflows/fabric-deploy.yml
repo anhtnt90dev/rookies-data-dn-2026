@@ -1,6 +1,9 @@
 name: Deploy Fabric
 
 on:
+  push:
+    branches:
+      - feature/us-7-cicd
   pull_request:
     branches:
       - dev

@@ -105,26 +105,7 @@ Build a CI/CD pipeline based on:
           |
           v
 
-    /fabric folder
-
-          |
-          |
-    parameter.yml replacement
-
-          |
-          v
-
-    Test Workspace
-
-          |
-          |
-    Manual Approval
-
-          |
-          v
-
-    Prod Workspace
-
+     Workspace
 ------------------------------------------------------------------------
 
 # 5. Components

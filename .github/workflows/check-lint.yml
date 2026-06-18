@@ -20,9 +20,7 @@ permissions:
 jobs:
   LintNotebooks:
     
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      startsWith(github.head_ref, 'feature/')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'feature/')
 
     name: "Lint Notebook Content (Warning Only)"
     runs-on: ubuntu-latest

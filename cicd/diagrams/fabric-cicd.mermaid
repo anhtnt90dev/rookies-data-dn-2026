@@ -1,0 +1,10 @@
+flowchart TD
+  A["Developer<br>(feature branch)"] -->|Create PR| B["Pull Request"]
+  B --> C["CI: Validate PR<br>lint for artifact checks"]
+  C -->|If OK| D["Merge to dev/main"]
+  D --> E["CD: GitHub Actions<br>trigger on merge or manual dispatch"]
+  E --> F["Resolve target workspace &<br>environment secrets"]
+  F --> G["Prepare artifacts<br>update notebook metadata / replace GUIDs"]
+  G --> H["Deploy to Target Workspace<br>fabric-cicd: publish_all_items()"]
+  H --> N["Done"]
+

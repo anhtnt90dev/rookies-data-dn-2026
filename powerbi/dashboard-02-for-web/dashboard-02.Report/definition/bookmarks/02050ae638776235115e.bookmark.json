@@ -1,0 +1,381 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/2.1.0/schema.json",
+  "displayName": "Cancellation Detail Table",
+  "name": "02050ae638776235115e",
+  "options": {
+    "targetVisualNames": []
+  },
+  "explorationState": {
+    "version": "1.3",
+    "activeSection": "e81ebc5ebe0058408e4e",
+    "sections": {
+      "e81ebc5ebe0058408e4e": {
+        "visualContainers": {
+          "83c562c616d90e20d104": {
+            "filters": {
+              "byExpr": [
+                {
+                  "name": "f2306ffc33b2c881bc02",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_policy"
+                        }
+                      },
+                      "Property": "policy_id"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "78130dc0bb731e265426",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_customer"
+                        }
+                      },
+                      "Property": "full_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "c540d1dc59782500041c",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_provider"
+                        }
+                      },
+                      "Property": "provider_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "6d81787687ca783e2a35",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_package"
+                        }
+                      },
+                      "Property": "package_code"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "1938988b030840406ea7",
+                  "type": "Advanced",
+                  "expression": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures DB2"
+                        }
+                      },
+                      "Property": "Policy Start Date"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "6305e17922bd9beea0a8",
+                  "type": "Advanced",
+                  "expression": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures DB2"
+                        }
+                      },
+                      "Property": "Policy End Date"
+                    }
+                  },
+                  "howCreated": 0
+                }
+              ]
+            },
+            "singleVisual": {
+              "visualType": "tableEx",
+              "objects": {},
+              "orderBy": [
+                {
+                  "Direction": 1,
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_package"
+                        }
+                      },
+                      "Property": "package_code"
+                    }
+                  }
+                }
+              ],
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "31a72039d22349c9e9b8": {
+            "filters": {
+              "byExpr": [
+                {
+                  "name": "b0ef7a3b65845cc550bc",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_payment"
+                        }
+                      },
+                      "Property": "payment_id"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "f4bcc2406e06e2170c73",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_payment"
+                        }
+                      },
+                      "Property": "policy_id"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "01836013c236650bd692",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_customer"
+                        }
+                      },
+                      "Property": "full_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "69f7d6f2580394db6164",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_provider"
+                        }
+                      },
+                      "Property": "provider_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "dec33b520639d3633d5b",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_payment_method"
+                        }
+                      },
+                      "Property": "payment_method_code"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "afeb313490ed6d9d9cec",
+                  "type": "Advanced",
+                  "expression": {
+                    "Aggregation": {
+                      "Expression": {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Entity": "fact_payment"
+                            }
+                          },
+                          "Property": "payment_amount"
+                        }
+                      },
+                      "Function": 0
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "a381f5bcd24399ea6331",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_payment_status"
+                        }
+                      },
+                      "Property": "payment_status_code"
+                    }
+                  },
+                  "howCreated": 0
+                }
+              ]
+            },
+            "singleVisual": {
+              "visualType": "tableEx",
+              "objects": {},
+              "display": {
+                "mode": "hidden"
+              }
+            }
+          },
+          "55ad06bf900ceec9b441": {
+            "filters": {
+              "byExpr": [
+                {
+                  "name": "da47ce2a6e212057b33a",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_cancellation"
+                        }
+                      },
+                      "Property": "cancellation_id"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "19c0b05413085c30a8cd",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_cancellation"
+                        }
+                      },
+                      "Property": "policy_id"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "bde3dcf388ebca9004a7",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_customer"
+                        }
+                      },
+                      "Property": "full_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "37415845e563833b5ba4",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_provider"
+                        }
+                      },
+                      "Property": "provider_name"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "2ea9cb8044969d89da3c",
+                  "type": "Categorical",
+                  "expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "dim_cancellation_reason"
+                        }
+                      },
+                      "Property": "cancellation_reason"
+                    }
+                  },
+                  "howCreated": 0
+                },
+                {
+                  "name": "325e51719e9c6ec45c40",
+                  "type": "Advanced",
+                  "expression": {
+                    "Aggregation": {
+                      "Expression": {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Entity": "fact_cancellation"
+                            }
+                          },
+                          "Property": "refund_amount"
+                        }
+                      },
+                      "Function": 0
+                    }
+                  },
+                  "howCreated": 0
+                }
+              ]
+            },
+            "singleVisual": {
+              "visualType": "tableEx",
+              "objects": {}
+            }
+          }
+        }
+      }
+    },
+    "objects": {
+      "merge": {
+        "outspacePane": [
+          {
+            "properties": {
+              "expanded": {
+                "expr": {
+                  "Literal": {
+                    "Value": "false"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

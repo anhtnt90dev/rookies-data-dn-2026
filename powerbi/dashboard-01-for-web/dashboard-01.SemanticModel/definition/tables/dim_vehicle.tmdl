@@ -1,0 +1,138 @@
+table dim_vehicle
+	lineageTag: 69dd76f6-e741-416f-bac7-d4dd7afea78c
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 444fada3-3d09-4c83-9b4b-127e934c5d17
+		summarizeBy: none
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 26b0f534-254a-4d69-a72e-b281f36771e0
+		summarizeBy: none
+		sourceColumn: vehicle_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 35e4fd8d-2d6e-40c7-949d-22891c98c937
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column plate_number
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 2b4b7ee3-cb53-4537-aac5-23395dc72ff3
+		summarizeBy: none
+		sourceColumn: plate_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_brand
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 96eb9d2b-6f9a-4ef5-b5d3-a08422d9d541
+		summarizeBy: none
+		sourceColumn: vehicle_brand
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_model
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: c33994ae-278e-4b19-9776-66e24735e105
+		summarizeBy: none
+		sourceColumn: vehicle_model
+
+		annotation SummarizationSetBy = Automatic
+
+	column manufacture_year
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 42b41548-ed0d-4602-86ba-d5e1d1bdede3
+		summarizeBy: sum
+		sourceColumn: manufacture_year
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_value
+		dataType: double
+		sourceProviderType: decimal(18, 2)
+		lineageTag: c0cdbd9f-126c-4b05-8b55-05edac69b2d3
+		summarizeBy: sum
+		sourceColumn: vehicle_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column effective_from
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: fe0eee3d-3ec7-4c2a-ae47-51f9b0b2c5fe
+		summarizeBy: none
+		sourceColumn: effective_from
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_to
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 850573e1-c490-4a24-94bf-625f007a604e
+		summarizeBy: none
+		sourceColumn: effective_to
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 112d225b-2d63-48bd-9940-81b12343ff47
+		summarizeBy: none
+		sourceColumn: is_current
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 2c1b900e-2da0-405a-9668-871a69f445f8
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: ee2aae19-2a5f-4ba7-a95a-b20136f8c2a9
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_vehicle = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_vehicle = Source{[Schema="gold",Item="dim_vehicle"]}[Data]
+				in
+				    gold_dim_vehicle
+

@@ -218,11 +218,22 @@ def update_table_layer_status_batch(
     layer_status_column = layer_columns.status
 
 
+    schema = StructType([
+        StructField("session_id", StringType(), True),
+        StructField("source_table_id", StringType(), True),
+        StructField("source_table_name", StringType(), True),
+        StructField("table_session_status", StringType(), True),
+        StructField("layer_status", StringType(), True),
+        StructField("load_type", StringType(), True),
+        StructField("error_code", StringType(), True),
+        StructField("error_message", StringType(), True)
+    ])
+
     records = []
     for r in table_results:
         records.append({
-            "session_id": session_id,
-            "source_table_id": r["source_table_id"],
+            "session_id": str(session_id),
+            "source_table_id": str(r["source_table_id"]),
             "source_table_name": r.get("bronze_table_name"),
             "table_session_status": AuditStatus.RUNNING.value,
             "layer_status": AuditStatus.RUNNING.value,
@@ -231,7 +242,7 @@ def update_table_layer_status_batch(
             "error_message": None,
         })
 
-    df = spark.createDataFrame(records)
+    df = spark.createDataFrame(records, schema=schema)
 
     # ----------------------------
     # DELTA TABLE
@@ -1543,31 +1554,25 @@ print("=" * 70)
 
 # CELL ********************
 
-# table_sessions: dict[int, str] = {}  # source_table_id → table_session_id
+# ── PHASE 1: Mark all tables as RUNNING before ingestion ──
+pre_ingest_results = [
+    {
+        "source_table_id": _cfg["id"],
+        "bronze_table_name": _cfg["bronze_table_name"],
+        "load_type": (
+            force_load_type.upper()
+            if force_load_type
+            else _cfg.get("load_type", "FULL").upper()
+        ),
+    }
+    for _cfg in config_load_tables
+]
 
-# for _cfg in config_load_tables:
-#     _resolved_lt = (
-#         force_load_type.lower()
-#         if force_load_type
-#         else _cfg.get("load_type", LOAD_TYPE_INCREMENTAL).lower()
-#     )
-#     try:
-#         _tsid = update_table_layer_status(
-#             session_id=session_id,
-#             source_table_id=_cfg["id"],
-#             source_table_name=_cfg["bronze_table_name"],
-#             layer=LAYER_SILVER,
-#             batch_id=batch_id,
-#             load_type=_resolved_lt.upper(),
-#         )
-#         table_sessions[_cfg["id"]] = _tsid
-#     except Exception as _audit_start_err:
-#         print(
-#             f"[AUDIT] Warning — Could not start audit for "
-#             f"source_table_id={_cfg['id']} ({_cfg['bronze_table_name']}): "
-#             f"{_audit_start_err}"
-#         )
-#         table_sessions[_cfg["id"]] = None
+update_table_layer_status_batch(
+    session_id=session_id,
+    layer=Layer.SILVER,
+    table_results=pre_ingest_results,
+)
 
 # METADATA ********************
 
@@ -1852,7 +1857,7 @@ def finish_table_layer_batch(
     # ========================================================
     source_rows = [
         Row(
-            source_table_id=r["source_table_id"],
+            source_table_id=str(r["source_table_id"]),
             silver_status=r.get("status"),
             error_code=r.get("error_code"),
             error_message=r.get("error_message"),
@@ -1961,29 +1966,26 @@ def finish_table_layer_batch(
     # 3. VALIDATE RELATION
     # ========================================================
 
-    # missing_df = (
-    #     source_df
-    #     .join(
-    #         table_session_df,
-    #         on="source_table_id",
-    #         how="left"
-    #     )
-    #     .filter(
-    #         F.col("table_session_id")
-    #         .isNull()
-    #     )
-    # )
+    missing_df = (
+        source_df
+        .join(
+            table_session_df,
+            on="source_table_id",
+            how="left"
+        )
+        .filter(
+            F.col("table_session_id")
+            .isNull()
+        )
+    )
 
-    # if missing_df.count() > 0:
-    #     print(
-    #         "[AUDIT] Missing table_session_id"
-    #     )
-    #     missing_df.show(
-    #         False
-    #     )
-    #     raise Exception(
-    #         "Cannot create audit_detail because parent audit_table_session missing"
-    #     )
+    if missing_df.count() > 0:
+        print(
+            "[AUDIT] WARNING — Missing audit_table_session for:"
+        )
+        missing_df.show(
+            False
+        )
 
 
     # ========================================================
@@ -1992,6 +1994,7 @@ def finish_table_layer_batch(
     source_df.createOrReplaceTempView(
         "silver_update_source"
     )
+    
     spark.sql(
         f"""
         MERGE INTO {audit_table_session_table} target
@@ -2110,10 +2113,10 @@ def finish_table_layer_batch(
     # 6. INSERT DETAIL
     # ========================================================
 
-    # append_audit_detail_batch(
-    #     detail_df,
-    #     audit_detail_table
-    # )
+    append_audit_detail_batch(
+        detail_df,
+        audit_detail_table
+    )
 
 
     print(
@@ -2151,7 +2154,7 @@ try:
     table_sessions = finish_table_layer_batch(session_id=session_id,table_results=table_results)
 except Exception as _audit_finish_err:
         print(
-            f"[AUDIT] Warning — update_table_layer_status_batch failed for"
+            f"[AUDIT] Warning — finish_table_layer_batch failed for"
             f"{_audit_finish_err}"
         )
 

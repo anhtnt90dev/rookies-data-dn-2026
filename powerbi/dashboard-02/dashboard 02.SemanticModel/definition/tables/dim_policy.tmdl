@@ -1,0 +1,57 @@
+table dim_policy
+	lineageTag: 17ed581e-1405-4f0d-8a13-14db1f1a8d7e
+
+	column policy_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: edef2317-9524-473b-8cfc-2e4dd613e62b
+		summarizeBy: none
+		sourceColumn: policy_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: a684aeed-7d75-4665-8c23-a46fecee6bf6
+		summarizeBy: none
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 3afddb19-e629-4c71-a971-f4422e8187b6
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 869da201-8872-4b0e-bd68-cc2806ad575a
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_policy = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_policy = Source{[Schema="gold",Item="dim_policy"]}[Data]
+				in
+				    gold_dim_policy
+

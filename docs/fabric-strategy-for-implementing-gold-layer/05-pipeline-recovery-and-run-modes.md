@@ -90,20 +90,16 @@ graph TD
     
     Stage1 --> Result1{"Did any Dimension fail?"}
     
-    Result1 -->|Yes| FailResolve["Fail Gating:<br/>1. Skip Stage 2<br/>2. Resolve Source Statuses<br/>3. Re-raise Exception&nbsp;&nbsp;"]
+    Result1 -->|Yes| FailResolve["Fail Gating:<br/>1. Skip Stage 2<br/>2. Resolve Source Statuses as FAILED<br/>3. Re-raise Exception&nbsp;&nbsp;"]
     Result1 -->|No| Stage2["Stage 2: Facts Parallel Load<br/>(max_workers = 5)&nbsp;&nbsp;"]
     
     Stage2 --> Result2{"Did any Fact fail?"}
     
     Result2 -->|Yes| FailResolve
-    Result2 -->|No| Stage3["Stage 3: Validation Suite&nbsp;&nbsp;"]
+    Result2 -->|No| Stage3["Stage 3: Post-Ingestion Audit<br/>1. Resolve Source Statuses as SUCCESS<br/>2. Mark Session SUCCESS<br/>3. Reset next_run_mode to NEW&nbsp;&nbsp;"]
     
-    Stage3 --> Result3{"Validation Pass?"}
-    Result3 -->|No| FactRollback["In-Memory Rollback:<br/>Set all Fact statuses<br/>to FAILED&nbsp;&nbsp;"] --> FailResolve
-    Result3 -->|Yes| Success["Mark Session SUCCESS<br/>Reset next_run_mode<br/>to NEW&nbsp;&nbsp;"]
-    
+    Stage3 --> End([Success Terminate])
     FailResolve --> Abort(["Propagate Failure<br/>& Terminate&nbsp;&nbsp;"])
-    Success --> End([Success Terminate])
 ```
 
 ### 3.1 Fail-Fast Gating
@@ -115,9 +111,10 @@ Regardless of whether the run succeeds or fails, the orchestrator evaluates fina
 *   If **all conformed tables** mapped to source table $S$ succeeded $\rightarrow$ `log.audit_table_session` for source $S$ is updated to `SUCCESS`.
 *   If **any conformed table** mapped to source table $S$ failed or was skipped $\rightarrow$ source $S$ is updated to `FAILED`.
 
-### 3.3 Validation Failure Recovery
-If the validation suite (`nb_gold_validate_reconciliation_dev`) fails:
-1.  All dimension tables remain marked as `SUCCESS` (if they finished).
-2.  The orchestrator dynamically resets the status of all active **Fact tables** to `FAILED` in the conformed status tracker.
-3.  The source success matrix is resolved based on this modified status tracker, ensuring that source tables feeding these facts are marked `FAILED` in the audit log.
-4.  The orchestrator re-raises the validation error, pushing the pipeline into `RECOVERY` mode.
+### 3.3 Validation Failure Behavior
+Because the validation suite (`nb_gold_validate_reconciliation_dev`) executes as a dedicated pipeline activity downstream of the orchestrator:
+1. **No In-Memory Status Rollback**: A validation failure does not affect the dimension and fact statuses resolved during the load stage in `nb_gold_master_load_dev`.
+2. **Audit Detail Mark**: The validation activity calls `finish_table_layer` to record the `"FAILED"` validation status in `log.audit_detail` under the `"GOLD"` layer for the affected fact table session.
+3. **Run Mode Reset**: Since the master orchestrator completed successfully and reset `cfg.next_run_mode` to `NEW` prior to validation running, the run mode is not automatically rolled back to `RECOVERY`.
+4. **Pipeline Failure**: The pipeline execution fails due to the validation errors. Re-running the pipeline after a validation failure requires manual administrative action (e.g. manually updating `cfg.next_run_mode` to `RECOVERY` with the failed batch ID) to perform a recovery run.
+

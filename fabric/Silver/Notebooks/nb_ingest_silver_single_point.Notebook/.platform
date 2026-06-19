@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_ingest_silver_single_point"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "b94c233c-71e8-a451-4ba9-39800140cc05"
+  }
+}

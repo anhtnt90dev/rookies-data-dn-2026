@@ -20,22 +20,22 @@ stateDiagram-v2
 ```
 
 ### 1.1. Ingestion Success Path
-When all dimensions and fact tables complete execution and pass validation checks:
-1.  **Flag Audit**: Update `log.audit_session` status to `SUCCESS` and calculate session duration.
-2.  **Reset Run Mode**: Invoke `reset_next_run_mode()` to reset `cfg.next_run_mode` back to:
+When all dimensions and fact tables complete execution in the master orchestrator (`nb_gold_master_load_dev`):
+1.  **Flag Audit**: Updates `log.audit_session` status to `SUCCESS` and calculates session duration.
+2.  **Reset Run Mode**: Invokes `reset_next_run_mode()` to reset `cfg.next_run_mode` back to:
     - `next_run_mode = 'NEW'`
     - `batch_id = NULL`
     - `session_id = NULL`
 3.  **Next Ingestion**: The next pipeline run begins a brand-new batch ID.
 
 ### 1.2. Ingestion Failure Path
-If any notebook raises an exception or fails data quality validation:
-1.  **Mark Recovery**: The notebook triggers `mark_recovery_required(batch_id, failed_layer, session_id)` which updates `cfg.next_run_mode` to:
+If any notebook in the parallel pools of the master orchestrator raises an exception:
+1.  **Mark Recovery**: The pipeline failure handler (`handle_failed_gold`) triggers and updates `cfg.next_run_mode` to:
     - `next_run_mode = 'RECOVERY'`
     - `batch_id = <current_batch_id>` (retains the active batch)
     - `session_id = <failed_session_id>` (preserves lineage)
 2.  **Fail Audit**: Logs `session_status = 'FAILED'` in `log.audit_session`.
-3.  **Abort**: Raises a Python exception to fail the Fabric pipeline activity, alerting administrators.
+3.  **Abort**: The orchestrator raises a Python exception to fail the Fabric pipeline activity `nb_ingestion_gold`, alerting administrators.
 
 ---
 
@@ -86,9 +86,25 @@ The mapping is dynamically evaluated using the mapping metadata table `cfg.sourc
 
 ---
 
-## 3. Post-Ingestion Validation Suite
+## 3. Gold Layer Audit Session Lookup Strategy
 
-Executed by `nb_gold_validate_reconciliation_dev` at the end of the ingestion workflow, this suite enforces data quality and metrics consistency:
+Unlike the Bronze and Silver stages, which initialize fresh table sessions in `log.audit_table_session`, the Gold Layer dimensions and facts run in parallel and map back to their respective upstream sources to maintain lineage.
+
+### 3.1. Session ID Resolution (Lineage Connection)
+When a Gold ingestion notebook starts, it invokes `start_table_layer`. The helper `nb_gold_audit_helper_dev` performs the following steps:
+1. **Dynamic Mapping**: Resolves the conformed table ID to its upstream source table ID using the config mapping `cfg.source_dim_fact` and target schema heuristics.
+2. **Session ID Retrieval**: Queries `log.audit_table_session` to locate the active table session ID created during Bronze/Silver ingestion for the current `batch_id` and resolved `source_table_id`.
+3. **Lineage Preservation**: Returns the retrieved session ID so that all Gold stage audits are written as detail records in `log.audit_detail` under the original source session.
+4. **Fallback Handling**: If no active session is found (e.g., during manual standalone notebook runs), it generates a temporary dummy UUID to bypass logging and prevent failures.
+
+### 3.2. Detailed Audit Logging
+Upon completion, the Gold notebook calls `finish_table_layer` to append audit statistics (`inserted_row`, `updated_row`, `source_row_count`, `target_row_count`) under the `"GOLD"` layer for the resolved session.
+
+---
+
+## 4. Post-Ingestion Validation Suite
+
+Executed by the dedicated pipeline activity `nb_validation_gold` (running `nb_gold_validate_reconciliation_dev`) upon successful completion of the master load notebook, this suite enforces data quality and metrics consistency:
 
 1.  **Grain Uniqueness Check**:
     - Verifies that target primary keys are unique.
@@ -102,4 +118,7 @@ Executed by `nb_gold_validate_reconciliation_dev` at the end of the ingestion wo
 4.  **Reconciliation Verification**:
     - Compares row counts and measure totals between Silver source tables and Gold target tables.
     - Compares sum of premium amounts, payment amounts, and refund amounts (handling soft deletes).
-    - If anomalies exceed the threshold, logs failures to `log.invalid_record`, flags the table status as `FAILED`, and raises a failure exception.
+5.  **Anomaly Logging & Auditing**:
+    - If validation checks fail, the notebook calls `finish_table_layer` to record the `"FAILED"` status in `log.audit_detail` under the `"GOLD"` layer for the affected fact table session.
+    - It writes the specific record key and validation error details to `log.invalid_record` via `log_invalid_record`.
+    - It returns a JSON status map of all checks. Since this notebook runs as a dedicated activity downstream, a validation failure fails the pipeline run for visibility without triggering automatic `RECOVERY` run mode updates (which have already been reset to `NEW` by the completed orchestrator).

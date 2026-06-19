@@ -4,7 +4,7 @@ flowchart TD
   C --> D["Merge to dev/main"]
   D --> E["CD: GitHub Actions<br>trigger on merge or manual dispatch"]
   E --> F["Resolve target workspace &<br>environment secrets"]
-  F --> G["Prepare artifacts<br>update notebook metadata / replace GUIDs"]
+  F --> G["Prepare artifacts by updating notebook metadata and replacing globally unique identifiers (GUIDs) for the target environment"]
   G --> H["Deploy to Target Workspace<br>fabric-cicd: publish_all_items()"]
   H --> N["Done"]
 

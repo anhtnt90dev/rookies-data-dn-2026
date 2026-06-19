@@ -21,7 +21,7 @@ te":"2026-04-03T14:19:08.000","last_updated":"2026-04-03T14:19:08.000","operatio
 n_type":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"policy_
 id":"POL00066","quotation_id":"QUO00187","customer_id":"CUS0087","provider_code"
 :"PVI","policy_number":"POLNO-66","policy_start_date":"2026-03-14","policy_end_d
-ate":"2027-03-14","policy_status":"ACTIVE","premium_amount":4193276,"issued_date
+ate":"2027-03-14","policy_status":"CANCELLED","premium_amount":4193276,"issued_date
 ":"2026-03-14T19:08:21.000","last_updated":"2026-03-14T19:08:21.000","operation_
 type":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"policy_id
 ":"POL00067","quotation_id":"QUO00191","customer_id":"CUS0090","provider_code":"

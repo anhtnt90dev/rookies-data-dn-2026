@@ -1,0 +1,1 @@
+![alt text](insert-1million-record.png)

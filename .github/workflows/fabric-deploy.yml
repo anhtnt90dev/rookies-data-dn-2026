@@ -21,9 +21,10 @@ on:
         description: "Fabric environment"
         required: true
         type: choice
+        default: "UAT"
         options:
           - DEV
-          - TEST
+          - UAT
           - PROD
 
 permissions:
@@ -37,7 +38,7 @@ jobs:
     name: Deploy Fabric Workspace
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
 
     steps:
       - name: Checkout selected branch
@@ -173,7 +174,7 @@ jobs:
 
             echo "workspace=${{ secrets.PROD_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
 
-          elif [[ "${{ inputs.target_environment }}" == "TEST" ]]; then
+          elif [[ "${{ inputs.target_environment }}" == "UAT" ]]; then
 
             echo "workspace=${{ secrets.TEST_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
 
@@ -183,7 +184,7 @@ jobs:
           fi
       - name: Update Notebook Metadata
         env:
-          DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}
+          DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
           FABRIC_WORKSPACE_DEV_ID: ${{ secrets.FABRIC_WORKSPACE_DEV_ID }}
           FABRIC_LAKEHOUSE_DEV_ID: ${{ secrets.FABRIC_LAKEHOUSE_DEV_ID }}
           FABRIC_LAKEHOUSE_DEV_NAME: ${{ secrets.FABRIC_LAKEHOUSE_DEV_NAME }}
@@ -208,4 +209,4 @@ jobs:
           --azclientid "$AZURE_CLIENT_ID" \
           --azspsecret "$AZURE_CLIENT_SECRET" \
           --workspaceid "${{ steps.workspace.outputs.workspace }}" \
-          --target_env "${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}"
+          --target_env "${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}"

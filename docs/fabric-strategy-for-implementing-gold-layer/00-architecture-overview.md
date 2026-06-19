@@ -85,7 +85,7 @@ fabric/Gold/Notebooks/
 
 ## 4. Parallel Orchestration Stages
 
-The master orchestrator notebook (`nb_gold_master_load_dev`) executes the ingestion steps in parallel stages to optimize runtime while preserving relational integrity:
+The master orchestrator notebook (`nb_gold_master_load_dev`) executes the ingestion steps in parallel stages to optimize runtime while preserving relational integrity, followed by a downstream validation activity:
 
 1. **Stage 1 (Parallel Dimensions)**:
    - Populates calendar setup (`nb_gold_load_dim_date_dev`), 9 SCD1 dimensions, and 4 SCD2 dimensions concurrently.
@@ -95,10 +95,14 @@ The master orchestrator notebook (`nb_gold_master_load_dev`) executes the ingest
    - Executes once all dimensions finish successfully.
    - Populates `fact_quotation`, `fact_quotation_item`, `fact_policy`, `fact_payment`, and `fact_cancellation` concurrently.
    - Concurrency is throttled to `max_workers = 5`.
-3. **Stage 3 (Validation Suite)**:
-   - Executes `nb_gold_validate_reconciliation_dev` sequentially to run data quality, grain uniqueness, and key checks.
-4. **Post-Ingestion Audit**:
-   - Resolves source table status, updates audit logging tables, and resets the next run mode to `NEW`.
+3. **Stage 3 (Post-Ingestion Audit & Run Mode Reset)**:
+   - Resolves the success/failure status of upstream ingestion sources based on target tables success.
+   - Updates `log.audit_table_session` and `log.audit_session` statuses.
+   - Resets the run mode to `NEW` by updating the control table `cfg.next_run_mode`.
+4. **Stage 4 (Dedicated Validation Activity)**:
+   - Executed as a separate pipeline activity (`nb_validation_gold`) in `pl_master_etl_dev.DataPipeline` upon successful completion of the master load.
+   - Sequentially runs `nb_gold_validate_reconciliation_dev` to perform data quality checks, grain uniqueness checks, and metrics reconciliation.
+
 
 ---
 

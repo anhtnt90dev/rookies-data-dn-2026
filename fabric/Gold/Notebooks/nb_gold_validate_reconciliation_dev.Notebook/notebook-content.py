@@ -253,11 +253,13 @@ def validate_fact_table(
     table_session_id = get_table_session_id(dim_fact_table_id)
     is_temp_session = False
     if not table_session_id:
-        print(f"[INFO] No table session found for {table_name} in batch {batch_id}. Using a temporary session ID.")
+        print(f"\n[INFO] No table session found for {table_name} in batch {batch_id}. Using a temporary session ID.")
         table_session_id = new_audit_id()
         is_temp_session = True
 
+    print("\n" + "=" * 80)
     print(f"[VALIDATE] Starting QA check suite for {table_name}...")
+    print("=" * 80 + "\n")
     gold_df = spark.table(table_name)
 
     # We only check records inserted/updated in the current batch
@@ -294,13 +296,14 @@ def validate_fact_table(
         business_keys = meta.get("business_keys", [])
 
         # 1. Grain Uniqueness Check
+        print("  --> 1. Grain Uniqueness Check")
         grain_dups = batch_gold_df.groupBy(*grain_cols).count().filter("count > 1")
         dup_stats = grain_dups.select(F.sum(F.col("count") - 1).alias("dup_rows")).collect()
         dup_count = dup_stats[0]["dup_rows"] if dup_stats and dup_stats[0]["dup_rows"] is not None else 0
 
         if dup_count > 0:
             err_msg = f"Grain Uniqueness Check Failed: Found {dup_count} duplicate rows at grain {grain_cols}."
-            print(f"[ERROR] {err_msg}")
+            print(f"      [ERROR] {err_msg}")
             sample_dup = grain_dups.limit(1).collect()[0]
             log_invalid_record(
                 table_session_id=table_session_id,
@@ -313,6 +316,8 @@ def validate_fact_table(
                 error_type=ErrorType.RULE
             )
             fail_pipeline = True
+        else:
+            print(f"      [SUCCESS] Grain Uniqueness Check passed at grain {grain_cols}.")
 
         # 2. Build joined dataset for the remaining validations (single-action execution)
         joined_df = batch_gold_df.alias("g")
@@ -392,11 +397,13 @@ def validate_fact_table(
 
         # 4. Process check results from stats
         # A. Null business keys check
+        print("\n  --> 2. Null Business Keys Check")
+        has_null_bk = False
         for bk in business_keys:
             null_count = stats.get(f"null_bk_{bk}") or 0
             if null_count > 0:
                 err_msg = f"Missing Fact Business Key: Column {bk} has {null_count} null or empty values."
-                print(f"[ERROR] {err_msg}")
+                print(f"      [ERROR] {err_msg}")
                 sample = joined_df.filter(F.col(f"g.{bk}").isNull() | (F.col(f"g.{bk}") == "")).limit(1).collect()[0]
                 log_invalid_record(
                     table_session_id=table_session_id,
@@ -409,8 +416,13 @@ def validate_fact_table(
                     error_type=ErrorType.RULE
                 )
                 fail_pipeline = True
+                has_null_bk = True
+        if not has_null_bk:
+            print(f"      [SUCCESS] Null Business Keys Check passed for keys {business_keys}.")
 
         # B. Foreign key integrity check (orphaned keys mapping to dimension pk)
+        print("\n  --> 3. Foreign Key Integrity Check")
+        has_orphaned_fk = False
         for fk_col, dim_table in fk_mappings.items():
             dim_pk = dim_table.split(".")[-1].replace("dim_", "") + "_key"
             if dim_table == "gold.dim_cancellation_reason":
@@ -418,7 +430,7 @@ def validate_fact_table(
             orphaned_count = stats.get(f"orphaned_fk_{fk_col}") or 0
             if orphaned_count > 0:
                 err_msg = f"Foreign Key Integrity Check Failed: Column {fk_col} has {orphaned_count} orphaned keys mapping to {dim_table}."
-                print(f"[ERROR] {err_msg}")
+                print(f"      [ERROR] {err_msg}")
                 sample = joined_df.filter((F.col(f"g.{fk_col}") != -1) & F.col(f"d_{fk_col}.{dim_pk}").isNull()).limit(1).collect()[0]
                 log_invalid_record(
                     table_session_id=table_session_id,
@@ -431,8 +443,13 @@ def validate_fact_table(
                     error_type=ErrorType.RULE
                 )
                 fail_pipeline = True
+                has_orphaned_fk = True
+        if not has_orphaned_fk:
+            print(f"      [SUCCESS] Foreign Key Integrity Check passed for all conformed keys.")
 
         # C. Unresolved keys check (-1 when valid BK is present)
+        print("\n  --> 4. Unresolved Keys Check")
+        has_unresolved_fk = False
         for fk_col, bk_col in fk_bk_mappings.items():
             unresolved_count = stats.get(f"unresolved_fk_{fk_col}") or 0
             if unresolved_count > 0:
@@ -440,12 +457,12 @@ def validate_fact_table(
                 max_ratio = THRESHOLDS["unresolved_key"].get(sev, 0.01)
                 ratio = unresolved_count / total_rows if total_rows > 0 else 0.0
 
-                err_msg = f"Unresolved Key Check: Column {fk_col} has {unresolved_count} rows ({ratio:.2%}) resolved to -1 (severity: {sev}, threshold: {max_ratio:.2%})."
-                print(f"[INFO] {err_msg}")
-
+                err_msg = f"Column {fk_col} has {unresolved_count} rows ({ratio:.2%}) resolved to -1 (severity: {sev}, threshold: {max_ratio:.2%})."
                 if ratio > max_ratio:
-                    print(f"[ERROR] {err_msg} exceeds threshold!")
+                    print(f"      [ERROR] Unresolved Key Check: {err_msg} exceeds threshold!")
                     fail_pipeline = True
+                else:
+                    print(f"      [INFO] Unresolved Key Check: {err_msg}")
 
                 sample = joined_df.filter((F.col(f"g.{fk_col}") == -1) & F.col(f"g.{bk_col}").isNotNull() & (F.col(f"g.{bk_col}") != "Unknown") & (F.col(f"g.{bk_col}") != "")).limit(1).collect()[0]
                 log_invalid_record(
@@ -458,8 +475,13 @@ def validate_fact_table(
                     error_column=fk_col,
                     error_type=ErrorType.RULE
                 )
+                has_unresolved_fk = True
+        if not has_unresolved_fk:
+            print(f"      [SUCCESS] Unresolved Keys Check passed (no rows resolved to -1).")
 
         # D. Temporal Integrity check (SCD2 effective date range)
+        print("\n  --> 5. Temporal Integrity Check")
+        has_temporal_viol = False
         for fk_col, (dim_table, tx_date_col) in scd2_temporal_mappings.items():
             viol_count = stats.get(f"temporal_viol_{fk_col}") or 0
             if viol_count > 0:
@@ -467,12 +489,12 @@ def validate_fact_table(
                 max_ratio = THRESHOLDS["unresolved_key"].get(sev, 0.01)
                 ratio = viol_count / total_rows if total_rows > 0 else 0.0
 
-                err_msg = f"Temporal Integrity Check: Column {fk_col} has {viol_count} rows ({ratio:.2%}) prior to dimension effective_from date (severity: {sev}, threshold: {max_ratio:.2%})."
-                print(f"[INFO] {err_msg}")
-
+                err_msg = f"Column {fk_col} has {viol_count} rows ({ratio:.2%}) prior to dimension effective_from date (severity: {sev}, threshold: {max_ratio:.2%})."
                 if ratio > max_ratio:
-                    print(f"[ERROR] {err_msg} exceeds threshold!")
+                    print(f"      [ERROR] Temporal Integrity Check: {err_msg} exceeds threshold!")
                     fail_pipeline = True
+                else:
+                    print(f"      [INFO] Temporal Integrity Check: {err_msg}")
 
                 sample = joined_df.filter((F.col(f"g.{fk_col}") != -1) & (F.col(f"g.{tx_date_col}") != -1) & (F.col(f"dt_{tx_date_col}.full_date") < F.col(f"d_{fk_col}.effective_from").cast("date"))).limit(1).collect()[0]
                 log_invalid_record(
@@ -485,8 +507,13 @@ def validate_fact_table(
                     error_column=fk_col,
                     error_type=ErrorType.RULE
                 )
+                has_temporal_viol = True
+        if not has_temporal_viol:
+            print(f"      [SUCCESS] Temporal Integrity Check passed for SCD2 dimensions.")
 
         # E. Date Key Validity Check
+        print("\n  --> 6. Date Key Validity Check")
+        has_invalid_date = False
         for date_key_col in date_keys:
             orphaned_date_count = stats.get(f"orphaned_date_{date_key_col}") or 0
             if orphaned_date_count > 0:
@@ -494,12 +521,12 @@ def validate_fact_table(
                 max_ratio = THRESHOLDS["invalid_date_key"].get(sev, 0.0)
                 ratio = orphaned_date_count / total_rows if total_rows > 0 else 0.0
 
-                err_msg = f"Date Key Validity Check: Column {date_key_col} has {orphaned_date_count} date keys ({ratio:.2%}) not resolving in dim_date (severity: {sev}, threshold: {max_ratio:.2%})."
-                print(f"[INFO] {err_msg}")
-
+                err_msg = f"Column {date_key_col} has {orphaned_date_count} date keys ({ratio:.2%}) not resolving in dim_date (severity: {sev}, threshold: {max_ratio:.2%})."
                 if ratio > max_ratio:
-                    print(f"[ERROR] {err_msg} exceeds threshold!")
+                    print(f"      [ERROR] Date Key Validity Check: {err_msg} exceeds threshold!")
                     fail_pipeline = True
+                else:
+                    print(f"      [INFO] Date Key Validity Check: {err_msg}")
 
                 sample = joined_df.filter((F.col(f"g.{date_key_col}") != -1) & F.col(f"dt_{date_key_col}.date_key").isNull()).limit(1).collect()[0]
                 log_invalid_record(
@@ -512,13 +539,17 @@ def validate_fact_table(
                     error_column=date_key_col,
                     error_type=ErrorType.RULE
                 )
+                has_invalid_date = True
+        if not has_invalid_date:
+            print(f"      [SUCCESS] Date Key Validity Check passed for conformed date keys.")
 
         # F. Soft Delete Auditing Check
+        print("\n  --> 7. Soft Delete Auditing Check")
         if "is_deleted" in batch_gold_df.columns:
             corrupt_delete_count = stats.get("corrupt_deletes") or 0
             if corrupt_delete_count > 0:
                 err_msg = f"Soft Delete Auditing Check Failed: Found {corrupt_delete_count} deleted rows with missing delete metadata."
-                print(f"[ERROR] {err_msg}")
+                print(f"      [ERROR] {err_msg}")
                 sample = joined_df.filter((F.col("g.is_deleted") == True) & (F.col("g.deleted_at").isNull() | F.col("g.delete_batch_id").isNull())).limit(1).collect()[0]
                 log_invalid_record(
                     table_session_id=table_session_id,
@@ -531,8 +562,13 @@ def validate_fact_table(
                     error_type=ErrorType.RULE
                 )
                 fail_pipeline = True
+            else:
+                print(f"      [SUCCESS] Soft Delete Auditing Check passed.")
+        else:
+            print(f"      [SUCCESS] Soft Delete Auditing Check passed (no is_deleted column).")
 
         # G. Row Count Reconciliation Check
+        print("\n  --> 8. Row Count Reconciliation Check")
         silver_df = spark.table(silver_table_name).where(F.col("_batch_id") == F.lit(str(batch_id)))
         resolved_silver_grain_cols = silver_grain_cols or grain_cols
 
@@ -560,7 +596,7 @@ def validate_fact_table(
 
         if row_diff_ratio > max_row_ratio:
             err_msg = f"Row Count Reconciliation Failed: Gold count ({gold_count}) does not match deduplicated Silver count ({silver_count}) (diff: {row_diff_ratio:.2%}, threshold: {max_row_ratio:.2%})."
-            print(f"[ERROR] {err_msg}")
+            print(f"      [ERROR] {err_msg}")
             log_invalid_record(
                 table_session_id=table_session_id,
                 layer="GOLD",
@@ -572,8 +608,12 @@ def validate_fact_table(
                 error_type=ErrorType.RULE
             )
             fail_pipeline = True
+        else:
+            print(f"      [SUCCESS] Row Count Reconciliation passed. Gold count ({gold_count}) matches deduplicated Silver count ({silver_count}) (diff: {row_diff_ratio:.2%}).")
 
         # H. Metric Reconciliation Check
+        print("\n  --> 9. Metric Reconciliation Check")
+        has_metric_recon_fail = False
         for metric_col in metric_cols:
             if "is_deleted" in silver_recon_df.columns:
                 silver_metric_sum_col = F.sum(F.when(F.col("is_deleted") == True, F.lit(0.00)).otherwise(F.coalesce(F.col(metric_col), F.lit(0.00))))
@@ -596,7 +636,7 @@ def validate_fact_table(
 
             if diff_ratio > metric_threshold and variance > 0.01:
                 err_msg = f"Metric Reconciliation Failed for {metric_col}: Silver sum = {silver_metric_sum:.2f}, Gold sum = {gold_metric_sum:.2f}, variance = {variance:.4f} (ratio: {diff_ratio:.4%}, threshold: {metric_threshold:.4%}) exceeds threshold."
-                print(f"[ERROR] {err_msg}")
+                print(f"      [ERROR] {err_msg}")
                 log_invalid_record(
                     table_session_id=table_session_id,
                     layer="GOLD",
@@ -608,18 +648,26 @@ def validate_fact_table(
                     error_type=ErrorType.RULE
                 )
                 fail_pipeline = True
+                has_metric_recon_fail = True
+            else:
+                print(f"      [SUCCESS] Metric Reconciliation passed for {metric_col}. Silver sum = {silver_metric_sum:.2f}, Gold sum = {gold_metric_sum:.2f} (variance: {variance:.4f}, ratio: {diff_ratio:.4%}).")
+        if not metric_cols:
+            print(f"      [SUCCESS] Metric Reconciliation Check passed (no metrics configured).")
 
         # 5. Finalize table session and status output map
+        print("\n" + "-" * 80)
+        status_key = f"{dim_fact_table_id} ({table_name})"
         if fail_pipeline:
-            validation_statuses[dim_fact_table_id] = "FAILED"
+            validation_statuses[status_key] = "FAILED"
             if not is_temp_session:
                 finish_table_layer(table_session_id, "GOLD", "FAILED", error_code="VALIDATION_FAILED", error_message=f"Validation failed for table {table_name}")
-            print(f"[FAILED] {table_name} failed QA audits.")
+            print(f"[RESULT] ❌ {table_name} failed QA audits.")
         else:
-            validation_statuses[dim_fact_table_id] = "SUCCESS"
+            validation_statuses[status_key] = "SUCCESS"
             if not is_temp_session:
                 finish_table_layer(table_session_id, "GOLD", "SUCCESS")
-            print(f"[SUCCESS] {table_name} passed all QA audits successfully.")
+            print(f"[RESULT]  {table_name} passed all QA audits successfully.")
+        print("=" * 80 + "\n")
 
     finally:
         batch_gold_df.unpersist()
@@ -640,7 +688,7 @@ fact_table_rows = fact_table_df.collect()
 fact_name_to_info = {row["table_name"].lower(): (int(row["id"]), bool(row["is_active"])) for row in fact_table_rows}
 
 # Initialize validation statuses for active fact tables
-validation_statuses = {f_id: "SUCCESS" for f_name, (f_id, is_act) in fact_name_to_info.items() if is_act}
+validation_statuses = {f"{f_id} (gold.{f_name})": "SUCCESS" for f_name, (f_id, is_act) in fact_name_to_info.items() if is_act}
 validation_errors = {}
 
 def run_validation_safely(
@@ -679,7 +727,8 @@ def run_validation_safely(
             silver_grain_cols=silver_grain_cols
         )
     except Exception as e:
-        validation_statuses[fact_id] = "FAILED"
+        status_key = f"{fact_id} ({table_name})"
+        validation_statuses[status_key] = "FAILED"
         validation_errors[fact_id] = str(e)
 
 # 1. fact_quotation
@@ -833,6 +882,19 @@ run_validation_safely(
         "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
     }
 )
+
+# Print summary of all table validations
+print("\n" + "=" * 80)
+print("                  FINAL QA RECONCILIATION SUMMARY")
+print("=" * 80)
+for key, status in sorted(validation_statuses.items()):
+    icon = "❌" if status == "FAILED" else "✅"
+    print(f" {icon} {key:<45} : {status}")
+if validation_errors:
+    print("\nErrors encountered during execution:")
+    for f_id, err in validation_errors.items():
+        print(f" - Table ID {f_id}: {err}")
+print("=" * 80 + "\n")
 
 # Exit returning status map in JSON
 mssparkutils.notebook.exit(json.dumps(validation_statuses))

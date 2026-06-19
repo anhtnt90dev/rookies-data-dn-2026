@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
-// Helper: run a SQL query against Fabric SQL Endpoint via fetch + TDS
-async function queryFabricSQL(query: string): Promise<any[]> {
+// Parameter type for parameterized SQL queries
+interface SqlParameter {
+  name: string;
+  type: any; // tedious TYPES (e.g., TYPES.NVarChar)
+  value: string;
+}
+
+// Helper: run a parameterized SQL query against Fabric SQL Endpoint via TDS
+async function queryFabricSQL(query: string, params: SqlParameter[] = []): Promise<any[]> {
   const server = process.env.SQL_CONNECTION_STRING;
   const database = process.env.SQL_DATABASE;
 
@@ -10,7 +17,7 @@ async function queryFabricSQL(query: string): Promise<any[]> {
   }
 
   // Use dynamic import for tedious
-  const { Connection, Request } = await import("tedious");
+  const { Connection, Request, TYPES } = await import("tedious");
 
   return new Promise((resolve, reject) => {
     const rows: any[] = [];
@@ -52,6 +59,11 @@ async function queryFabricSQL(query: string): Promise<any[]> {
         }
         connection.close();
       });
+
+      // Add parameterized values to prevent SQL injection
+      for (const param of params) {
+        request.addParameter(param.name, param.type, param.value);
+      }
 
       request.on("row", (columns) => {
         const row: any = {};
@@ -95,19 +107,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: "Invalid User ID prefix. Must start with CUS or AG." });
     }
 
-    // Try SQL verification
+    // SQL verification with parameterized query to prevent SQL injection
     try {
       console.log(`Verifying ${upperId} in SQL database...`);
 
+      const { TYPES } = await import("tedious");
+
       let query = "";
       if (role === "customer") {
-        query = `SELECT TOP 1 customer_id FROM dim_customer WHERE UPPER(customer_id) = '${upperId}'`;
+        query = `SELECT TOP 1 customer_id FROM gold.dim_customer WHERE UPPER(customer_id) = @userId`;
       } else {
-        query = `SELECT TOP 1 agent_id FROM dim_agent WHERE UPPER(agent_id) = '${upperId}'`;
+        query = `SELECT TOP 1 agent_id FROM gold.dim_agent WHERE UPPER(agent_id) = @userId`;
       }
 
-      console.log("SQL Query:", query);
-      const results = await queryFabricSQL(query);
+      const params: SqlParameter[] = [
+        { name: "userId", type: TYPES.NVarChar, value: upperId }
+      ];
+
+      console.log("SQL Query:", query, "| Param @userId =", upperId);
+      const results = await queryFabricSQL(query, params);
 
       if (results.length === 0) {
         console.log(`User ${upperId} NOT found in database`);
@@ -116,10 +134,12 @@ export async function POST(request: Request) {
 
       console.log(`User ${upperId} FOUND in database. Role: ${role}`);
     } catch (sqlError: any) {
-      // SQL failed - fall back to prefix-only
-      console.warn(`SQL verification failed: ${sqlError.message}`);
-      console.warn("Falling back to prefix-only check...");
-      console.log(`Prefix matched. Role assigned: ${role} (SQL bypass)`);
+      // SQL failed - do NOT fall through to success
+      console.error(`SQL verification failed: ${sqlError.message}`);
+      return NextResponse.json(
+        { success: false, error: "Unable to verify user. Please try again later." },
+        { status: 503 }
+      );
     }
 
     console.log("Login successful, returning role:", role);

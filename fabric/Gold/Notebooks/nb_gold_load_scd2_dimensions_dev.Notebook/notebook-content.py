@@ -58,11 +58,9 @@ p_table_id = ""
 
 # CELL ********************
 
-import sys
 from datetime import datetime
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, DateType, StringType, BooleanType, TimestampType, LongType
 from delta.tables import DeltaTable
 
 # Cast parameters
@@ -70,6 +68,12 @@ batch_id = int(batch_id)
 session_id = str(session_id)
 run_mode = str(run_mode).upper()
 p_table_id = int(p_table_id) if p_table_id else None
+
+# Load table ID mapping from cfg.dim_fact_table dynamically
+dim_fact_lookup = {
+    row["table_name"]: int(row["id"])
+    for row in spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
+}
 
 # Ensure Unknown Row (-1) helper for SCD2
 def ensure_unknown_row_scd2(table_name: str, pk_col: str, bk_col: str, tracked_cols: list[str]):
@@ -257,8 +261,9 @@ def load_scd2_dimension(
 # Dimension Loads Sequenced Execution
 # ---------------------------------------------------------------------------
 
-# 1. dim_customer (Source: silver.customer, ID: 2)
-if p_table_id is None or p_table_id == 2:
+# 1. dim_customer (Source: silver.customer)
+dim_customer_id = dim_fact_lookup["dim_customer"]
+if p_table_id is None or p_table_id == dim_customer_id:
     print("[LOAD] Processing dim_customer...")
     customer_src_df = spark.table("silver.customer").select(
         "customer_id",
@@ -272,10 +277,11 @@ if p_table_id is None or p_table_id == 2:
         F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
     )
     customer_cols = ["full_name", "gender", "dob", "phone_number", "email", "city", "district"]
-    load_scd2_dimension("gold.dim_customer", customer_src_df, "customer_id", "customer_key", customer_cols, 2)
+    load_scd2_dimension("gold.dim_customer", customer_src_df, "customer_id", "customer_key", customer_cols, dim_customer_id)
 
-# 2. dim_agent (Source: silver.agent, ID: 3)
-if p_table_id is None or p_table_id == 3:
+# 2. dim_agent (Source: silver.agent)
+dim_agent_id = dim_fact_lookup["dim_agent"]
+if p_table_id is None or p_table_id == dim_agent_id:
     print("[LOAD] Processing dim_agent...")
     agent_src_df = spark.table("silver.agent").select(
         "agent_id",
@@ -286,10 +292,11 @@ if p_table_id is None or p_table_id == 3:
         F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
     )
     agent_cols = ["agent_name", "region", "branch", "manager_name"]
-    load_scd2_dimension("gold.dim_agent", agent_src_df, "agent_id", "agent_key", agent_cols, 3)
+    load_scd2_dimension("gold.dim_agent", agent_src_df, "agent_id", "agent_key", agent_cols, dim_agent_id)
 
-# 3. dim_provider (Source: silver.provider, ID: 4)
-if p_table_id is None or p_table_id == 4:
+# 3. dim_provider (Source: silver.provider)
+dim_provider_id = dim_fact_lookup["dim_provider"]
+if p_table_id is None or p_table_id == dim_provider_id:
     print("[LOAD] Processing dim_provider...")
     provider_src_df = spark.table("silver.provider").select(
         "provider_code",
@@ -299,10 +306,11 @@ if p_table_id is None or p_table_id == 4:
         F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
     )
     provider_cols = ["provider_name", "provider_group", "active_flag"]
-    load_scd2_dimension("gold.dim_provider", provider_src_df, "provider_code", "provider_key", provider_cols, 4)
+    load_scd2_dimension("gold.dim_provider", provider_src_df, "provider_code", "provider_key", provider_cols, dim_provider_id)
 
-# 4. dim_vehicle (Source: silver.vehicle, ID: 14)
-if p_table_id is None or p_table_id == 14:
+# 4. dim_vehicle (Source: silver.vehicle)
+dim_vehicle_id = dim_fact_lookup["dim_vehicle"]
+if p_table_id is None or p_table_id == dim_vehicle_id:
     print("[LOAD] Processing dim_vehicle...")
     vehicle_src_df = spark.table("silver.vehicle").select(
         "vehicle_id",
@@ -315,7 +323,7 @@ if p_table_id is None or p_table_id == 14:
         F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
     )
     vehicle_cols = ["customer_id", "plate_number", "vehicle_brand", "vehicle_model", "manufacture_year", "vehicle_value"]
-    load_scd2_dimension("gold.dim_vehicle", vehicle_src_df, "vehicle_id", "vehicle_key", vehicle_cols, 14)
+    load_scd2_dimension("gold.dim_vehicle", vehicle_src_df, "vehicle_id", "vehicle_key", vehicle_cols, dim_vehicle_id)
 
 # METADATA ********************
 

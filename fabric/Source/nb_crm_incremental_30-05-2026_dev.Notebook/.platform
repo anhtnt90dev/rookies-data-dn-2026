@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
     "type": "Notebook",
-    "displayName": "nb_create_initial_crm_db_dev"
+    "displayName": "nb_crm_incremental_30-05-2026_dev"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "bc02c2ba-1d45-a66f-4379-7cb8bf706e99"
+    "logicalId": "a3b081fd-67b2-b8e6-4b99-c7c4fe5d6057"
   }
 }

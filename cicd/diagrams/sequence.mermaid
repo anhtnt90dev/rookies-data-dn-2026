@@ -8,17 +8,14 @@ sequenceDiagram
     participant FabricCICD as "fabric_cicd Module"
 
     Runner->>Deploy: Run with credentials, env & workspace arguments
-    Note over Deploy: Appends 'enable_shortcut_publish' feature flag & sets log level to DEBUG
     
     Deploy->>EntraID: Request Auth Token (via ClientSecretCredential)
     EntraID-->>Deploy: Return Access Token
 
     alt workspaceid argument provided
-        Note over Deploy: Use provided Workspace ID directly
     else workspacename argument provided (or resolved via env variable)
         Deploy->>FabricAPI: GET /v1/workspaces (with Token)
         FabricAPI-->>Deploy: Return Workspace List
-        Note over Deploy: Match target display name & extract workspace UUID
     end
 
     Deploy->>FabricWS: Instantiate FabricWorkspace (with ID, repo path, credentials & item scope)
@@ -26,13 +23,11 @@ sequenceDiagram
 
     Deploy->>FabricCICD: publish_all_items(target_workspace)
     activate FabricCICD
-    Note over FabricCICD: Scans local 'fabric' folder and publishes notebooks, pipelines, etc.
     FabricCICD-->>Deploy: Publishing completed
     deactivate FabricCICD
 
     Deploy->>FabricCICD: unpublish_all_orphan_items(target_workspace)
     activate FabricCICD
-    Note over FabricCICD: Compares local & remote items, deleting those no longer in repository
     FabricCICD-->>Deploy: Orphan cleanup completed
     deactivate FabricCICD
 

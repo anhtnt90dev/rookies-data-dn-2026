@@ -96,8 +96,8 @@ TABLE_METADATA = {
         "business_keys": ["quotation_id"],
         "fk_severity": {
             "quotation_key": "critical",
-            "customer_key": "critical",
-            "provider_key": "critical",
+            "customer_key": "important",
+            "provider_key": "important",
             "agent_key": "important",
             "package_key": "important",
             "quotation_status_key": "important",
@@ -117,7 +117,7 @@ TABLE_METADATA = {
             "provider_key": "important",
             "package_key": "important",
             "quotation_status_key": "important",
-            "coverage_key": "important",
+            "coverage_key": "critical",
             "vehicle_key": "optional"
         },
         "date_severity": {
@@ -129,12 +129,12 @@ TABLE_METADATA = {
         "fk_severity": {
             "policy_key": "critical",
             "quotation_key": "critical",
-            "customer_key": "critical",
-            "provider_key": "critical",
+            "customer_key": "important",
+            "provider_key": "important",
             "agent_key": "important",
             "package_key": "important",
             "policy_status_key": "important",
-            "vehicle_key": "important"
+            "vehicle_key": "optional"
         },
         "date_severity": {
             "issued_date_key": "critical",

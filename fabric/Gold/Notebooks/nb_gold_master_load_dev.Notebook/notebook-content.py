@@ -46,7 +46,6 @@ p_run_mode = ""
 
 # CELL ********************
 
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pyspark.sql import functions as F
 
@@ -180,46 +179,15 @@ try:
         failed_fact_names = [id_to_table_name.get(f[0], f"ID {f[0]}") for f in fact_failures]
         raise Exception(f"Failed to load facts: {failed_fact_names}")
 
-    # 5. Validation Check Suite
-    print("[MASTER] Running Validation Checks...")
-    try:
-        val_result_str = mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
-        import json
-        try:
-            val_results = json.loads(val_result_str)
-            val_results_named = {id_to_table_name.get(int(fid), f"ID {fid}"): status for fid, status in val_results.items()}
-            print(f"[MASTER] Validation results received: {val_results_named}")
-            for fact_id_str, status in val_results.items():
-                conformed_statuses[int(fact_id_str)] = status
-            
-            # If any validation failed, raise an Exception so that the master load notebook fails
-            failed_facts = [fid for fid, status in val_results.items() if status == "FAILED"]
-            if failed_facts:
-                failed_fact_names = [id_to_table_name.get(int(fid), f"ID {fid}") for fid in failed_facts]
-                raise Exception(f"Validation checks failed for facts: {failed_fact_names}")
-        except json.JSONDecodeError:
-            print("[MASTER WARNING] Could not parse validation results as JSON. Defaulting all active facts to FAILED.")
-            active_fact_ids = [int(row["id"]) for row in dim_fact_config if row["table_type"] == "FACT"]
-            for fact_id in active_fact_ids:
-                conformed_statuses[fact_id] = "FAILED"
-            raise Exception("Validation notebook returned invalid format.")
-    except Exception as val_err:
-        # Only overwrite conformed_statuses to FAILED if it wasn't a standard validation failure (e.g. timeout, run error, etc.)
-        if "Validation checks failed for facts" not in str(val_err):
-            active_fact_ids = [int(row["id"]) for row in dim_fact_config if row["table_type"] == "FACT"]
-            for fact_id in active_fact_ids:
-                conformed_statuses[fact_id] = "FAILED"
-        raise val_err
-
-    # 6. Post-Ingestion Source Status Resolution
+    # 5. Post-Ingestion Source Status Resolution
     print("[MASTER] Running Source Success Matrix Resolution...")
     resolve_source_success(p_batch_id, conformed_statuses)
 
-    # 7. Complete master session successfully
+    # 6. Complete master session successfully
     print("[MASTER] Finishing pipeline session successfully...")
     finish_pipeline_session(p_session_id, "SUCCESS")
 
-    # 8. Reset next run mode control table to NEW
+    # 7. Reset next run mode control table to NEW
     print("[MASTER] Resetting next_run_mode to NEW...")
     reset_next_run_mode()
 

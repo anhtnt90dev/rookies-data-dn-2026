@@ -58,8 +58,6 @@ p_table_id = ""
 
 # CELL ********************
 
-import sys
-from datetime import datetime
 from pyspark.sql import functions as F
 from pyspark.sql.types import IntegerType
 from delta.tables import DeltaTable
@@ -69,8 +67,11 @@ batch_id = int(batch_id)
 session_id = str(session_id)
 run_mode = str(run_mode).upper()
 
-FACT_TABLE_NAME = "gold.fact_cancellation"
-DIM_FACT_TABLE_ID = 19
+DIM_FACT_TABLE_ID = int(p_table_id)
+row = spark.table("cfg.dim_fact_table").filter(F.col("id") == F.lit(DIM_FACT_TABLE_ID)).select("table_name").collect()
+if not row:
+    raise ValueError(f"Table ID {DIM_FACT_TABLE_ID} not found in cfg.dim_fact_table")
+FACT_TABLE_NAME = f"gold.{row[0]['table_name']}"
 
 # Check if table should process in this run
 if not should_process_table_layer(batch_id, DIM_FACT_TABLE_ID, "GOLD"):
@@ -81,7 +82,7 @@ if not should_process_table_layer(batch_id, DIM_FACT_TABLE_ID, "GOLD"):
 table_session_id = start_table_layer(
     session_id=session_id,
     source_table_id=DIM_FACT_TABLE_ID,
-    source_table_name="fact_cancellation",
+    source_table_name=FACT_TABLE_NAME.split(".")[-1],
     layer="GOLD",
     batch_id=batch_id,
     load_type="INCREMENTAL"
@@ -187,7 +188,7 @@ except Exception as err:
         table_session_id=table_session_id,
         layer="GOLD",
         status="FAILED",
-        error_code="FACT_CANCELLATION_LOAD_FAILED",
+        error_code=f"{FACT_TABLE_NAME.split('.')[-1].upper()}_LOAD_FAILED",
         error_message=str(err)[:1000]
     )
     raise err

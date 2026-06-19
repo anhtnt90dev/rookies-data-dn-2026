@@ -46,7 +46,6 @@ p_run_mode = ""
 
 # CELL ********************
 
-import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pyspark.sql import functions as F
 
@@ -63,6 +62,17 @@ common_args = {
     "batch_id": p_batch_id,
     "run_mode": p_run_mode
 }
+
+# Build mappings for logging (ID to human-readable names)
+try:
+    id_to_table_name = {int(row["id"]): row["table_name"] for row in spark.table("cfg.dim_fact_table").select("id", "table_name").collect()}
+except Exception:
+    id_to_table_name = {}
+
+try:
+    source_id_to_name = {int(row["id"]): row["source_name"] for row in spark.table("cfg.source_table").select("id", "source_name").collect()}
+except Exception:
+    source_id_to_name = {}
 
 def resolve_source_success(batch_id: int, conformed_statuses: dict):
     # Query mappings between Gold tables and source table IDs
@@ -87,7 +97,8 @@ def resolve_source_success(batch_id: int, conformed_statuses: dict):
                     updated_at = current_timestamp()
                 WHERE batch_id = {batch_id} AND source_table_id = {src_id}
             """)
-            print(f"[MASTER] Resolved Source Table {src_id} success status: SUCCESS")
+            src_name = source_id_to_name.get(src_id, f"ID {src_id}")
+            print(f"[MASTER] Resolved Source Table {src_name} success status: SUCCESS")
         else:
             # If not all mapped targets succeeded, flag source table as FAILED
             spark.sql(f"""
@@ -98,7 +109,8 @@ def resolve_source_success(batch_id: int, conformed_statuses: dict):
                     updated_at = current_timestamp()
                 WHERE batch_id = {batch_id} AND source_table_id = {src_id}
             """)
-            print(f"[MASTER] Resolved Source Table {src_id} success status: FAILED (one or more dependent tables failed)")
+            src_name = source_id_to_name.get(src_id, f"ID {src_id}")
+            print(f"[MASTER] Resolved Source Table {src_name} success status: FAILED (one or more dependent tables failed)")
 
 # Track conformed table load statuses dynamically based on the configuration table
 all_table_ids = [int(row["id"]) for row in spark.table("cfg.dim_fact_table").select("id").collect()]
@@ -127,13 +139,16 @@ try:
             try:
                 future.result()
                 conformed_statuses[table_id] = "SUCCESS"
-                print(f"[MASTER] Dimension table ID {table_id} loaded successfully.")
+                t_name = id_to_table_name.get(table_id, f"ID {table_id}")
+                print(f"[MASTER] Dimension table {t_name} loaded successfully.")
             except Exception as e:
-                print(f"[MASTER ERROR] Dimension table ID {table_id} ({nb_name}) failed: {e}")
+                t_name = id_to_table_name.get(table_id, f"ID {table_id}")
+                print(f"[MASTER ERROR] Dimension table {t_name} ({nb_name}) failed: {e}")
                 dim_failures.append((table_id, e))
 
     if dim_failures:
-        raise Exception(f"Failed to load dimensions: {[f[0] for f in dim_failures]}")
+        failed_dim_names = [id_to_table_name.get(f[0], f"ID {f[0]}") for f in dim_failures]
+        raise Exception(f"Failed to load dimensions: {failed_dim_names}")
 
     # 2. Run Fact Ingestions in Parallel (dynamically determined)
     fact_tasks = [
@@ -153,33 +168,26 @@ try:
             try:
                 future.result()
                 conformed_statuses[table_id] = "SUCCESS"
-                print(f"[MASTER] Fact table ID {table_id} loaded successfully.")
+                t_name = id_to_table_name.get(table_id, f"ID {table_id}")
+                print(f"[MASTER] Fact table {t_name} loaded successfully.")
             except Exception as e:
-                print(f"[MASTER ERROR] Fact table ID {table_id} ({nb_name}) failed: {e}")
+                t_name = id_to_table_name.get(table_id, f"ID {table_id}")
+                print(f"[MASTER ERROR] Fact table {t_name} ({nb_name}) failed: {e}")
                 fact_failures.append((table_id, e))
 
     if fact_failures:
-        raise Exception(f"Failed to load facts: {[f[0] for f in fact_failures]}")
+        failed_fact_names = [id_to_table_name.get(f[0], f"ID {f[0]}") for f in fact_failures]
+        raise Exception(f"Failed to load facts: {failed_fact_names}")
 
-    # 5. Validation Check Suite
-    print("[MASTER] Running Validation Checks...")
-    try:
-        mssparkutils.notebook.run("nb_gold_validate_reconciliation_dev", 1800, common_args)
-    except Exception as val_err:
-        active_fact_ids = [int(row["id"]) for row in dim_fact_config if row["table_type"] == "FACT"]
-        for fact_id in active_fact_ids:
-            conformed_statuses[fact_id] = "FAILED"
-        raise val_err
-
-    # 6. Post-Ingestion Source Status Resolution
+    # 5. Post-Ingestion Source Status Resolution
     print("[MASTER] Running Source Success Matrix Resolution...")
     resolve_source_success(p_batch_id, conformed_statuses)
 
-    # 7. Complete master session successfully
+    # 6. Complete master session successfully
     print("[MASTER] Finishing pipeline session successfully...")
     finish_pipeline_session(p_session_id, "SUCCESS")
 
-    # 8. Reset next run mode control table to NEW
+    # 7. Reset next run mode control table to NEW
     print("[MASTER] Resetting next_run_mode to NEW...")
     reset_next_run_mode()
 

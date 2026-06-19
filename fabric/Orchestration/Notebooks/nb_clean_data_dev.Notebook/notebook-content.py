@@ -387,7 +387,9 @@ insert_source_dim_fact_data()
 
 # META {
 # META   "language": "python",
-# META   "language_group": "synapse_pyspark"
+# META   "language_group": "synapse_pyspark",
+# META   "frozen": false,
+# META   "editable": true
 # META }
 
 # CELL ********************

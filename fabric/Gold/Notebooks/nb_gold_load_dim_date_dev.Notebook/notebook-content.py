@@ -57,8 +57,6 @@ run_mode = ""
 
 # CELL ********************
 
-import sys
-from datetime import datetime
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, DateType, StringType, BooleanType
 from delta.tables import DeltaTable
@@ -67,9 +65,16 @@ from delta.tables import DeltaTable
 batch_id = int(batch_id)
 session_id = str(session_id)
 run_mode = str(run_mode).upper()
+DIM_FACT_TABLE_ID = int(p_table_id)
 
+# Resolve table name dynamically from cfg.dim_fact_table
 DIM_DATE_TABLE = "gold.dim_date"
-DIM_FACT_TABLE_ID = 1
+try:
+    row = spark.table("cfg.dim_fact_table").filter(F.col("id") == F.lit(DIM_FACT_TABLE_ID)).select("table_name").collect()
+    if row:
+        DIM_DATE_TABLE = f"gold.{row[0]['table_name']}"
+except Exception as e:
+    print(f"[INFO] Failed to resolve table name from cfg.dim_fact_table: {e}. Falling back to default: {DIM_DATE_TABLE}")
 
 # Check if table already populated
 is_populated = False
@@ -86,7 +91,7 @@ if not is_populated:
     table_session_id = start_table_layer(
         session_id=session_id,
         source_table_id=DIM_FACT_TABLE_ID,
-        source_table_name="dim_date",
+        source_table_name=DIM_DATE_TABLE.split(".")[-1],
         layer="GOLD",
         batch_id=batch_id,
         load_type="FULL"
@@ -169,12 +174,13 @@ if not is_populated:
         )
 
     except Exception as err:
-        print(f"[ERROR] Failed to load dim_date: {err}")
+        tbl_short_name = DIM_DATE_TABLE.split(".")[-1]
+        print(f"[ERROR] Failed to load {DIM_DATE_TABLE}: {err}")
         finish_table_layer(
             table_session_id=table_session_id,
             layer="GOLD",
             status="FAILED",
-            error_code="DIM_DATE_LOAD_FAILED",
+            error_code=f"{tbl_short_name.upper()}_LOAD_FAILED",
             error_message=str(err)[:1000]
         )
         raise err

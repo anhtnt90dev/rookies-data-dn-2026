@@ -24,9 +24,9 @@ ate":"2025-04-30T12:17:24.000","payment_method":"Credit Card","payment_status":"
 PENDING","payment_amount":4822883,"transaction_reference":"TXN00006","last_updat
 ed":"2025-04-30T12:17:24.000","operation_type":"I","batch_date":"2025-08-31","so
 urce_system":"policy_system"},{"payment_id":"PAY00007","policy_id":"POL00007","p
-ayment_date":"2025-09-19T06:44:05.000","payment_method":"E-wallet","payment_stat
+ayment_date":"2025-08-29T06:44:05.000","payment_method":"E-wallet","payment_stat
 us":"PENDING","payment_amount":6079771,"transaction_reference":"TXN00007","last_
-updated":"2025-09-19T06:44:05.000","operation_type":"I","batch_date":"2025-08-31
+updated":"2025-08-29T06:44:05.000","operation_type":"I","batch_date":"2025-08-31
 ","source_system":"policy_system"},{"payment_id":"PAY00008","policy_id":"POL0000
 8","payment_date":"2025-03-03T01:32:26.000","payment_method":"Credit Card","paym
 ent_status":"PAID","payment_amount":4889120,"transaction_reference":"TXN00008","
@@ -60,9 +60,9 @@ id":"PAY00015","policy_id":"POL00015","payment_date":"2025-04-29T13:15:38.000","
 payment_method":"E-wallet","payment_status":"PAID","payment_amount":3066030,"tra
 nsaction_reference":"TXN00015","last_updated":"2025-04-29T13:15:38.000","operati
 on_type":"I","batch_date":"2025-08-31","source_system":"policy_system"},{"paymen
-t_id":"PAY00016","policy_id":"POL00016","payment_date":"2025-09-07T18:12:55.000"
+t_id":"PAY00016","policy_id":"POL00016","payment_date":"2025-08-30T18:12:55.000"
 ,"payment_method":"Bank Transfer","payment_status":"PENDING","payment_amount":43
-36482,"transaction_reference":"TXN00016","last_updated":"2025-09-07T18:12:55.000
+36482,"transaction_reference":"TXN00016","last_updated":"2025-08-30T18:12:55.000
 ","operation_type":"I","batch_date":"2025-08-31","source_system":"policy_system"
 },{"payment_id":"PAY00017","policy_id":"POL00017","payment_date":"2025-07-30T11:
 38:14.000","payment_method":"Credit Card","payment_status":"PENDING","payment_am
@@ -215,9 +215,9 @@ yment_amount":6080192,"transaction_reference":"TXN00052","last_updated":"2025-07
 ","payment_amount":4824087,"transaction_reference":"TXN00053","last_updated":"20
 25-02-17T06:30:21.000","operation_type":"I","batch_date":"2025-08-31","source_sy
 stem":"policy_system"},{"payment_id":"PAY00054","policy_id":"POL00054","payment_
-date":"2025-09-12T00:22:20.000","payment_method":"Bank Transfer","payment_status
+date":"2025-08-25T00:22:20.000","payment_method":"Bank Transfer","payment_status
 ":"PAID","payment_amount":3137966,"transaction_reference":"TXN00054","last_updat
-ed":"2025-09-12T00:22:20.000","operation_type":"I","batch_date":"2025-08-31","so
+ed":"2025-08-25T00:22:20.000","operation_type":"I","batch_date":"2025-08-31","so
 urce_system":"policy_system"},{"payment_id":"PAY00055","policy_id":"POL00055","p
 ayment_date":"2025-02-10T03:04:50.000","payment_method":"E-wallet","payment_stat
 us":"PAID","payment_amount":8059463,"transaction_reference":"TXN00055","last_upd

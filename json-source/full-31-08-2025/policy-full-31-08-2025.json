@@ -30,9 +30,9 @@ POL00006","quotation_id":"QUO00018","customer_id":"CUS0025","provider_code":"MIC
 5-04-19T14:36:24.000","last_updated":"2025-04-19T14:36:24.000","operation_type":
 "I","batch_date":"2025-08-31","source_system":"policy_system"},{"policy_id":"POL
 00007","quotation_id":"QUO00020","customer_id":"CUS0044","provider_code":"BIC","
-policy_number":"POLNO-7","policy_start_date":"2025-09-04","policy_end_date":"202
-6-09-04","policy_status":"ACTIVE","premium_amount":6079771,"issued_date":"2025-0
-9-04T15:41:05.000","last_updated":"2025-09-04T15:41:05.000","operation_type":"I"
+policy_number":"POLNO-7","policy_start_date":"2025-08-04","policy_end_date":"202
+6-08-04","policy_status":"ACTIVE","premium_amount":6079771,"issued_date":"2025-0
+8-04T15:41:05.000","last_updated":"2025-08-04T15:41:05.000","operation_type":"I"
 ,"batch_date":"2025-08-31","source_system":"policy_system"},{"policy_id":"POL000
 08","quotation_id":"QUO00022","customer_id":"CUS0056","provider_code":"MIC","pol
 icy_number":"POLNO-8","policy_start_date":"2025-02-18","policy_end_date":"2025-0
@@ -264,9 +264,9 @@ atus":"ISSUED","premium_amount":4824087,"issued_date":"2025-02-15T17:50:21.000",
 "last_updated":"2025-02-15T17:50:21.000","operation_type":"I","batch_date":"2025
 -08-31","source_system":"policy_system"},{"policy_id":"POL00054","quotation_id":
 "QUO00162","customer_id":"CUS0076","provider_code":"BV","policy_number":"POLNO-5
-4","policy_start_date":"2025-09-05","policy_end_date":"2026-09-05","policy_statu
-s":"ACTIVE","premium_amount":3137966,"issued_date":"2025-09-05T17:27:20.000","la
-st_updated":"2025-09-05T17:27:20.000","operation_type":"I","batch_date":"2025-08
+4","policy_start_date":"2025-08-05","policy_end_date":"2026-08-05","policy_statu
+s":"ACTIVE","premium_amount":3137966,"issued_date":"2025-08-05T17:27:20.000","la
+st_updated":"2025-08-05T17:27:20.000","operation_type":"I","batch_date":"2025-08
 -31","source_system":"policy_system"},{"policy_id":"POL00055","quotation_id":"QU
 O00163","customer_id":"CUS0051","provider_code":"LIB","policy_number":"POLNO-55"
 ,"policy_start_date":"2025-02-06","policy_end_date":"2026-02-06","policy_status"
@@ -304,7 +304,7 @@ mium_amount":4891156,"issued_date":"2025-03-31T18:03:43.000","last_updated":"202
 5-03-31T18:03:43.000","operation_type":"I","batch_date":"2025-08-31","source_sys
 tem":"policy_system"},{"policy_id":"POL00081","quotation_id":"QUO00180","custome
 r_id":"CUS0002","provider_code":"PVI","policy_number":"POLNO-81","policy_start_d
-ate":"2025-03-31","policy_end_date":"2026-03-31","policy_status":"ACTIVE","premi
+ate":"2025-03-31","policy_end_date":"2026-03-31","policy_status":"ISSUED","premi
 um_amount":-4891156,"issued_date":"2025-03-31T18:03:43.000","last_updated":"2025
 -03-31T18:03:43.000","operation_type":"I","batch_date":"2025-08-31","source_syst
 em":"policy_system"}]

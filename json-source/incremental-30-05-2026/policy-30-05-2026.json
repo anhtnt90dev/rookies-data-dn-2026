@@ -6,7 +6,7 @@ sued_date":"2026-04-06T17:26:50.000","last_updated":"2026-04-06T17:26:50.000","o
 peration_type":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"
 policy_id":"POL00063","quotation_id":"QUO00182","customer_id":"CUS0089","provide
 r_code":"BV","policy_number":"POLNO-63","policy_start_date":"2025-10-04","policy
-_end_date":"2026-10-04","policy_status":"ACTIVE","premium_amount":2879051,"issue
+_end_date":"2026-10-04","policy_status":"EXPIRED","premium_amount":2879051,"issue
 d_date":"2025-10-04T18:24:33.000","last_updated":"2025-10-04T18:24:33.000","oper
 ation_type":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"pol
 icy_id":"POL00064","quotation_id":"QUO00183","customer_id":"CUS0094","provider_c

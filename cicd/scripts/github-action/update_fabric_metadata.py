@@ -15,7 +15,7 @@ CONFIG = {
         "lakehouse_id": os.getenv("FABRIC_LAKEHOUSE_DEV_ID"),
         "lakehouse_name": os.getenv("FABRIC_LAKEHOUSE_DEV_NAME"),
     },
-    "test": {
+    "uat": {
         "workspace_id": os.getenv("FABRIC_WORKSPACE_TEST_ID"),
         "lakehouse_id": os.getenv("FABRIC_LAKEHOUSE_TEST_ID"),
         "lakehouse_name": os.getenv("FABRIC_LAKEHOUSE_TEST_NAME"),

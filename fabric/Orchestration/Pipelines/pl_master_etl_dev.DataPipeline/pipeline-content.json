@@ -502,21 +502,21 @@
           "notebookId": "df0e3216-cb34-78ab-4c11-12501aae3c01",
           "workspaceId": "00000000-0000-0000-0000-000000000000",
           "parameters": {
-            "p_session_id": {
+            "session_id": {
               "value": {
                 "value": "@variables('session_id')",
                 "type": "Expression"
               },
               "type": "string"
             },
-            "p_run_mode": {
+            "run_mode": {
               "value": {
                 "value": "@variables('run_mode')",
                 "type": "Expression"
               },
               "type": "string"
             },
-            "p_batch_id": {
+            "batch_id": {
               "value": {
                 "value": "@variables('batch_id')",
                 "type": "Expression"

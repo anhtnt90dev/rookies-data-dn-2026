@@ -40,20 +40,22 @@ sequenceDiagram
 
     %% Phase 2: App-Owns-Data Token Flow
     Note over Frontend, PowerBI: PHASE 2: App-Owns-Data Token Flow
-    Frontend->>EmbedAPI: 1. Request Dashboard Token for AG0001
 
     loop Every 50 Minutes (Background Token Refresh)
-        EmbedAPI->>Azure: 2. Authenticate App using Client Secret
+        Frontend->>EmbedAPI: Request Dashboard Token for AG0001
+
+        EmbedAPI->>Azure: Authenticate App using Client Secret
         Azure-->>EmbedAPI: Return Access Token
 
-        EmbedAPI->>PowerBI: 3. Request Embed Token for role (Payload: userId + ROLE_AGENT)
+        EmbedAPI->>PowerBI: Request Embed Token for role (Payload: userId + ROLE_AGENT)
         PowerBI-->>EmbedAPI: Return Embed Token (Grants view access to Agent dashboard)
 
-        EmbedAPI-->>Frontend: 4. Send Embed Token safely to Browser
+        EmbedAPI-->>Frontend: Send Embed Token safely to Browser
 
         Note over User, PowerBI: PHASE 3: Secure Rendering
         Frontend->>PowerBI: Inject/Update Embed Token in secure <iframe>
-        PowerBI-->>User: Render dashboard for the authorized role directly in iframe
+        PowerBI-->>Frontend: Return report/data to the embedded iframe
+        Frontend-->>User: Render and display the report on the screen
     end
 ```
 ### Design Rationale: Why Split Login and Token Generation?

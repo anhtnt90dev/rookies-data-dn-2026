@@ -28,7 +28,7 @@ The master notebook relies on the following columns from the configuration table
 
 ## 2. Two-Stage Parallel Execution Flow
 
-To ensure referential integrity, ingestion is executed in two concurrent stages. Dimension loads must be fully completed before Fact loads begin so that point-in-time dimension key lookups resolve correctly.
+To ensure referential integrity, ingestion is executed in two concurrent stages. Dimension loads must be fully completed before Fact loads begin so that point-in-time dimension key lookups resolve correctly. The validation suite runs subsequently as a dedicated sequential activity.
 
 ```mermaid
 graph TD
@@ -57,27 +57,36 @@ graph TD
     end
     Stage2 --> F1 & F2 & F3 & F4 & F5
     
-    F1 & F2 & F3 & F4 & F5 -->|All Succeeded| Stage3[Stage 3: Validation Suite]
     F1 & F2 & F3 & F4 & F5 -->|Any Failed| Halt2[Halt and Abort immediately]
+    F1 & F2 & F3 & F4 & F5 -->|All Succeeded| Stage3[Stage 3: Post-Ingestion Audit & Reset run mode to NEW]
     
-    Stage3 -->|Pass| Success[Post-Ingestion Audit & Reset run mode to NEW]
-    Stage3 -->|Fail| Halt3[Log anomalies to log.invalid_record & Abort]
+    Stage3 -->|nb_ingestion_gold Succeeded| Stage4[Pipeline Stage: Validation Suite]
+    
+    subgraph "Pipeline Stage: Validation Activity (Dedicated Sequential Activity)"
+        V1[nb_gold_validate_reconciliation_dev]
+    end
+    Stage4 --> V1
+    
+    V1 -->|Pass| Success[Pipeline Succeeded]
+    V1 -->|Fail| Halt3[Log anomalies to log.invalid_record & Pipeline Failed]
 ```
 
-### Master Notebook Execution Sequence
+### End-to-End Execution Sequence
 
-The execution path, parallel notebook runs, dynamic error interception, and final metadata updates in the orchestrator notebook are outlined below:
+The execution path, parallel notebook runs, dynamic error interception, final metadata updates, and downstream validation are outlined below:
 
 ```mermaid
 sequenceDiagram
     autonumber
+    participant Pipeline as pl_master_etl_dev
     participant Master as nb_gold_master_load_dev
     participant Config as cfg.dim_fact_table
     participant Pool as ThreadPoolExecutor
     participant Child as Child Ingestion Notebooks
-    participant Val as nb_gold_validate_reconciliation_dev
     participant Audit as log.audit_table_session
+    participant Val as nb_gold_validate_reconciliation_dev
     
+    Pipeline->>Master: Run nb_ingestion_gold (batch_id, session_id, run_mode)
     Master->>Config: Query active tables list
     Config-->>Master: Return list of active dimensions & facts
     
@@ -92,6 +101,7 @@ sequenceDiagram
     alt Any Dimension failed
         Master->>Audit: resolve_source_success() (Mark affected sources as FAILED)
         Master-->>Master: Raise Exception (Fail Fast & Abort)
+        Master-->>Pipeline: Return Failure
     else All Dimensions succeeded
         Note over Master: STAGE 2: Load Facts
         Master->>Pool: Initialize ThreadPool (max_workers=5)
@@ -104,18 +114,21 @@ sequenceDiagram
         alt Any Fact failed
             Master->>Audit: resolve_source_success() (Mark affected sources as FAILED)
             Master-->>Master: Raise Exception (Abort)
+            Master-->>Pipeline: Return Failure
         else All Facts succeeded
-            Note over Master: STAGE 3: Post-Ingestion Validation
-            Master->>Val: mssparkutils.notebook.run(validation_notebook)
-            alt Validation fails
-                Val-->>Master: Raise error
-                Master->>Master: Reset conformed_statuses of Facts to FAILED
-                Master->>Audit: resolve_source_success() (Mark affected sources as FAILED)
-                Master-->>Master: Raise Exception (Abort)
-            else Validation passes
-                Val-->>Master: Return validation pass
-                Master->>Audit: resolve_source_success() (Mark all sources as SUCCESS)
-                Master->>Master: reset_next_run_mode() (Set next_run_mode = 'NEW')
+            Note over Master: STAGE 3: Post-Ingestion Audit & Reset
+            Master->>Audit: resolve_source_success() (Mark all sources as SUCCESS)
+            Master->>Master: reset_next_run_mode() (Set next_run_mode = 'NEW')
+            Master-->>Pipeline: Return Success (Exit)
+            
+            Note over Pipeline: Pipeline Activity: nb_validation_gold
+            Pipeline->>Val: Run Validation (batch_id, session_id, run_mode)
+            Val->>Val: Run validation checks sequentially
+            Val->>Audit: finish_table_layer() (Write detail statuses to log.audit_detail)
+            alt Any check fails
+                Val-->>Pipeline: Return Validation Statuses (Anomalies logged)
+            else All checks pass
+                Val-->>Pipeline: Return Validation Statuses (All green)
             end
         end
     end

@@ -205,7 +205,7 @@
         "description": "change to mode RECOVERY when silver fail",
         "dependsOn": [
           {
-            "activity": "for_each_table_config",
+            "activity": "nb_process_transform_silver_layer",
             "dependencyConditions": [
               "Failed"
             ]
@@ -254,82 +254,6 @@
         ]
       },
       {
-        "type": "ForEach",
-        "typeProperties": {
-          "isSequential": false,
-          "batchCount": 9,
-          "items": {
-            "value": "@activity('lk_tables_need_load_for_silver').output.value",
-            "type": "Expression"
-          },
-          "activities": [
-            {
-              "type": "TridentNotebook",
-              "typeProperties": {
-                "notebookId": "9462e5b9-9e8b-9126-47a2-e4a943650751",
-                "workspaceId": "00000000-0000-0000-0000-000000000000",
-                "parameters": {
-                  "p_config_load_table": {
-                    "value": {
-                      "value": "@coalesce(string(item()),'')",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  },
-                  "p_session_id": {
-                    "value": {
-                      "value": "@coalesce(variables('session_id'),'')",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  },
-                  "p_pipeline_run_id": {
-                    "value": {
-                      "value": "@pipeline().RunId",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  },
-                  "p_batch_id": {
-                    "value": {
-                      "value": "@coalesce(variables('batch_id'),'')",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  },
-                  "p_previous_session_id": {
-                    "value": {
-                      "value": "@variables('previous_session_id')",
-                      "type": "Expression"
-                    },
-                    "type": "string"
-                  }
-                },
-                "sessionTag": "session_silver_conncurrency"
-              },
-              "policy": {
-                "timeout": "0.12:00:00",
-                "retry": 0,
-                "retryIntervalInSeconds": 30,
-                "secureInput": false,
-                "secureOutput": false
-              },
-              "name": "nb_transform",
-              "dependsOn": []
-            }
-          ]
-        },
-        "name": "for_each_table_config",
-        "dependsOn": [
-          {
-            "activity": "lk_tables_need_load_for_silver",
-            "dependencyConditions": [
-              "Succeeded"
-            ]
-          }
-        ]
-      },
-      {
         "type": "TridentNotebook",
         "typeProperties": {
           "notebookId": "df0e3216-cb34-78ab-4c11-12501aae3c02",
@@ -368,7 +292,7 @@
         "name": "nb_ingestion_gold",
         "dependsOn": [
           {
-            "activity": "for_each_table_config",
+            "activity": "nb_process_transform_silver_layer",
             "dependencyConditions": [
               "Succeeded"
             ]
@@ -520,6 +444,98 @@
         "dependsOn": [
           {
             "activity": "ingestion",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "b94c233c-71e8-a451-4ba9-39800140cc05",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "p_session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_list_config_load_table": {
+              "value": {
+                "value": "@string(activity('lk_tables_need_load_for_silver').output.value)",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "nb_process_transform_silver_layer",
+        "dependsOn": [
+          {
+            "activity": "lk_tables_need_load_for_silver",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "df0e3216-cb34-78ab-4c11-12501aae3c01",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "session_id": {
+              "value": {
+                "value": "@variables('session_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "run_mode": {
+              "value": {
+                "value": "@variables('run_mode')",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "batch_id": {
+              "value": {
+                "value": "@variables('batch_id')",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "nb_validation_gold",
+        "dependsOn": [
+          {
+            "activity": "nb_ingestion_gold",
             "dependencyConditions": [
               "Succeeded"
             ]

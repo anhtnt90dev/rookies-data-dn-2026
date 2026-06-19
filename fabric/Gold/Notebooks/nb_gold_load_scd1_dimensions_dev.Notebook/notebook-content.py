@@ -58,11 +58,9 @@ p_table_id = ""
 
 # CELL ********************
 
-import sys
 from datetime import datetime
 from pyspark.sql import DataFrame, Window
 from pyspark.sql import functions as F
-from pyspark.sql.types import StructType, StructField, IntegerType, DateType, StringType, BooleanType, TimestampType, LongType
 from delta.tables import DeltaTable
 
 # Cast parameters
@@ -70,6 +68,12 @@ batch_id = int(batch_id)
 session_id = str(session_id)
 run_mode = str(run_mode).upper()
 p_table_id = int(p_table_id) if p_table_id else None
+
+# Load table ID mapping from cfg.dim_fact_table dynamically
+dim_fact_lookup = {
+    row["table_name"]: int(row["id"])
+    for row in spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
+}
 
 # Ensure Unknown Row (-1) helper
 def ensure_unknown_row(table_name: str, pk_col: str):
@@ -227,53 +231,61 @@ def load_scd1_dimension(
 # Dimension Loads Sequenced Execution
 # ---------------------------------------------------------------------------
 
-# 1. dim_package (Source: silver.quotation, ID: 5)
-if p_table_id is None or p_table_id == 5:
+# 1. dim_package (Source: silver.quotation)
+dim_package_id = dim_fact_lookup["dim_package"]
+if p_table_id is None or p_table_id == dim_package_id:
     print("[LOAD] Processing dim_package...")
     package_source_df = spark.table("silver.quotation").select("package_code")
-    load_scd1_dimension("gold.dim_package", package_source_df, "package_code", "package_key", [], 5)
+    load_scd1_dimension("gold.dim_package", package_source_df, "package_code", "package_key", [], dim_package_id)
 
-# 2. dim_coverage (Source: silver.quotation_item, ID: 6)
-if p_table_id is None or p_table_id == 6:
+# 2. dim_coverage (Source: silver.quotation_item)
+dim_coverage_id = dim_fact_lookup["dim_coverage"]
+if p_table_id is None or p_table_id == dim_coverage_id:
     print("[LOAD] Processing dim_coverage...")
     coverage_source_df = spark.table("silver.quotation_item").select("coverage_type")
-    load_scd1_dimension("gold.dim_coverage", coverage_source_df, "coverage_type", "coverage_key", [], 6)
+    load_scd1_dimension("gold.dim_coverage", coverage_source_df, "coverage_type", "coverage_key", [], dim_coverage_id)
 
-# 3. dim_quotation (Source: silver.quotation, ID: 7)
-if p_table_id is None or p_table_id == 7:
+# 3. dim_quotation (Source: silver.quotation)
+dim_quotation_id = dim_fact_lookup["dim_quotation"]
+if p_table_id is None or p_table_id == dim_quotation_id:
     print("[LOAD] Processing dim_quotation...")
     quotation_source_df = spark.table("silver.quotation").select(
         "quotation_id",
         F.to_date("quotation_expiry_at").alias("quotation_expiry_date")
     )
-    load_scd1_dimension("gold.dim_quotation", quotation_source_df, "quotation_id", "quotation_key", ["quotation_expiry_date"], 7)
+    load_scd1_dimension("gold.dim_quotation", quotation_source_df, "quotation_id", "quotation_key", ["quotation_expiry_date"], dim_quotation_id)
 
-# 4. dim_policy (Source: silver.policy, ID: 8)
-if p_table_id is None or p_table_id == 8:
+# 4. dim_policy (Source: silver.policy)
+dim_policy_id = dim_fact_lookup["dim_policy"]
+if p_table_id is None or p_table_id == dim_policy_id:
     print("[LOAD] Processing dim_policy...")
     policy_source_df = spark.table("silver.policy").select("policy_id")
-    load_scd1_dimension("gold.dim_policy", policy_source_df, "policy_id", "policy_key", [], 8)
+    load_scd1_dimension("gold.dim_policy", policy_source_df, "policy_id", "policy_key", [], dim_policy_id)
 
-# 5. dim_quotation_status (Source: silver.quotation, ID: 9)
-if p_table_id is None or p_table_id == 9:
+# 5. dim_quotation_status (Source: silver.quotation)
+dim_qstatus_id = dim_fact_lookup["dim_quotation_status"]
+if p_table_id is None or p_table_id == dim_qstatus_id:
     print("[LOAD] Processing dim_quotation_status...")
     qstatus_source_df = spark.table("silver.quotation").select(F.col("quotation_status").alias("quotation_status_code"))
-    load_scd1_dimension("gold.dim_quotation_status", qstatus_source_df, "quotation_status_code", "quotation_status_key", [], 9)
+    load_scd1_dimension("gold.dim_quotation_status", qstatus_source_df, "quotation_status_code", "quotation_status_key", [], dim_qstatus_id)
 
-# 6. dim_policy_status (Source: silver.policy, ID: 10)
-if p_table_id is None or p_table_id == 10:
+# 6. dim_policy_status (Source: silver.policy)
+dim_pstatus_id = dim_fact_lookup["dim_policy_status"]
+if p_table_id is None or p_table_id == dim_pstatus_id:
     print("[LOAD] Processing dim_policy_status...")
     pstatus_source_df = spark.table("silver.policy").select(F.col("policy_status").alias("policy_status_code"))
-    load_scd1_dimension("gold.dim_policy_status", pstatus_source_df, "policy_status_code", "policy_status_key", [], 10)
+    load_scd1_dimension("gold.dim_policy_status", pstatus_source_df, "policy_status_code", "policy_status_key", [], dim_pstatus_id)
 
-# 7. dim_payment_status (Source: silver.payment, ID: 11)
-if p_table_id is None or p_table_id == 11:
+# 7. dim_payment_status (Source: silver.payment)
+dim_paystatus_id = dim_fact_lookup["dim_payment_status"]
+if p_table_id is None or p_table_id == dim_paystatus_id:
     print("[LOAD] Processing dim_payment_status...")
     paystatus_source_df = spark.table("silver.payment").select(F.col("payment_status").alias("payment_status_code"))
-    load_scd1_dimension("gold.dim_payment_status", paystatus_source_df, "payment_status_code", "payment_status_key", [], 11)
+    load_scd1_dimension("gold.dim_payment_status", paystatus_source_df, "payment_status_code", "payment_status_key", [], dim_paystatus_id)
 
-# 8. dim_payment_method (Source: silver.payment, ID: 12)
-if p_table_id is None or p_table_id == 12:
+# 8. dim_payment_method (Source: silver.payment)
+dim_paymethod_id = dim_fact_lookup["dim_payment_method"]
+if p_table_id is None or p_table_id == dim_paymethod_id:
     print("[LOAD] Processing dim_payment_method...")
     raw_payment_method_df = spark.table("silver.payment").select("payment_method")
     payment_method_df = raw_payment_method_df.select(
@@ -282,13 +294,14 @@ if p_table_id is None or p_table_id == 12:
          .when(F.col("payment_method") == "E-wallet", "E_WALLET")
          .otherwise(F.upper(F.col("payment_method"))).alias("payment_method_code")
     )
-    load_scd1_dimension("gold.dim_payment_method", payment_method_df, "payment_method_code", "payment_method_key", [], 12)
+    load_scd1_dimension("gold.dim_payment_method", payment_method_df, "payment_method_code", "payment_method_key", [], dim_paymethod_id)
 
-# 9. dim_cancellation_reason (Source: silver.cancellation, ID: 13)
-if p_table_id is None or p_table_id == 13:
+# 9. dim_cancellation_reason (Source: silver.cancellation)
+dim_cancelreason_id = dim_fact_lookup["dim_cancellation_reason"]
+if p_table_id is None or p_table_id == dim_cancelreason_id:
     print("[LOAD] Processing dim_cancellation_reason...")
     cancel_source_df = spark.table("silver.cancellation").select("cancellation_reason")
-    load_scd1_dimension("gold.dim_cancellation_reason", cancel_source_df, "cancellation_reason", "cancellation_reason_key", [], 13)
+    load_scd1_dimension("gold.dim_cancellation_reason", cancel_source_df, "cancellation_reason", "cancellation_reason_key", [], dim_cancelreason_id)
 
 # METADATA ********************
 

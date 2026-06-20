@@ -30,7 +30,7 @@ Recommended source structure:
     │   └── other Fabric items
     │
     ├── scripts/
-    │   └── deploy.py
+    │   └── deploy_*.py
     │
     ├── parameter.yml
     │
@@ -197,14 +197,14 @@ jobs:
 
       run: |
 
-        python scripts/deploy.py
+        python scripts/deploy_*.py
 ```
 
 ------------------------------------------------------------------------
 
 # 7. Deploy Script
 
-`scripts/deploy.py`
+`scripts/deploy_*.py`
 
 Flow:
 
@@ -365,7 +365,7 @@ Production flow:
 -   Grant Fabric workspace permission.
 -   Setup GitHub Secrets.
 -   Install fabric-cicd.
--   Create deploy.py.
+-   Create deploy_pipeline.py and deploy_powerbi.py.
 -   Create parameter.yml.
 
 Result:

@@ -90,7 +90,7 @@ print(f"Repository directory: {repository_directory}")
 print(repository_directory)
 
 # convert the item types argument into a valid list
-list_item_types = ["Notebook","DataPipeline","Lakehouse","SemanticModel","Report","VariableLibrary"]
+list_item_types = ["Notebook","DataPipeline","Lakehouse","VariableLibrary"]
 
 # Initialize the FabricWorkspace object with the required parameters
 target_workspace = FabricWorkspace(

@@ -1,0 +1,18 @@
+table 'New Calculation Group'
+	lineageTag: a65047b1-c110-4f34-8a6e-51f403533cf8
+
+	calculationGroup
+		precedence: 1
+
+	column Name
+		dataType: string
+		lineageTag: 720cba80-f755-4ab5-951d-abd32e987556
+		sourceColumn: Name
+		sortByColumn: Ordinal
+
+	column Ordinal
+		dataType: int64
+		isHidden
+		lineageTag: 7db4e985-ffdd-4838-b971-5e8ffe44c2a7
+		sourceColumn: Ordinal
+

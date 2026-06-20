@@ -1,0 +1,235 @@
+table 'gold fact_quotation'
+	lineageTag: 66738a0d-f183-437c-ad8d-d90a81784962
+
+	column quotation_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 50382779-39ea-4251-94be-11113d63e7da
+		summarizeBy: none
+		sourceColumn: quotation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 4bddbe8a-70b8-4642-bcbc-3e659deff555
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 789fb22d-429d-49a4-9d82-f5ecf37e7173
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: c695968c-84e4-463c-961b-c318ee10e49a
+		summarizeBy: none
+		sourceColumn: provider_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: a0a3984c-361c-42ca-9dd7-60c01c237404
+		summarizeBy: sum
+		sourceColumn: quotation_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 732eb878-64b6-4004-bc5b-55f307557b40
+		summarizeBy: sum
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: d4ca732e-7e09-4869-bae9-838153989086
+		summarizeBy: sum
+		sourceColumn: agent_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: d49c3636-17a1-4a1d-9c9f-7ba425b7e2c0
+		summarizeBy: sum
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column package_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: f9aede12-fb80-407a-ab7e-b1bbac42b5bf
+		summarizeBy: sum
+		sourceColumn: package_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_status_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 4ff60043-62cd-4ee6-8d9e-676546295732
+		summarizeBy: sum
+		sourceColumn: quotation_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 3ff05a65-dc0b-454b-a724-df724d39ac86
+		summarizeBy: sum
+		sourceColumn: quotation_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_expiry_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 8c7b9d40-4034-4f78-9c2f-ebb64ca08719
+		summarizeBy: sum
+		sourceColumn: quotation_expiry_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: fd1c8435-2d34-4ee1-814c-f8d8242e84d6
+		summarizeBy: sum
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column premium_amount
+		dataType: double
+		sourceProviderType: decimal(18, 2)
+		lineageTag: a44cf9e2-ece1-4027-a469-c8bd11f46063
+		summarizeBy: sum
+		sourceColumn: premium_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column converted_flag
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 3f622006-16b2-4696-8681-73a3ec363336
+		summarizeBy: none
+		sourceColumn: converted_flag
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4f374d99-cc1c-43f7-b9fb-3d231bb73b23
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: fe3d6e56-e53a-4bbb-be98-1b24b97a8733
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column _batch_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: bc462b83-aef4-475e-8b33-c71b0fb1fccd
+		summarizeBy: none
+		sourceColumn: _batch_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column _source_system
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 5697e439-1195-4f9c-b88c-3349b06d5ca2
+		summarizeBy: none
+		sourceColumn: _source_system
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_run_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: fe074044-966c-49ac-bf7a-127b4426d212
+		summarizeBy: none
+		sourceColumn: pipeline_run_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_deleted
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: e93a735f-38f8-450e-ba73-beef8815aeb8
+		summarizeBy: none
+		sourceColumn: is_deleted
+
+		annotation SummarizationSetBy = Automatic
+
+	column deleted_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 0680c340-1b40-455e-aca6-115735a78033
+		summarizeBy: none
+		sourceColumn: deleted_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column delete_batch_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 104ef478-6ff0-4c77-98ca-c3c2751a4295
+		summarizeBy: none
+		sourceColumn: delete_batch_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold fact_quotation' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_fact_quotation = Source{[Schema="gold",Item="fact_quotation"]}[Data]
+				in
+				    gold_fact_quotation
+

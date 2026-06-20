@@ -1,0 +1,177 @@
+relationship 08c76cc3-0711-fc85-8062-5397c3e7d508
+	crossFilteringBehavior: bothDirections
+	fromColumn: fact_quotation.quotation_key
+	toColumn: dim_quotation.quotation_key
+
+relationship a1302b99-43c9-c1c9-0140-94649e1be3a4
+	fromColumn: fact_quotation.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 62bd143b-f7f5-2a3b-b550-308dde8c8f93
+	fromColumn: fact_quotation.agent_key
+	toColumn: dim_agent.agent_key
+
+relationship 43350144-5d09-ab75-721b-41bddbc4db3e
+	fromColumn: fact_quotation.provider_key
+	toColumn: dim_provider.provider_key
+
+relationship 78aebbf1-1357-224d-eed2-446bad3eb2a8
+	fromColumn: fact_quotation.package_key
+	toColumn: dim_package.package_key
+
+relationship 437fbf3b-0feb-b537-7bc7-dd6d9c0ecbcb
+	fromColumn: fact_quotation.quotation_status_key
+	toColumn: dim_quotation_status.quotation_status_key
+
+relationship e5633967-cd17-35df-5b66-e29dade39489
+	fromColumn: fact_quotation.vehicle_key
+	toColumn: dim_vehicle.vehicle_key
+
+relationship 8738b141-1a66-de53-91ab-3fa7850c3b58
+	fromColumn: fact_quotation.quotation_date_key
+	toColumn: dim_date.date_key
+
+relationship de528e10-35e3-933c-9cac-fa6e634380bb
+	isActive: false
+	fromColumn: fact_quotation.quotation_expiry_date_key
+	toColumn: dim_date.date_key
+
+relationship 22bc66ff-eff6-1189-ca26-09a15b645774
+	fromColumn: fact_quotation_item.quotation_key
+	toColumn: dim_quotation.quotation_key
+
+relationship aabc5181-54e5-af40-0141-fdbf807e1dfe
+	fromColumn: fact_quotation_item.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 01866b2d-9d94-7540-a1f8-50d8c8be4a34
+	fromColumn: fact_quotation_item.agent_key
+	toColumn: dim_agent.agent_key
+
+relationship 8ec5c28c-b876-8861-85b4-982575b6bbdb
+	fromColumn: fact_quotation_item.provider_key
+	toColumn: dim_provider.provider_key
+
+relationship 7135b5f5-494e-3d45-7991-603237159c5a
+	fromColumn: fact_quotation_item.package_key
+	toColumn: dim_package.package_key
+
+relationship e5fe28a2-0f3b-52d6-41c1-494036f6e721
+	fromColumn: fact_quotation_item.quotation_status_key
+	toColumn: dim_quotation_status.quotation_status_key
+
+relationship a172ecac-dd93-e094-38dc-2fb8e34a8fba
+	fromColumn: fact_quotation_item.coverage_key
+	toColumn: dim_coverage.coverage_key
+
+relationship c60690dd-7b90-b42f-f22c-12e88f14b610
+	fromColumn: fact_quotation_item.vehicle_key
+	toColumn: dim_vehicle.vehicle_key
+
+relationship c3722fdb-62c0-8dc8-a02e-599254095fbe
+	fromColumn: fact_quotation_item.quotation_date_key
+	toColumn: dim_date.date_key
+
+relationship 62813cc7-ca29-5112-6b33-8fb8a8dac52a
+	fromColumn: fact_policy.policy_key
+	toColumn: dim_policy.policy_key
+
+relationship d65fb44a-7e9b-c41f-4d3c-948614255e89
+	fromColumn: fact_policy.quotation_key
+	toColumn: dim_quotation.quotation_key
+
+relationship 3437a6e1-a7b8-f76a-8185-0656ab5d1f08
+	fromColumn: fact_policy.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 1685c6f7-a483-505f-43a1-23efbcd1533a
+	fromColumn: fact_policy.agent_key
+	toColumn: dim_agent.agent_key
+
+relationship 717357ee-8bef-d2a7-25b3-a29b5ebf1d45
+	fromColumn: fact_policy.provider_key
+	toColumn: dim_provider.provider_key
+
+relationship ab2e2412-65fa-0b92-1238-00d80e572b68
+	fromColumn: fact_policy.package_key
+	toColumn: dim_package.package_key
+
+relationship 093ce9fc-9361-bb30-68e0-3f188cddc47a
+	fromColumn: fact_policy.policy_status_key
+	toColumn: dim_policy_status.policy_status_key
+
+relationship 4dd0a808-9858-7e39-c2cd-4674a1abcb56
+	fromColumn: fact_policy.vehicle_key
+	toColumn: dim_vehicle.vehicle_key
+
+relationship f77c71a1-1baa-73ff-a142-c1a1f4b7517c
+	fromColumn: fact_policy.issued_date_key
+	toColumn: dim_date.date_key
+
+relationship 56031e20-6bfc-5359-035a-222f03f75c1c
+	isActive: false
+	fromColumn: fact_policy.policy_end_date_key
+	toColumn: dim_date.date_key
+
+relationship 6e5f7a1a-b212-c3d4-2a84-b2e5a90af378
+	isActive: false
+	fromColumn: fact_policy.policy_start_date_key
+	toColumn: dim_date.date_key
+
+relationship ad8d2771-4d15-99e8-e286-d36c412cecdd
+	fromColumn: fact_payment.policy_key
+	toColumn: dim_policy.policy_key
+
+relationship 92833b6e-bc1a-969a-4c74-524235837ed5
+	fromColumn: fact_payment.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 2d34ec83-bff4-fe40-1401-86a496732bd9
+	fromColumn: fact_payment.provider_key
+	toColumn: dim_provider.provider_key
+
+relationship 74ef16bc-8b0a-414d-87cd-893da6db66c2
+	fromColumn: fact_payment.payment_status_key
+	toColumn: dim_payment_status.payment_status_key
+
+relationship 37fdc3b5-782f-664b-fccc-92bd78f358c0
+	fromColumn: fact_payment.payment_method_key
+	toColumn: dim_payment_method.payment_method_key
+
+relationship 51380ccc-b122-1ad7-6762-4c7bdedefb1f
+	fromColumn: fact_payment.vehicle_key
+	toColumn: dim_vehicle.vehicle_key
+
+relationship 534a75bb-fd61-be2c-c79b-126a0356dbd5
+	fromColumn: fact_payment.payment_date_key
+	toColumn: dim_date.date_key
+
+relationship 42c31bf0-fb0b-e07e-0984-c936626dedc4
+	isActive: false
+	fromColumn: fact_payment.issued_date_key
+	toColumn: dim_date.date_key
+
+relationship a8b5275c-1505-532d-2044-7d7d6acd9163
+	fromColumn: fact_cancellation.policy_key
+	toColumn: dim_policy.policy_key
+
+relationship 61f9d701-df59-c075-cc24-66ecd6b9c629
+	fromColumn: fact_cancellation.customer_key
+	toColumn: dim_customer.customer_key
+
+relationship 1eb2688b-6809-18ee-ff3b-fe3f9b4350d9
+	fromColumn: fact_cancellation.provider_key
+	toColumn: dim_provider.provider_key
+
+relationship 7e5f2599-4eb7-ceb4-5411-306b2ef1bf49
+	fromColumn: fact_cancellation.cancellation_reason_key
+	toColumn: dim_cancellation_reason.cancellation_reason_key
+
+relationship d0bdf004-1869-465a-a20f-0d7bfd736bf9
+	fromColumn: fact_cancellation.vehicle_key
+	toColumn: dim_vehicle.vehicle_key
+
+relationship 4bca6a02-13a4-7840-800d-98bb695681dd
+	fromColumn: fact_cancellation.cancellation_date_key
+	toColumn: dim_date.date_key
+

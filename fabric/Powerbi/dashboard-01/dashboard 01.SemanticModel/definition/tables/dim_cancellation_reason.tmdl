@@ -1,0 +1,51 @@
+table dim_cancellation_reason
+	lineageTag: 33fa23e0-3ac1-4731-8ffe-286f6c8a91d7
+
+	column cancellation_reason_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: fb4c00bc-a4ac-4c1a-b0dd-7662164e28c4
+		summarizeBy: none
+		sourceColumn: cancellation_reason_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_reason
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 9bf8fcb8-4bb6-4e48-80d6-7fedee66091f
+		summarizeBy: none
+		sourceColumn: cancellation_reason
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 680af8f5-4e56-4570-90e5-df10e3a9e499
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 3cafd6cd-c0bb-4664-aba2-96e70d4d4e48
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_cancellation_reason = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_cancellation_reason = Source{[Schema="gold",Item="dim_cancellation_reason"]}[Data]
+				in
+				    gold_dim_cancellation_reason
+

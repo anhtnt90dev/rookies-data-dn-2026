@@ -1,16 +1,16 @@
 ## Row Count
 
-![Row Count](insert-1million-record.png)
+![Row Count](insert-five-million-records.png)
 
 ## Execution Time
 
-~16 minutes 47 seconds
+~19 minutes 15 seconds
 
 ![Execution Time](time.png)
 
 ## Inserted Records
 
-![Inserted Records](audit-record-log.png)
+![Inserted Records](audit-detail.png)
 
 ## Validation Results
 

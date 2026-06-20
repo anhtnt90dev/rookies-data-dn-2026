@@ -204,7 +204,7 @@ jobs:
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
         run: |
-          python cicd/scripts/github-action/deploy.py \
+          python cicd/scripts/github-action/deploy_pipeline.py \
           --aztenantid "$AZURE_TENANT_ID" \
           --azclientid "$AZURE_CLIENT_ID" \
           --azspsecret "$AZURE_CLIENT_SECRET" \

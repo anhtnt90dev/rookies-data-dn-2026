@@ -1,0 +1,212 @@
+name: Deploy Fabric
+
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - fabric/**
+    types: [closed]
+
+  # Manual deployment
+  workflow_dispatch:
+    inputs:
+      deploy_branch:
+        description: "Branch to deploy"
+        required: true
+        type: string
+        default: "dev"
+
+      target_environment:
+        description: "Fabric environment"
+        required: true
+        type: choice
+        default: "UAT"
+        options:
+          - DEV
+          - UAT
+          - PROD
+
+permissions:
+  contents: read
+
+jobs:
+  DeployToFabric:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      github.event_name == 'workflow_dispatch'
+    name: Deploy Fabric Workspace
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
+
+    steps:
+      - name: Checkout selected branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: |
+
+            ${{ 
+              github.event_name == 'workflow_dispatch'
+              && inputs.deploy_branch
+              || github.ref_name
+            }}
+
+      - name: Detect changed notebook-content.py files
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual run: scan all notebook-content.py files in fabric/
+            CHANGED=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            # Push event: compare pushed commit range
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+              # First push to a new branch — scan all files
+              CHANGED=$(find fabric/ -name 'notebook-content.py' 2>/dev/null || true)
+            else
+              CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+                | grep -E '^fabric/.*notebook-content\.py$' || true)
+            fi
+          else
+            # pull_request event
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            CHANGED=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" \
+              | grep -E '^fabric/.*notebook-content\.py$' || true)
+          fi
+
+          echo "Changed notebook files:"
+          echo "$CHANGED"
+
+          CHANGED_ENCODED=$(echo "$CHANGED" | tr '\n' '|' | sed 's/|$//')
+          if [ -n "$CHANGED" ]; then
+            HAS_CHANGES="true"
+          else
+            HAS_CHANGES="false"
+          fi
+
+          echo "files=$CHANGED_ENCODED" >> $GITHUB_OUTPUT
+          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+
+      - name: Check Lint For Notebook files
+        if: steps.changed.outputs.has_changes == 'true'
+        continue-on-error: true
+        run: |
+          WARN=false
+          FILES=$(echo "${{ steps.changed.outputs.files }}" | tr '|' '\n' | grep -v '^$')
+
+          for FILE in $FILES; do
+            echo ""
+            echo "══════════════════════════════════════════"
+            echo "  Checking: $FILE"
+            echo "══════════════════════════════════════════"
+
+            if [ ! -f "$FILE" ]; then
+              echo "  SKIP — file deleted or not found."
+              continue
+            fi
+
+            ERRORS=0
+
+            if ! grep -q '^# Fabric notebook source' "$FILE"; then
+              echo "  WARN — missing '# Fabric notebook source' header."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '^# METADATA \*\*\*\*' "$FILE"; then
+              echo "  WARN — missing '# METADATA ****' block."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"default_lakehouse_workspace_id"' "$FILE"; then
+              echo "  WARN — missing 'default_lakehouse_workspace_id' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"default_lakehouse"' "$FILE"; then
+              echo "  WARN — missing 'default_lakehouse' in metadata."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if ! grep -q '"name": "synapse_pyspark"' "$FILE"; then
+              echo "  WARN — kernel_info must use 'synapse_pyspark'."
+              ERRORS=$((ERRORS + 1))
+            fi
+
+            if [ "$ERRORS" -eq 0 ]; then
+              echo "   OK"
+            else
+              echo "  $ERRORS warning(s) — $FILE"
+              WARN=true
+            fi
+          done
+
+          echo ""
+          if [ "$WARN" = "true" ]; then
+            echo "════════════════════════════════════════════════"
+            echo "  Lint WARNINGS found — deployment continues."
+            echo "════════════════════════════════════════════════"
+            exit 1   # caught by continue-on-error; annotated but not blocking
+          fi
+
+          echo "════════════════════════════════════════════════"
+          echo "   Lint PASSED — all notebook files look good."
+          echo "════════════════════════════════════════════════"
+      # ─────────────────────────────────────────────────────────────────────────
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fabric-cicd azure-identity python-dotenv
+
+      - name: Resolve workspace
+        id: workspace
+        run: |
+          if [[ "${{ inputs.target_environment }}" == "PROD" ]]; then
+
+            echo "workspace=${{ secrets.PROD_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          elif [[ "${{ inputs.target_environment }}" == "UAT" ]]; then
+
+            echo "workspace=${{ secrets.TEST_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          else
+            echo "workspace=${{ secrets.DEV_WORKSPACE_ID }}" >> $GITHUB_OUTPUT
+
+          fi
+      - name: Update Notebook Metadata
+        env:
+          DEPLOY_ENV: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
+          FABRIC_WORKSPACE_DEV_ID: ${{ secrets.FABRIC_WORKSPACE_DEV_ID }}
+          FABRIC_LAKEHOUSE_DEV_ID: ${{ secrets.FABRIC_LAKEHOUSE_DEV_ID }}
+          FABRIC_LAKEHOUSE_DEV_NAME: ${{ secrets.FABRIC_LAKEHOUSE_DEV_NAME }}
+          FABRIC_WORKSPACE_TEST_ID: ${{ secrets.FABRIC_WORKSPACE_TEST_ID }}
+          FABRIC_LAKEHOUSE_TEST_ID: ${{ secrets.FABRIC_LAKEHOUSE_TEST_ID }}
+          FABRIC_LAKEHOUSE_TEST_NAME: ${{ secrets.FABRIC_LAKEHOUSE_TEST_NAME }}
+          FABRIC_WORKSPACE_PROD_ID: ${{ secrets.FABRIC_WORKSPACE_PROD_ID }}
+          FABRIC_LAKEHOUSE_PROD_ID: ${{ secrets.FABRIC_LAKEHOUSE_PROD_ID }}
+          FABRIC_LAKEHOUSE_PROD_NAME: ${{ secrets.FABRIC_LAKEHOUSE_PROD_NAME }}
+        run: |
+          export DEPLOY_ENV=$(echo "$DEPLOY_ENV" | tr '[:upper:]' '[:lower:]')
+          python cicd/scripts/github-action/update_fabric_metadata.py
+      - name: Deploy Fabric
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+        run: |
+          python cicd/scripts/github-action/deploy.py \
+          --aztenantid "$AZURE_TENANT_ID" \
+          --azclientid "$AZURE_CLIENT_ID" \
+          --azspsecret "$AZURE_CLIENT_SECRET" \
+          --workspaceid "${{ steps.workspace.outputs.workspace }}" \
+          --target_env "${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}"

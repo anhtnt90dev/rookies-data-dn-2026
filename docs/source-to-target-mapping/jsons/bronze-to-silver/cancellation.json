@@ -1,0 +1,131 @@
+{
+  "source_table": "bronze.cancellation",
+  "target_table": "silver.cancellation",
+  "columns": [
+    {
+      "target": "cancellation_id",
+      "expression": "cancellation_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "cancellation_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "policy_id",
+              "type": "string",
+              "reason_error": "policy_id is null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "cancellation_at",
+      "expression": "cancellation_date",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "cancellation_at",
+              "type": "date",
+              "reason_error": "cancellation_at is null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "cancellation_reason",
+      "expression": "cancellation_reason"
+    },
+    {
+      "target": "refund_amount",
+      "expression": "refund_amount",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "refund_amount",
+              "type": "decimal",
+              "reason_error": "refund_amount is null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "last_updated_at",
+      "expression": "last_updated_at",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "last_updated_at",
+              "reason_error": "last_updated_at key is empty"
+            }
+          ]
+        },
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "last_updated_at",
+              "reason_error": "last_updated_at key invalid date format"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "updated_at",
+      "expression": "last_updated_at"
+    },
+    {
+      "target": "operation_type",
+      "expression": "_operation_type"
+    },
+    {
+      "target": "is_deleted",
+      "expression": "CASE WHEN _operation_type = 'D' THEN TRUE ELSE FALSE END"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "current_timestamp()",
+      "expression_type": "system"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

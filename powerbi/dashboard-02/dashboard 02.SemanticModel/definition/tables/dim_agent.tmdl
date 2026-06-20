@@ -1,0 +1,136 @@
+table dim_agent
+	lineageTag: 0aefc659-99f3-47b2-8b08-1dc543505540
+
+	column agent_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 49b4cbfb-76e2-489c-8557-0c61ab8c836e
+		summarizeBy: none
+		sourceColumn: agent_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: d7905d44-e399-430e-98d6-58fd055c36bb
+		summarizeBy: none
+		sourceColumn: agent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column agent_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 249dd131-3fbd-42ab-9a11-a4dec4d5694f
+		summarizeBy: none
+		sourceColumn: agent_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 3a84e1ac-526e-4a2f-8c2c-4c730a3bc474
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column branch
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 8147cc98-5c03-4e3a-9c8c-491dc297a9a3
+		summarizeBy: none
+		sourceColumn: branch
+
+		annotation SummarizationSetBy = Automatic
+
+	column manager_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 579960bd-6d77-49ef-b99d-cffcdc00d9e3
+		summarizeBy: none
+		sourceColumn: manager_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_from
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 0c340a74-6e10-40e3-8d4f-8197d3d49e50
+		summarizeBy: none
+		sourceColumn: effective_from
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_to
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: f03232f7-3d8e-46cb-b395-a212f6a05678
+		summarizeBy: none
+		sourceColumn: effective_to
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: c430de17-a4a4-4121-ba73-33eb83001c9c
+		summarizeBy: none
+		sourceColumn: is_current
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: d7bf9c8d-9198-41e3-a88b-6307953e58c3
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: dccb2e6e-4958-4082-830f-07a3106c6a75
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_agent = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_agent = Source{[Schema="gold",Item="dim_agent"]}[Data]
+				in
+				    gold_dim_agent
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

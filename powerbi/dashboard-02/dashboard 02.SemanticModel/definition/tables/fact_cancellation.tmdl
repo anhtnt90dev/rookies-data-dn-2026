@@ -1,0 +1,201 @@
+table fact_cancellation
+	lineageTag: 78a07a5a-3b8f-43cb-9e7c-b0b126a395ad
+
+	column cancellation_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: ab637a19-2b68-44c2-81e8-800a96a84d79
+		summarizeBy: none
+		sourceColumn: cancellation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 700800a2-b3e3-4d11-9359-0c5db2dcdf4b
+		summarizeBy: none
+		sourceColumn: policy_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 3924e7c7-3fdf-4f1b-ba71-48c624200626
+		summarizeBy: none
+		sourceColumn: policy_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_reason_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 7816897c-5407-49c2-bdeb-d81480e6b336
+		summarizeBy: none
+		sourceColumn: cancellation_reason_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column cancellation_date_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 342c97d9-bc28-4d04-92a4-40ca74a3edf7
+		summarizeBy: none
+		sourceColumn: cancellation_date_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: c11ce563-0d2f-4860-afe9-7473f4b208a2
+		summarizeBy: none
+		sourceColumn: customer_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 215547d8-9bf9-41f9-9df1-537fb7dbdb41
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column vehicle_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: cd57e010-6754-459a-89e6-86a84f5d6869
+		summarizeBy: none
+		sourceColumn: vehicle_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column refund_amount
+		dataType: double
+		sourceProviderType: decimal(18, 2)
+		lineageTag: c1e3961f-1490-4661-8dbe-dab0d0bbf51b
+		summarizeBy: sum
+		sourceColumn: refund_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 16584d75-0b07-4ce7-b386-46b88467abb9
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: dc9bbc85-d9d3-4bf1-9e92-8ac8e37fbd90
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column _batch_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 734d16b4-51e8-4206-be66-df000d5605eb
+		summarizeBy: none
+		sourceColumn: _batch_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column _source_system
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 5824a670-2603-469e-9823-1397ab524e00
+		summarizeBy: none
+		sourceColumn: _source_system
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column pipeline_run_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 98356321-a4e5-4103-9fdd-7683b761b65c
+		summarizeBy: none
+		sourceColumn: pipeline_run_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_deleted
+		dataType: boolean
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 5a468936-539a-4bad-9a7f-e6dcb9c0a632
+		summarizeBy: none
+		sourceColumn: is_deleted
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column deleted_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 8c1ae67d-8981-490e-b094-64497ca84fe0
+		summarizeBy: none
+		sourceColumn: deleted_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column delete_batch_id
+		dataType: string
+		isHidden
+		sourceProviderType: varchar(8000)
+		lineageTag: 9f84207f-5024-4a90-8662-716c64ed87b4
+		summarizeBy: none
+		sourceColumn: delete_batch_id
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_cancellation = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_fact_cancellation = Source{[Schema="gold",Item="fact_cancellation"]}[Data]
+				in
+				    gold_fact_cancellation
+

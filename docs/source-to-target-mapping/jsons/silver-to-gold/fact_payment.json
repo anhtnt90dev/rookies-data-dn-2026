@@ -1,0 +1,86 @@
+{
+  "source_table": "silver.payment",
+  "target_table": "gold.fact_payment",
+  "columns": [
+    {
+      "target": "policy_key",
+      "expression": "policy_id"
+    },
+    {
+      "target": "payment_date_key",
+      "expression": "payment_at"
+    },
+    {
+      "target": "issued_date_key",
+      "expression": "policy.issued_at"
+    },
+    {
+      "target": "customer_key",
+      "expression": "policy.customer_id"
+    },
+    {
+      "target": "provider_key",
+      "expression": "policy.provider_code"
+    },
+    {
+      "target": "payment_status_key",
+      "expression": "payment_status"
+    },
+    {
+      "target": "payment_method_key",
+      "expression": "payment_method"
+    },
+    {
+      "target": "vehicle_key",
+      "expression": "policy.customer_id"
+    },
+    {
+      "target": "payment_amount",
+      "expression": "payment_amount"
+    },
+    {
+      "target": "payment_id",
+      "expression": "payment_id"
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "transaction_reference",
+      "expression": "transaction_reference"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "pipeline_run_id",
+      "expression": "pipeline_run_id"
+    },
+    {
+      "target": "is_deleted",
+      "expression": "is_deleted"
+    },
+    {
+      "target": "deleted_at",
+      "expression": "deleted_at"
+    },
+    {
+      "target": "delete_batch_id",
+      "expression": "delete_batch_id"
+    }
+  ]
+}

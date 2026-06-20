@@ -1,0 +1,58 @@
+{
+  "source_table": "silver.vehicle",
+  "target_table": "gold.dim_vehicle",
+  "columns": [
+    {
+      "target": "vehicle_key",
+      "expression": null
+    },
+    {
+      "target": "vehicle_id",
+      "expression": "vehicle_id"
+    },
+    {
+      "target": "customer_id",
+      "expression": "customer_id"
+    },
+    {
+      "target": "plate_number",
+      "expression": "plate_number"
+    },
+    {
+      "target": "vehicle_brand",
+      "expression": "vehicle_brand"
+    },
+    {
+      "target": "vehicle_model",
+      "expression": "vehicle_model"
+    },
+    {
+      "target": "manufacture_year",
+      "expression": "manufacture_year"
+    },
+    {
+      "target": "vehicle_value",
+      "expression": "vehicle_value"
+    },
+    {
+      "target": "effective_from",
+      "expression": "COALESCE(updated_at,created_at)"
+    },
+    {
+      "target": "effective_to",
+      "expression": null
+    },
+    {
+      "target": "is_current",
+      "expression": null
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
+    }
+  ]
+}

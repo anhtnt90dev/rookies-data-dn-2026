@@ -1,0 +1,160 @@
+{
+  "source_table": "bronze.customer",
+  "target_table": "silver.customer",
+  "columns": [
+    {
+      "target": "customer_id",
+      "expression": "customer_id",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_null",
+          "params": [
+            {
+              "key": "customer_id",
+              "type": "string",
+              "reason_error": "primary key is null"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "full_name",
+      "expression": "full_name",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "full_name",
+              "type": "string",
+              "reason_error": "full_name is empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "gender",
+      "expression": "gender",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "gender",
+              "type": "string",
+              "reason_error": "gender is empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "dob",
+      "expression": "dob",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "dob",
+              "type": "string",
+              "reason_error": "dob is empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "phone_number",
+      "expression": "phone_number",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "phone_number",
+              "type": "string",
+              "reason_error": "phone_number is empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "email",
+      "expression": "email",
+      "expression_type": "primitive",
+      "validates": [
+        {
+          "name_func": "_validate_regex",
+          "params": [
+            {
+              "key": "email",
+              "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+              "reason_error": "email format is invalid"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "city",
+      "expression": "city",
+      "validates": [
+        {
+          "name_func": "_validate_is_not_empty",
+          "params": [
+            {
+              "key": "city",
+              "type": "string",
+              "reason_error": "city is empty"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "district",
+      "expression": "district"
+    },
+    {
+      "target": "created_at",
+      "expression": "created_date",
+      "validates": [
+        {
+          "name_func": "_validate_date_iso8601",
+          "params": [
+            {
+              "key": "created_at",
+              "reason_error": "created_at invalid date format"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "target": "updated_at",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": "_batch_id"
+    },
+    {
+      "target": "_loaded_at",
+      "expression": "current_timestamp()",
+      "expression_type": "system"
+    },
+    {
+      "target": "_source_system",
+      "expression": "_source_system"
+    },
+    {
+      "target": "_source_name",
+      "expression": "_source_name"
+    }
+  ]
+}

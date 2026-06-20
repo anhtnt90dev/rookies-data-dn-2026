@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rookie 15 – Sprint 03 | Gold Layer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* ─── RESET ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ─── SCOPED ROOT ────────────────────────────────────── */
+    #rookie15-slides {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #090d13;
+      color: #e2e8f0;
+      --gold:   #f5a623;
+      --gold2:  #ffcc55;
+      --teal:   #38bdf8;
+      --slate:  #1e2d3d;
+      --slate2: #162032;
+      --border: rgba(245,166,35,0.18);
+      --text-muted: #94a3b8;
+      --danger: #f87171;
+      --success:#34d399;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    /* ─── SLIDE BASE ─────────────────────────────────────── */
+    #rookie15-slides .slide-item {
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 64px 80px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* diagonal accent line */
+    #rookie15-slides .slide-item::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+    }
+
+    /* ─── EYEBROW / LABEL ─────────────────────────────────── */
+    #rookie15-slides .eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 18px;
+    }
+
+    /* ─── HEADINGS ────────────────────────────────────────── */
+    #rookie15-slides h1 {
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.1;
+      color: #f8fafc;
+      margin-bottom: 20px;
+    }
+    #rookie15-slides h1 span { color: var(--gold); }
+
+    #rookie15-slides h2 {
+      font-size: clamp(1.5rem, 3vw, 2.4rem);
+      font-weight: 600;
+      color: #f8fafc;
+      margin-bottom: 16px;
+    }
+    #rookie15-slides h2 span { color: var(--gold); }
+
+    #rookie15-slides h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--teal);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    /* ─── BODY TEXT ───────────────────────────────────────── */
+    #rookie15-slides p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      max-width: 760px;
+      margin-bottom: 16px;
+    }
+
+    /* ─── CODE BLOCKS ─────────────────────────────────────── */
+    #rookie15-slides pre {
+      background: #0a111a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      overflow-x: auto;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #cbd5e1;
+      margin: 16px 0;
+      max-width: 100%;
+    }
+    #rookie15-slides pre .kw   { color: #7dd3fc; }
+    #rookie15-slides pre .str  { color: #86efac; }
+    #rookie15-slides pre .cmt  { color: #475569; font-style: italic; }
+    #rookie15-slides pre .fn   { color: var(--gold2); }
+    #rookie15-slides pre .op   { color: #f9a8d4; }
+    #rookie15-slides code {
+      font-family: var(--mono);
+      background: rgba(245,166,35,0.1);
+      color: var(--gold2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* ─── CARDS / GRID ────────────────────────────────────── */
+    #rookie15-slides .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    #rookie15-slides .card {
+      background: var(--slate2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    #rookie15-slides .card .card-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    #rookie15-slides .card .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 6px;
+    }
+    #rookie15-slides .card .card-body {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── TWO-COL LAYOUT ──────────────────────────────────── */
+    #rookie15-slides .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: start;
+      margin-top: 24px;
+    }
+    @media (max-width: 900px) {
+      #rookie15-slides .two-col { grid-template-columns: 1fr; }
+      #rookie15-slides .slide-item { padding: 40px 24px; }
+    }
+
+    /* ─── TIMELINE / STEPS ────────────────────────────────── */
+    #rookie15-slides .steps {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    #rookie15-slides .step {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 14px 0;
+      border-left: 2px solid var(--border);
+      padding-left: 24px;
+      position: relative;
+    }
+    #rookie15-slides .step::before {
+      content: attr(data-n);
+      position: absolute;
+      left: -13px;
+      top: 14px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #090d13;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #rookie15-slides .step-content h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+    #rookie15-slides .step-content p {
+      font-size: 0.82rem;
+      margin-bottom: 0;
+    }
+
+    /* ─── TABLE ───────────────────────────────────────────── */
+    #rookie15-slides table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.83rem;
+    }
+    #rookie15-slides th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(245,166,35,0.08);
+      color: var(--gold);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    #rookie15-slides td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #cbd5e1;
+      vertical-align: top;
+    }
+    #rookie15-slides tr:last-child td { border-bottom: none; }
+    #rookie15-slides td code { font-size: 0.78rem; }
+
+    /* ─── TAG / BADGE ─────────────────────────────────────── */
+    #rookie15-slides .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    #rookie15-slides .badge-gold  { background: rgba(245,166,35,0.15); color: var(--gold2); }
+    #rookie15-slides .badge-teal  { background: rgba(56,189,248,0.12); color: var(--teal); }
+    #rookie15-slides .badge-green { background: rgba(52,211,153,0.12); color: var(--success); }
+    #rookie15-slides .badge-red   { background: rgba(248,113,113,0.12); color: var(--danger); }
+
+    /* ─── FLOW DIAGRAM (ASCII-SVG hybrid) ────────────────── */
+    #rookie15-slides .flow-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--slate2);
+      padding: 14px 18px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.8;
+    }
+    #rookie15-slides .flow-box .node {
+      display: inline-block;
+      background: rgba(245,166,35,0.1);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 8px;
+      color: var(--gold2);
+      font-weight: 600;
+    }
+    #rookie15-slides .flow-box .arrow { color: #475569; }
+
+    /* ─── DIVIDER ─────────────────────────────────────────── */
+    #rookie15-slides .divider {
+      height: 1px;
+      background: linear-gradient(to right, var(--gold), transparent);
+      margin: 24px 0;
+      max-width: 400px;
+    }
+
+    /* ─── HIGHLIGHT BOX ───────────────────────────────────── */
+    #rookie15-slides .highlight-box {
+      background: rgba(245,166,35,0.06);
+      border-left: 3px solid var(--gold);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin: 16px 0;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+    }
+
+    /* ─── COVER SLIDE extras ──────────────────────────────── */
+    #rookie15-slides .slide-cover {
+      background: radial-gradient(ellipse 80% 60% at 60% 40%, rgba(245,166,35,0.07) 0%, transparent 70%), #090d13;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 64px 80px;
+      position: relative;
+    }
+    #rookie15-slides .slide-cover::before { display: none; }
+    #rookie15-slides .cover-tag {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--gold);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+    #rookie15-slides .cover-name {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 32px;
+    }
+    #rookie15-slides .cover-name strong { color: #f8fafc; }
+    #rookie15-slides .cover-grid {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    /* ─── STAT ROW ────────────────────────────────────────── */
+    #rookie15-slides .stat-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+    #rookie15-slides .stat {
+      background: var(--slate2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 24px;
+      min-width: 140px;
+      text-align: center;
+    }
+    #rookie15-slides .stat-num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+    #rookie15-slides .stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 6px;
+    }
+
+    /* ─── SCD COMPARE ─────────────────────────────────────── */
+    #rookie15-slides .scd-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    #rookie15-slides .scd-box {
+      background: var(--slate2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    #rookie15-slides .scd-box h4 {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 12px;
+      font-family: var(--mono);
+    }
+    #rookie15-slides .scd-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    #rookie15-slides .scd-box ul li {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    #rookie15-slides .scd-box ul li::before {
+      content: '▸';
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="rookie15-slides">
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 1 — COVER
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item slide-cover">
+    <div class="cover-tag">CarPro Insurance Analytics · Sprint 03 · Rookie 15</div>
+    <h1>Gold Layer<br><span>Pipeline Design</span></h1>
+    <p>Dimensional modeling, SCD orchestration, and automated data quality<br>for the Insurance Analytics reporting warehouse on Microsoft Fabric.</p>
+    <div class="cover-grid">
+      <span class="badge badge-gold">5 Fact Tables</span>
+      <span class="badge badge-teal">13 Dimensions</span>
+      <span class="badge badge-green">6-Check QA Suite</span>
+      <span class="badge badge-gold">Delta Lake Merge</span>
+      <span class="badge badge-teal">Recovery-First Design</span>
+    </div>
+    <div class="cover-name"><strong>Phú Lê</strong> · Data Engineering Rookie · Sprint 03 Review</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 2 — ARCHITECTURE OVERVIEW
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Architecture Overview</div>
+    <h2>Medallion Architecture &amp; <span>Gold Layer</span> Scope</h2>
+    <p>The pipeline follows a standard three-layer Medallion design. The Gold Layer is strictly isolated — no upstream Bronze or Silver logic is touched.</p>
+    <div class="two-col">
+      <div>
+        <div class="card-grid" style="grid-template-columns:1fr;">
+          <div class="card">
+            <div class="card-label">Bronze</div>
+            <div class="card-title">Ingestion &amp; Schema Guard</div>
+            <div class="card-body">Source extraction, watermark tracking, incremental loading, file-level logging.</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Silver</div>
+            <div class="card-title">Validation &amp; Conforming</div>
+            <div class="card-body">Deduplication, validation rules, clean conformed Silver tables.</div>
+          </div>
+          <div class="card" style="border-color:var(--gold); background:rgba(245,166,35,0.06);">
+            <div class="card-label" style="color:var(--gold2);">Gold ← Our Work</div>
+            <div class="card-title">Reporting-Ready Star Schema</div>
+            <div class="card-body">SCD1 &amp; SCD2 dimensions, 5 fact tables, PIT key lookups, Power BI semantic model.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Architectural Constraint</h3>
+        <div class="highlight-box">
+          We operate in strict isolation from upstream stages. Only two pipeline activities are ours to modify:<br><br>
+          <code>ingestion_gold_layer</code> → points to <code>nb_gold_master_load_dev</code><br>
+          <code>handle_failed_gold</code> → error handler notebook
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-num">10</div><div class="stat-label">Notebooks</div></div>
+          <div class="stat"><div class="stat-num">9</div><div class="stat-label">Source Tables</div></div>
+          <div class="stat"><div class="stat-num">18</div><div class="stat-label">Gold Tables</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 3 — STAR SCHEMA MAP
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Schema Design</div>
+    <h2>Constellation Schema — <span>Tables at a Glance</span></h2>
+    <p>Five fact tables share thirteen conformed dimensions. SCD Type 2 dimensions track historical changes; SCD Type 1 update in place.</p>
+    <div class="two-col" style="margin-top:28px;">
+      <div>
+        <h3>Fact Tables</h3>
+        <table>
+          <thead><tr><th>Table</th><th>Grain</th><th>Key Measure</th></tr></thead>
+          <tbody>
+            <tr><td><code>fact_quotation</code></td><td>1 row / quotation</td><td>premium_amount</td></tr>
+            <tr><td><code>fact_quotation_item</code></td><td>quotation × coverage</td><td>coverage_amount</td></tr>
+            <tr><td><code>fact_policy</code></td><td>1 row / policy</td><td>premium_amount</td></tr>
+            <tr><td><code>fact_payment</code></td><td>1 row / payment</td><td>payment_amount</td></tr>
+            <tr><td><code>fact_cancellation</code></td><td>1 row / cancellation</td><td>refund_amount</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Dimensions</h3>
+        <table>
+          <thead><tr><th>Table</th><th>Type</th></tr></thead>
+          <tbody>
+            <tr><td><code>dim_date</code></td><td><span class="badge badge-teal">Static</span></td></tr>
+            <tr><td><code>dim_customer</code></td><td><span class="badge badge-gold">SCD2</span></td></tr>
+            <tr><td><code>dim_agent</code></td><td><span class="badge badge-gold">SCD2</span></td></tr>
+            <tr><td><code>dim_provider</code></td><td><span class="badge badge-gold">SCD2</span></td></tr>
+            <tr><td><code>dim_vehicle</code></td><td><span class="badge badge-gold">SCD2</span></td></tr>
+            <tr><td><code>dim_quotation</code>, <code>dim_policy</code>, <code>dim_package</code>…</td><td><span class="badge badge-teal">SCD1</span></td></tr>
+          </tbody>
+        </table>
+        <div class="highlight-box" style="margin-top:16px; font-size:0.82rem;">
+          All tables carry an <strong>Unknown Member row</strong> (<code>key = -1</code>) to protect fact joins from orphaned keys.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 4 — EXECUTION ORDER & ORCHESTRATION
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Pipeline Orchestration</div>
+    <h2>Sequential Execution &amp; <span>Master Driver</span></h2>
+    <p>All notebooks run inside a single master coordinator (<code>nb_gold_master_load_dev</code>) sharing one Spark session — saving ~15 min of cluster init overhead vs. separate pipeline activities.</p>
+    <div class="two-col">
+      <div class="steps">
+        <div class="step" data-n="1">
+          <div class="step-content">
+            <h4>dim_date Setup</h4>
+            <p>Pre-generates 4 019 calendar rows (2020–2030) + Unknown row (<code>-1</code>). Skipped if already populated.</p>
+          </div>
+        </div>
+        <div class="step" data-n="2">
+          <div class="step-content">
+            <h4>SCD1 Dimensions (9 tables)</h4>
+            <p>In-place Delta MERGE on business key. Only changed attributes are written.</p>
+          </div>
+        </div>
+        <div class="step" data-n="3">
+          <div class="step-content">
+            <h4>SCD2 Dimensions (4 tables)</h4>
+            <p>MD5 hash comparison → expire old version, insert new version with surrogate key.</p>
+          </div>
+        </div>
+        <div class="step" data-n="4">
+          <div class="step-content">
+            <h4>Fact Tables (5 tables)</h4>
+            <p>PIT key lookups against SCD2. Delta MERGE on business grain key.</p>
+          </div>
+        </div>
+        <div class="step" data-n="5">
+          <div class="step-content">
+            <h4>Validation &amp; Reconciliation</h4>
+            <p>6-check automated QA suite. Fails pipeline immediately on any breach.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Parameter Propagation</h3>
+        <pre><span class="cmt"># Injected by Fabric pipeline at runtime</span>
+p_session_id = <span class="str">""</span>
+p_batch_id   = <span class="str">""</span>
+p_run_mode   = <span class="str">"NEW"</span>
+
+common_args = {
+    <span class="str">"session_id"</span>: p_session_id,
+    <span class="str">"batch_id"</span>:   p_batch_id,
+    <span class="str">"run_mode"</span>:   p_run_mode
+}
+
+<span class="fn">mssparkutils</span>.notebook.<span class="fn">run</span>(
+    <span class="str">"nb_gold_load_scd2_dimensions_dev"</span>,
+    <span class="op">1800</span>, common_args
+)</pre>
+        <div class="highlight-box" style="font-size:0.82rem;">
+          <strong>Stop-on-Failure policy:</strong> if any step fails, execution halts immediately. Facts won't load with broken dimension keys.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 5 — DIM DATE
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Dimension — Static Calendar</div>
+    <h2><code style="font-size:1.6rem;">dim_date</code> — <span>Design &amp; Logic</span></h2>
+    <div class="two-col">
+      <div>
+        <p>Pre-generated calendar table covering 2020-01-01 → 2030-12-31. Bypassed on subsequent runs if already populated.</p>
+        <table>
+          <thead><tr><th>Column</th><th>Rule</th></tr></thead>
+          <tbody>
+            <tr><td><code>date_key</code></td><td>INT, YYYYMMDD format</td></tr>
+            <tr><td><code>full_date</code></td><td>Raw DATE value</td></tr>
+            <tr><td><code>day_name</code></td><td><code>DATE_FORMAT(…,'EEEE')</code></td></tr>
+            <tr><td><code>quarter_number</code></td><td><code>QUARTER(full_date)</code></td></tr>
+            <tr><td><code>is_weekend</code></td><td><code>dayofweek() IN (1,7)</code></td></tr>
+            <tr><td><code>year_month</code></td><td><code>'yyyy-MM'</code> format</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Unknown Member Row</h3>
+        <pre><span class="cmt">-- Required default row</span>
+<span class="kw">INSERT INTO</span> gold.dim_date
+<span class="kw">VALUES</span> (
+    <span class="op">-1</span>,        <span class="cmt">-- date_key</span>
+    <span class="kw">NULL</span>,      <span class="cmt">-- full_date</span>
+    <span class="str">'Unknown'</span>, <span class="cmt">-- day_name</span>
+    <span class="str">'Unknown'</span>, <span class="cmt">-- month_name</span>
+    <span class="str">'Unknown'</span>, <span class="cmt">-- year_month</span>
+    <span class="kw">FALSE</span>      <span class="cmt">-- is_weekend</span>
+);</pre>
+        <h3 style="margin-top:20px;">Verification Queries</h3>
+        <pre><span class="cmt">-- Must return 4019 rows</span>
+<span class="kw">SELECT</span> <span class="fn">COUNT</span>(*) <span class="kw">FROM</span> gold.dim_date;
+
+<span class="cmt">-- Must return exactly 1 row</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> gold.dim_date
+<span class="kw">WHERE</span> date_key = <span class="op">-1</span>;</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 6 — SCD TYPE 1 DESIGN
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">SCD Type 1 — In-Place Update</div>
+    <h2>Nine Dimensions, <span>Zero History</span></h2>
+    <p>Status codes, lookup values, and identifiers that don't need historical tracking. Changed attributes are overwritten in-place via Delta MERGE.</p>
+    <div class="two-col">
+      <div>
+        <table>
+          <thead><tr><th>Dimension</th><th>Business Key</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td><code>dim_package</code></td><td>package_code</td><td>silver.quotation</td></tr>
+            <tr><td><code>dim_coverage</code></td><td>coverage_type</td><td>silver.quotation_item</td></tr>
+            <tr><td><code>dim_quotation</code></td><td>quotation_id</td><td>silver.quotation</td></tr>
+            <tr><td><code>dim_policy</code></td><td>policy_id</td><td>silver.policy</td></tr>
+            <tr><td><code>dim_quotation_status</code></td><td>quotation_status</td><td>silver.quotation</td></tr>
+            <tr><td><code>dim_policy_status</code></td><td>policy_status</td><td>silver.policy</td></tr>
+            <tr><td><code>dim_payment_status</code></td><td>payment_status</td><td>silver.payment</td></tr>
+            <tr><td><code>dim_payment_method</code></td><td>payment_method</td><td>silver.payment</td></tr>
+            <tr><td><code>dim_cancellation_reason</code></td><td>cancellation_reason</td><td>silver.cancellation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3>Delta Merge Pattern (dim_quotation)</h3>
+        <pre><span class="fn">delta_table</span>.alias(<span class="str">"target"</span>).merge(
+    source_df.alias(<span class="str">"source"</span>),
+    <span class="str">"target.quotation_id = source.quotation_id"</span>
+).<span class="fn">whenMatchedUpdate</span>(
+    condition=<span class="str">"COALESCE(target.quotation_expiry_date,'')"</span>
+              <span class="str">" != COALESCE(source.quotation_expiry_date,'')"</span>,
+    <span class="fn">set</span>={
+        <span class="str">"quotation_expiry_date"</span>: <span class="str">"source.quotation_expiry_date"</span>,
+        <span class="str">"updated_at"</span>: <span class="str">"current_timestamp()"</span>
+    }
+).<span class="fn">whenNotMatchedInsert</span>(values={...}).<span class="fn">execute</span>()</pre>
+        <div class="highlight-box" style="font-size:0.82rem;">
+          Idempotent: if attributes haven't changed, the merge writes zero bytes. Safe to rerun on recovery.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 7 — SCD TYPE 2 DESIGN (KEY SLIDE)
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">SCD Type 2 — Historical Versioning</div>
+    <h2>Track Changes, <span>Preserve History</span></h2>
+    <p>Four dimensions (<code>dim_customer</code>, <code>dim_agent</code>, <code>dim_provider</code>, <code>dim_vehicle</code>) use SCD2 with on-the-fly MD5 hashing — no hash column stored in the table.</p>
+    <div class="two-col">
+      <div>
+        <h3>Two-Phase Logic</h3>
+        <div class="steps">
+          <div class="step" data-n="1">
+            <div class="step-content">
+              <h4>Hash Generation (On-the-Fly)</h4>
+              <p>Deduplicate source by business key (latest record wins). Compute MD5 of tracked columns for both incoming and active target rows.</p>
+            </div>
+          </div>
+          <div class="step" data-n="2">
+            <div class="step-content">
+              <h4>Identify Actions</h4>
+              <p>Join on business key. <strong>Hash differs</strong> → expire old + insert new version. <strong>Key missing</strong> → insert new. <strong>Hash matches</strong> → skip.</p>
+            </div>
+          </div>
+          <div class="step" data-n="3">
+            <div class="step-content">
+              <h4>Expire via Merge</h4>
+              <p>Set <code>is_current = false</code>, <code>effective_to = event_time</code> on matching active records.</p>
+            </div>
+          </div>
+          <div class="step" data-n="4">
+            <div class="step-content">
+              <h4>Insert New Version</h4>
+              <p>Append with <code>is_current = true</code>, <code>effective_from = event_time</code>, <code>effective_to = 9999-12-31</code>, new surrogate key.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>PySpark Code — Hash &amp; Detect</h3>
+        <pre><span class="cmt"># On-the-fly MD5 hash of tracked columns</span>
+incoming = source_df.<span class="fn">withColumn</span>(
+    <span class="str">"row_hash"</span>,
+    F.<span class="fn">md5</span>(F.<span class="fn">concat_ws</span>(<span class="str">"||"</span>,
+        *[F.<span class="fn">coalesce</span>(F.<span class="fn">col</span>(c).<span class="fn">cast</span>(<span class="str">"string"</span>), F.<span class="fn">lit</span>(<span class="str">""</span>))
+          <span class="kw">for</span> c <span class="kw">in</span> tracked_cols]))
+)
+
+<span class="cmt"># Detect changed records</span>
+to_expire = joined.<span class="fn">filter</span>(
+    F.<span class="fn">col</span>(<span class="str">"tgt.customer_key"</span>).<span class="fn">isNotNull</span>() &
+    (F.<span class="fn">col</span>(<span class="str">"src.row_hash"</span>) <span class="op">!=</span> F.<span class="fn">col</span>(<span class="str">"tgt.row_hash"</span>))
+)</pre>
+        <h3 style="margin-top:16px;">Version Tracking Columns</h3>
+        <div class="scd-row" style="grid-template-columns:1fr;">
+          <div class="scd-box">
+            <ul>
+              <li><code>effective_from</code> — COALESCE(updated_at, created_at)</li>
+              <li><code>effective_to</code> — 9999-12-31 23:59:59 (active row)</li>
+              <li><code>is_current</code> — TRUE for active, FALSE for expired</li>
+              <li>Unknown row: <code>effective_from = 1900-01-01</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 8 — FACT TABLE DESIGN + PIT JOIN
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Fact Ingestion</div>
+    <h2>Point-in-Time Key Lookups &amp; <span>Soft Deletes</span></h2>
+    <p>Every fact table resolves dimension surrogate keys at the exact moment of the transaction. Late-arriving dimension changes never corrupt historical fact rows.</p>
+    <div class="two-col">
+      <div>
+        <h3>PIT Join Pattern (fact_quotation example)</h3>
+        <pre><span class="cmt"># SCD2 Point-in-Time join</span>
+<span class="cmt"># quotation_at must fall inside the active version window</span>
+joined = source.<span class="fn">join</span>(
+    dim_customer,
+    (source.customer_id == dim_customer.customer_id) &
+    (source.quotation_at >= dim_customer.effective_from) &
+    (source.quotation_at <  dim_customer.effective_to),
+    how=<span class="str">"left"</span>
+)
+
+<span class="cmt"># Default -1 if no match found</span>
+final_df = joined.<span class="fn">withColumn</span>(
+    <span class="str">"customer_key"</span>,
+    F.<span class="fn">coalesce</span>(F.<span class="fn">col</span>(<span class="str">"dim_customer.customer_key"</span>), F.<span class="fn">lit</span>(<span class="op">-1</span>))
+)</pre>
+        <h3 style="margin-top:16px;">Soft Delete Handling</h3>
+        <div class="highlight-box" style="font-size:0.82rem;">
+          Records flagged <code>is_deleted = true</code> in Silver are <strong>never purged</strong> from Gold. Instead, measures are zeroed out and delete metadata is populated: <code>deleted_at</code>, <code>delete_batch_id</code>.
+        </div>
+      </div>
+      <div>
+        <h3>Key Lookup Summary — fact_quotation</h3>
+        <table>
+          <thead><tr><th>Target Key</th><th>Lookup Type</th></tr></thead>
+          <tbody>
+            <tr><td><code>quotation_key</code></td><td><span class="badge badge-teal">SCD1</span></td></tr>
+            <tr><td><code>customer_key</code></td><td><span class="badge badge-gold">SCD2 PIT</span></td></tr>
+            <tr><td><code>agent_key</code></td><td><span class="badge badge-gold">SCD2 PIT</span></td></tr>
+            <tr><td><code>provider_key</code></td><td><span class="badge badge-gold">SCD2 PIT</span></td></tr>
+            <tr><td><code>vehicle_key</code></td><td><span class="badge badge-gold">SCD2 PIT</span></td></tr>
+            <tr><td><code>package_key</code></td><td><span class="badge badge-teal">SCD1</span></td></tr>
+            <tr><td><code>quotation_date_key</code></td><td>DATE_FORMAT → INT</td></tr>
+          </tbody>
+        </table>
+        <div class="highlight-box" style="margin-top:16px; font-size:0.82rem;">
+          <code>converted_flag</code> on <code>fact_quotation</code>: <strong>true</strong> if <code>quotation_id</code> exists in <code>silver.policy</code>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 9 — AUDIT & CONTROL FLOW
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Audit &amp; Control Flow</div>
+    <h2>Run Modes &amp; <span>Recovery State Machine</span></h2>
+    <p>A single-row control table (<code>cfg.next_run_mode</code>) drives pipeline behavior between runs. No manual intervention needed for common failures.</p>
+    <div class="two-col">
+      <div>
+        <div class="scd-row" style="grid-template-columns:1fr 1fr 1fr; gap:12px; margin-top:0;">
+          <div class="scd-box" style="border-color:var(--teal);">
+            <h4 style="color:var(--teal);">NEW</h4>
+            <ul>
+              <li>Default / post-success state</li>
+              <li>Increments batch_id</li>
+              <li>Fresh run from step 1</li>
+            </ul>
+          </div>
+          <div class="scd-box" style="border-color:var(--danger);">
+            <h4 style="color:var(--danger);">FAILED</h4>
+            <ul>
+              <li>Any table/layer errors</li>
+              <li>batch_id preserved</li>
+              <li>Sets next_run = RECOVERY</li>
+            </ul>
+          </div>
+          <div class="scd-box" style="border-color:var(--gold);">
+            <h4>RECOVERY</h4>
+            <ul>
+              <li>Reuses failed batch_id</li>
+              <li>Skips SUCCESS tables</li>
+              <li>Resumes from failure point</li>
+            </ul>
+          </div>
+        </div>
+        <div class="highlight-box" style="margin-top:16px; font-size:0.82rem;">
+          <strong>Skip-Resume logic:</strong> any table with <code>gold_status = 'SUCCESS'</code> for the active <code>batch_id</code> is bypassed entirely — zero Spark compute wasted.
+        </div>
+      </div>
+      <div>
+        <h3>Audit Schema</h3>
+        <table>
+          <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>log.audit_session</code></td><td>Top-level run status, batch/session IDs</td></tr>
+            <tr><td><code>log.audit_table_session</code></td><td>Per-table gold_status, row counts</td></tr>
+            <tr><td><code>log.audit_detail</code></td><td>Insert / update / delete / reject counts</td></tr>
+            <tr><td><code>log.retry_log</code></td><td>Transient error retry attempts</td></tr>
+            <tr><td><code>log.invalid_record</code></td><td>QA validation failures</td></tr>
+            <tr><td><code>cfg.next_run_mode</code></td><td>Singleton run-mode control</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 10 — VALIDATION SUITE
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Data Quality</div>
+    <h2>6-Check Automated <span>Validation Suite</span></h2>
+    <p>After every fact table ingestion, <code>nb_gold_validate_reconciliation_dev</code> runs 6 sequential checks. A single failure immediately aborts the pipeline and sets RECOVERY mode.</p>
+    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr); margin-top:28px;">
+      <div class="card" style="border-top:2px solid var(--gold);">
+        <div class="card-label">Check 1</div>
+        <div class="card-title">Grain Uniqueness</div>
+        <div class="card-body">Groups by logical grain columns for the active batch. Fails if any group count &gt; 1 (duplicate keys).</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--gold);">
+        <div class="card-label">Check 2</div>
+        <div class="card-title">Foreign Key Integrity</div>
+        <div class="card-body">Left joins fact against each dimension. Fails if any non-(-1) surrogate key has no match in dimension.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--gold);">
+        <div class="card-label">Check 3</div>
+        <div class="card-title">Date Key Validity</div>
+        <div class="card-body">Joins date keys against <code>dim_date</code>. Fails if any non-(-1) date key is unresolvable.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--teal);">
+        <div class="card-label">Check 4</div>
+        <div class="card-title">Row Count Reconciliation</div>
+        <div class="card-body">Gold row count must equal deduplicated Silver source count for the active batch. No dropped rows.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--teal);">
+        <div class="card-label">Check 5</div>
+        <div class="card-title">Metric Reconciliation</div>
+        <div class="card-body">Sum of financial columns in Gold vs Silver (soft-deletes zeroed out). Fails if variance &gt; 0.01.</div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--teal);">
+        <div class="card-label">Check 6</div>
+        <div class="card-title">Soft Delete Audit</div>
+        <div class="card-body">Soft-deleted records (<code>is_deleted = true</code>) must have populated <code>deleted_at</code> and <code>delete_batch_id</code>.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 11 — IDEMPOTENCY & RECOVERY MECHANICS
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Resilience Design</div>
+    <h2>Idempotency &amp; <span>Zero-Data-Loss Recovery</span></h2>
+    <p>Every layer is designed to be safely rerun without producing duplicates, corrupt keys, or wasted compute — critical for a shared Fabric capacity environment.</p>
+    <div class="two-col">
+      <div>
+        <h3>Guarantees per Layer</h3>
+        <table>
+          <thead><tr><th>Layer</th><th>Idempotency Mechanism</th></tr></thead>
+          <tbody>
+            <tr><td><code>dim_date</code></td><td>Existence check before generation — bypassed if populated</td></tr>
+            <tr><td>SCD1 dims</td><td>MERGE match on BK; update only if attribute differs</td></tr>
+            <tr><td>SCD2 dims</td><td>MD5 hash compare; 0 writes if hash unchanged</td></tr>
+            <tr><td>Fact tables</td><td>MERGE on grain key; whenMatchedUpdate overwrites deterministically</td></tr>
+            <tr><td>Validation</td><td>Reads current Gold state; no side effects on pass</td></tr>
+          </tbody>
+        </table>
+        <h3 style="margin-top:20px;">Transient Error Retry</h3>
+        <div class="highlight-box" style="font-size:0.82rem;">
+          Transient DB/cluster errors trigger <code>cfg.retry_policy</code> (max retries + wait delay). Each attempt is logged in <code>log.retry_log</code>. Only non-retryable errors immediately abort.
+        </div>
+      </div>
+      <div>
+        <h3>9 Source Success Rules</h3>
+        <p style="font-size:0.82rem; margin-bottom:12px;">A source table is only marked SUCCESS if <strong>all</strong> its mapped Gold dimensions AND facts succeed.</p>
+        <table>
+          <thead><tr><th>Source</th><th>Must Pass</th></tr></thead>
+          <tbody>
+            <tr><td><code>customers</code></td><td>dim_customer + all 5 facts</td></tr>
+            <tr><td><code>agents</code></td><td>dim_agent + 3 facts</td></tr>
+            <tr><td><code>vehicle</code></td><td>dim_vehicle + 5 facts</td></tr>
+            <tr><td><code>quotation</code></td><td>3 SCD1 dims + 3 facts</td></tr>
+            <tr><td><code>policy</code></td><td>2 SCD1 dims + 3 facts</td></tr>
+            <tr><td><code>payment</code></td><td>2 SCD1 dims + fact_payment</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 12 — SUMMARY & NEXT STEPS
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item">
+    <div class="eyebrow">Sprint 03 — Wrap-Up</div>
+    <h2>What We Built &amp; <span>What's Next</span></h2>
+    <div class="two-col">
+      <div>
+        <h3>Delivered This Sprint</h3>
+        <div class="steps">
+          <div class="step" data-n="✓">
+            <div class="step-content">
+              <h4>Constellation Schema Design</h4>
+              <p>5 fact tables, 13 dimensions (4 SCD2, 9 SCD1, 1 static calendar).</p>
+            </div>
+          </div>
+          <div class="step" data-n="✓">
+            <div class="step-content">
+              <h4>SCD2 with On-the-Fly Hashing</h4>
+              <p>MD5 hash computed at runtime — no hash column stored in Delta tables, keeping schema clean.</p>
+            </div>
+          </div>
+          <div class="step" data-n="✓">
+            <div class="step-content">
+              <h4>PIT Key Resolution</h4>
+              <p>All SCD2 lookups use event-time point-in-time joins — historically accurate foreign keys.</p>
+            </div>
+          </div>
+          <div class="step" data-n="✓">
+            <div class="step-content">
+              <h4>Automated QA + Recovery Loop</h4>
+              <p>6-check validation suite, audit logging, RECOVERY mode with Skip-Resume for zero data loss.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Pending / Next Sprint</h3>
+        <div class="card-grid" style="grid-template-columns:1fr;">
+          <div class="card">
+            <div class="card-label">Power BI</div>
+            <div class="card-title">Semantic Model Build</div>
+            <div class="card-body">Direct Lake connection to Gold Delta tables, relationship mapping, DAX measures.</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Performance</div>
+            <div class="card-title">Partition &amp; Z-Order Tuning</div>
+            <div class="card-body">Partition facts by <code>_batch_id</code>, Z-Order by surrogate key columns.</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Monitoring</div>
+            <div class="card-title">Audit Dashboard</div>
+            <div class="card-body">Power BI report over <code>log.*</code> tables — run trends, error rates, row counts.</div>
+          </div>
+        </div>
+        <div class="stat-row" style="margin-top:20px;">
+          <div class="stat"><div class="stat-num">10</div><div class="stat-label">Notebooks</div></div>
+          <div class="stat"><div class="stat-num">6</div><div class="stat-label">QA Checks</div></div>
+          <div class="stat"><div class="stat-num">3</div><div class="stat-label">Run Modes</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SLIDE 13 — Q&A / BACK MATTER
+  ═══════════════════════════════════════════════════════ -->
+  <section class="slide-item slide-cover" style="text-align:center; align-items:center;">
+    <div class="cover-tag">Sprint 03 · Gold Layer · Rookie 15</div>
+    <h1 style="font-size:clamp(2.5rem,6vw,5rem);">Q &amp; A</h1>
+    <div class="divider" style="margin:28px auto; max-width:200px;"></div>
+    <p style="text-align:center; max-width:600px; margin:0 auto;">
+      Notebooks, schema specs, and mapping JSONs are all in<br>
+      <code>fabric/Gold/Notebooks/</code> and<br>
+      <code>docs/source-to-target-mapping/</code>
+    </p>
+    <div class="cover-grid" style="justify-content:center; margin-top:32px;">
+      <span class="badge badge-gold">CarPro Insurance Analytics</span>
+      <span class="badge badge-teal">Microsoft Fabric</span>
+      <span class="badge badge-green">Delta Lake</span>
+      <span class="badge badge-teal">PySpark</span>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

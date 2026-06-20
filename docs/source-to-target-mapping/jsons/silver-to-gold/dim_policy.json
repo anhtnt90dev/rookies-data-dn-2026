@@ -1,0 +1,22 @@
+{
+  "source_table": "silver.policy",
+  "target_table": "gold.dim_policy",
+  "columns": [
+    {
+      "target": "policy_key",
+      "expression": null
+    },
+    {
+      "target": "policy_id",
+      "expression": "policy_id"
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "31a72039d22349c9e9b8",
+  "position": {
+    "x": 181.99460916442047,
+    "y": 136.28032345013477,
+    "z": 1000,
+    "height": 563.23450134770883,
+    "width": 1078.167115902965,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_payment"
+                    }
+                  },
+                  "Property": "payment_id"
+                }
+              },
+              "queryRef": "fact_payment.payment_id",
+              "nativeQueryRef": "PAYMENT ID",
+              "displayName": "PAYMENT ID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_payment"
+                    }
+                  },
+                  "Property": "policy_id"
+                }
+              },
+              "queryRef": "fact_payment.policy_id",
+              "nativeQueryRef": "POLICY ID",
+              "displayName": "POLICY ID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_customer"
+                    }
+                  },
+                  "Property": "full_name"
+                }
+              },
+              "queryRef": "dim_customer.full_name",
+              "nativeQueryRef": "CUSTOMER",
+              "displayName": "CUSTOMER"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_provider"
+                    }
+                  },
+                  "Property": "provider_name"
+                }
+              },
+              "queryRef": "dim_provider.provider_name",
+              "nativeQueryRef": "PROVIDER",
+              "displayName": "PROVIDER"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_payment_method"
+                    }
+                  },
+                  "Property": "payment_method_code"
+                }
+              },
+              "queryRef": "dim_payment_method.payment_method_code",
+              "nativeQueryRef": "METHOD",
+              "displayName": "METHOD"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_payment"
+                        }
+                      },
+                      "Property": "payment_amount"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(fact_payment.payment_amount)",
+              "nativeQueryRef": "AMOUNT (VND)",
+              "displayName": "AMOUNT (VND)"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "163.69808442058317D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Sum(fact_payment.payment_amount)"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "159.97304582210242D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_payment_method.payment_method_code"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0.6
+                    }
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'PAYMENT DETAIL TABLE'"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stylePreset": [
+        {
+          "properties": {
+            "name": {
+              "expr": {
+                "Literal": {
+                  "Value": "'BoldHeader'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "isHidden": true
+}

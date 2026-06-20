@@ -1,0 +1,51 @@
+table 'gold dim_payment_method'
+	lineageTag: 78dcd55a-8362-43a0-af0c-5dda090b669a
+
+	column payment_method_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: cd62d341-63c1-438c-b498-3ce085fca740
+		summarizeBy: sum
+		sourceColumn: payment_method_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_method_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: bb274d72-ac07-481e-9895-2a40b6644559
+		summarizeBy: none
+		sourceColumn: payment_method_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: d19cbdfb-374f-477b-876f-09b2d0c1b89e
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4faf93f9-80ea-470a-ad2e-2cdc6b1a6e63
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold dim_payment_method' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_payment_method = Source{[Schema="gold",Item="dim_payment_method"]}[Data]
+				in
+				    gold_dim_payment_method
+

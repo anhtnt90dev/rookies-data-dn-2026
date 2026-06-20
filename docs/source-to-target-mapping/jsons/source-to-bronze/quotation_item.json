@@ -1,0 +1,50 @@
+{
+  "source_table": "dbo.quotation_item",
+  "target_table": "bronze.quotation_item",
+  "columns": [
+    {
+      "target": "quotation_item_id",
+      "expression": "quotation_item_id"
+    },
+    {
+      "target": "quotation_id",
+      "expression": "quotation_id"
+    },
+    {
+      "target": "coverage_type",
+      "expression": "coverage_type"
+    },
+    {
+      "target": "coverage_amount",
+      "expression": "coverage_amount"
+    },
+    {
+      "target": "deductible_amount",
+      "expression": "deductible_amount"
+    },
+    {
+      "target": "created_date",
+      "expression": "created_date"
+    },
+    {
+      "target": "updated_date",
+      "expression": "updated_date"
+    },
+    {
+      "target": "_batch_id",
+      "expression": null
+    },
+    {
+      "target": "_loaded_at",
+      "expression": null
+    },
+    {
+      "target": "_source_system",
+      "expression": null
+    },
+    {
+      "target": "_source_name",
+      "expression": null
+    }
+  ]
+}

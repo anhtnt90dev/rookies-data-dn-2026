@@ -1,0 +1,22 @@
+{
+  "source_table": "silver.quotation",
+  "target_table": "gold.dim_quotation_status",
+  "columns": [
+    {
+      "target": "quotation_status_key",
+      "expression": null
+    },
+    {
+      "target": "quotation_status_code",
+      "expression": "quotation_status"
+    },
+    {
+      "target": "created_at",
+      "expression": "current_timestamp()"
+    },
+    {
+      "target": "updated_at",
+      "expression": "current_timestamp()"
+    }
+  ]
+}

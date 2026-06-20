@@ -1,0 +1,134 @@
+flowchart TD
+    Start([Start Pipeline])
+
+    %% ── CONTROL CHECK ──────────────────────────────────────
+    NMR_READ[Read cfg.next_run_mode Table<br/>Get mode, failed batch_id & session_id]
+    NMR_CHECK{Mode == 'RECOVERY'?}
+    RECOVER_CONTEXT[Resume Failed Batch:<br/>Use failed batch_id & session_id]
+    NEW_CONTEXT[Proceed with New Batch]
+
+    AS[Insert log.audit_session<br/> status = Running; pipeline_id; batch_id]
+
+    %% ── INITIAL ──────────────────────────────────────────
+    subgraph INIT["Initial"]
+        direction TB
+        A[Read cfg.source_table Table<br/> id; source_system; load_type; load_sequence;]
+        B[Read cfg.watermark<br/> watermark_value per source; NULL -> Full load triggered]
+    end
+
+    %% ── STATUS SETUP ──────────────────────────────────────
+    subgraph STATUS["Status Stage"]
+        direction TB
+        C[Insert log.audit_detail<br/> status = Running; source;]
+        D[Insert log.audit_table_session<br/> one record per active table; bronze/silver/gold = Pending]
+    end
+
+    %% ── BRONZE LAYER ──────────────────────────────────────
+    subgraph BRONZE[" Bronze Layer"]
+        direction TB
+        E["Extract from Source System<br/> FULL -> SELECT *;<br/> INCREMENTAL -> Source-specific logic:<br/> - updated_date (if supported)<br/> - created_date / full refresh + compare (append-only/non-updated sources)<br/> - JSON batch/date files + operation_type "]
+        F[Schema Validation<br/> validate column types;  reject invalids -> log.invalid_record]
+        H[Load Bronze<br/> FULL -> truncate + insert; INCREMENTAL -> append new; hash all fields for change detection]
+        I{Bronze Load<br/>Success?}
+        RB{Retry Bronze?<br/>Condition: retry_count < max_retry}
+        RB_WAIT[Schedule Bronze Retry<br/> increment retry_count; backoff delay]
+        J[Update log.audit_table_session<br/> bronze_status = Success; bronze_end_at = NOW; rows_extracted; rows_loaded]
+        K[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        L["Update cfg.watermark<br/> watermark_value =  MAX(source-specific watermark value)"]
+        ERR_B1[Update log.audit_table_session<br/>— Failed]
+        ERR_B2[Update log.audit_detail<br/> status = Failed; error message]
+        END_B([End this Bronze table])
+    end
+
+    %% ── SILVER LAYER ──────────────────────────────────────
+    subgraph SILVER["Silver Layer"]
+        direction TB
+        M[Insert log.audit_detail<br/> status = Running]
+        G1[Cleansing<br/> mandatory cleaning null]
+        G2[Deduplication Engine<br/> hash on business key; remove exact duplicates; keep latest by updated_at]
+        N[Load Silver<br/> initial -> truncate table; read bronze using table_session_id from log.audit_table_session; cleansing and business rules; SCD logic]
+        O{Silver Load<br/>Success?}
+        RS{Retry Silver?<br/>Condition: retry_count < max_retry}
+        RS_WAIT[Schedule Silver Retry<br/> increment retry_count; backoff delay]
+        P[Update log.audit_table_session<br/> silver_status = Success; silver_end_at = NOW]
+        Q[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_S1[Update log.audit_table_session<br/>— Failed]
+        ERR_S2[Update log.audit_detail<br/> status = Failed; error message]
+        END_S([End this Silver table])
+    end
+
+    %% ── GOLD LAYER ────────────────────────────────────────
+    subgraph GOLD["Gold Layer"]
+        direction TB
+        R[Insert log.audit_detail<br/> status = Running]
+        S[Load Gold<br/> read silver conformed tables; aggregation and KPI logic; merge into fact/dimension; partition by report_date + region]
+        T{Gold Load<br/>Success?}
+        RG{Retry Gold?<br/>Condition: retry_count < max_retry}
+        RG_WAIT[Schedule Gold Retry<br/> increment retry_count; backoff delay]
+        U[Update log.audit_table_session<br/> gold_status = Success; gold_ended_at = NOW]
+        V[Update log.audit_detail<br/> status = Success; inserted/updated/deleted rows]
+        ERR_G1[Update log.audit_table_session<br/>— Failed]
+        ERR_G2[Update log.audit_detail<br/> status = Failed; error message]
+        END_G([End this Gold table])
+    end
+
+    %% ── PIPELINE TERMINATION ──────────────────────────────
+    NMR_SUCCESS[Update cfg.next_run_mode Table<br/>mode = 'NEW';]
+    NMR_FAIL[Update cfg.next_run_mode Table<br/>mode = 'RECOVERY'; failed batch_id & session_id]
+    Fail([Pipeline Failed])
+
+    End([Pipeline Complete])
+
+    %% ── CONNECTIONS ───────────────────────────────────────
+    Start --> NMR_READ --> NMR_CHECK
+    NMR_CHECK -- Yes --> RECOVER_CONTEXT
+    NMR_CHECK -- No --> NEW_CONTEXT
+    RECOVER_CONTEXT --> AS
+    NEW_CONTEXT --> AS
+    AS --> INIT
+    A --> B
+    B --> STATUS
+    C --> D
+    D --> BRONZE
+    E --> F --> H --> I
+    I -- No  --> ERR_B1 --> ERR_B2 --> RB
+    RB -- Yes --> RB_WAIT --> E
+    RB -- No  --> END_B
+    I -- Yes --> J --> K --> L
+    L --> SILVER
+    M --> G1 --> G2 --> N --> O
+    O -- No  --> ERR_S1 --> ERR_S2 --> RS
+    RS -- Yes --> RS_WAIT --> M
+    RS -- No  --> END_S
+    O -- Yes --> P --> Q
+    Q --> GOLD
+    R --> S --> T
+    T -- No  --> ERR_G1 --> ERR_G2 --> RG
+    RG -- Yes --> RG_WAIT --> R
+    RG -- No  --> END_G
+    T -- Yes --> U --> V --> NMR_SUCCESS --> End
+
+    %% ── FAILURE CONNECTIONS ──────────────────────────────
+    END_B --> NMR_FAIL
+    END_S --> NMR_FAIL
+    END_G --> NMR_FAIL
+    NMR_FAIL --> Fail
+
+    %% ── STYLES ────────────────────────────────────────────
+    classDef startEnd fill:#1B6B3A,stroke:#0d4a28,color:#fff,rx:20
+    classDef config    fill:#2C3E6B,stroke:#1a2a50,color:#d0d8ff
+    classDef bronze    fill:#7B4A1E,stroke:#5a3210,color:#ffe8c8
+    classDef silver    fill:#3A5A7B,stroke:#24405c,color:#d0eaff
+    classDef gold      fill:#7B6B1E,stroke:#5a4e10,color:#fff8c8
+    classDef decision  fill:#4A3060,stroke:#2e1e47,color:#e8d8ff
+    classDef error     fill:#7B1E1E,stroke:#5a0e0e,color:#ffd0d0
+    classDef stopNode  fill:#9B2020,stroke:#7a0e0e,color:#fff,rx:20
+
+    class Start,End startEnd
+    class A,B,C,D,AS,NMR_READ,RECOVER_CONTEXT,NEW_CONTEXT,NMR_SUCCESS config
+    class E,F,H,J,K,L bronze
+    class M,G1,G2,N,P,Q silver
+    class R,S,U,V gold
+    class I,O,T,RB,RS,RG,NMR_CHECK decision
+    class ERR_B1,ERR_B2,ERR_S1,ERR_S2,ERR_G1,ERR_G2,NMR_FAIL error
+    class END_B,END_S,END_G,Fail stopNode

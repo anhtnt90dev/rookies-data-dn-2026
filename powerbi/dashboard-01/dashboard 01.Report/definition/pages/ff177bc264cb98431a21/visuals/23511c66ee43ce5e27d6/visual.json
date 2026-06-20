@@ -1,0 +1,222 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "23511c66ee43ce5e27d6",
+  "position": {
+    "x": 202.8927680798005,
+    "y": 448.87780548628427,
+    "z": 8000,
+    "height": 248.67830423940148,
+    "width": 500.94763092269324,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "funnel",
+    "query": {
+      "queryState": {
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures "
+                    }
+                  },
+                  "Property": "Funnel Drop-off: Issued → In Force"
+                }
+              },
+              "queryRef": "Measures .Funnel Drop-off: Issued → In Force",
+              "nativeQueryRef": "Funnel Drop-off: Issued → In Force"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures "
+                    }
+                  },
+                  "Property": "Total Quotations"
+                }
+              },
+              "queryRef": "Measures .Total Quotations",
+              "nativeQueryRef": "Total Quotations",
+              "format": "G"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures "
+                    }
+                  },
+                  "Property": "Accepted Quotations"
+                }
+              },
+              "queryRef": "Measures .Accepted Quotations",
+              "nativeQueryRef": "Accepted Quotations"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures "
+                    }
+                  },
+                  "Property": "Policies Issued"
+                }
+              },
+              "queryRef": "Measures .Policies Issued",
+              "nativeQueryRef": "Policies Issued"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures "
+                    }
+                  },
+                  "Property": "Policies In Force"
+                }
+              },
+              "queryRef": "Measures .Policies In Force",
+              "nativeQueryRef": "Policies In Force"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Measures "
+                  }
+                },
+                "Property": "Total Quotations"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "funnelLabelStyle": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Data, percent of first'"
+                }
+              }
+            },
+            "labelPosition": {
+              "expr": {
+                "Literal": {
+                  "Value": "'OutsideEnd'"
+                }
+              }
+            },
+            "labelDisplayUnits": {
+              "expr": {
+                "Literal": {
+                  "Value": "1D"
+                }
+              }
+            },
+            "labelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "0L"
+                }
+              }
+            },
+            "percentageLabelPrecision": {
+              "expr": {
+                "Literal": {
+                  "Value": "1L"
+                }
+              }
+            },
+            "enableBackground": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "showAllDataPoints": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'CONVERSIAL FUNNEL'"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

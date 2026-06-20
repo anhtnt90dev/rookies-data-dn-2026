@@ -1,0 +1,133 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "type": "ForEach",
+        "typeProperties": {
+          "isSequential": false,
+          "batchCount": 9,
+          "items": {
+            "value": "@json(activity('nb_lookup_tables_ingestion').output.result.exitValue)",
+            "type": "Expression"
+          },
+          "activities": [
+            {
+              "type": "TridentNotebook",
+              "typeProperties": {
+                "notebookId": "9462e5b9-9e8b-9126-47a2-e4a943650751",
+                "workspaceId": "00000000-0000-0000-0000-000000000000",
+                "parameters": {
+                  "p_config_load_table": {
+                    "value": {
+                      "value": "@coalesce(string(item()),'')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_session_id": {
+                    "value": {
+                      "value": "@coalesce(pipeline().parameters.p_session_id,'')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_pipeline_run_id": {
+                    "value": {
+                      "value": "@pipeline().RunId",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_batch_id": {
+                    "value": {
+                      "value": "@coalesce(pipeline().parameters.p_batch_id,'')",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  },
+                  "p_previous_session_id": {
+                    "value": {
+                      "value": "@pipeline().parameters.p_previous_session_id",
+                      "type": "Expression"
+                    },
+                    "type": "string"
+                  }
+                },
+                "sessionTag": "session_silver_conncurrency"
+              },
+              "policy": {
+                "timeout": "0.12:00:00",
+                "retry": 0,
+                "retryIntervalInSeconds": 30,
+                "secureInput": false,
+                "secureOutput": false
+              },
+              "name": "nb_transform",
+              "dependsOn": []
+            }
+          ]
+        },
+        "name": "for_each_table_config",
+        "dependsOn": [
+          {
+            "activity": "nb_lookup_tables_ingestion",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ]
+      },
+      {
+        "type": "TridentNotebook",
+        "typeProperties": {
+          "notebookId": "a937b4d2-58fc-a340-47d7-83ec231d30bd",
+          "workspaceId": "00000000-0000-0000-0000-000000000000",
+          "parameters": {
+            "p_previous_session_id": {
+              "value": {
+                "value": "@pipeline().parameters.p_previous_session_id",
+                "type": "Expression"
+              },
+              "type": "string"
+            },
+            "p_run_mode": {
+              "value": {
+                "value": "@pipeline().parameters.p_run_mode",
+                "type": "Expression"
+              },
+              "type": "string"
+            }
+          }
+        },
+        "policy": {
+          "timeout": "0.12:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 30,
+          "secureInput": false,
+          "secureOutput": false
+        },
+        "name": "nb_lookup_tables_ingestion",
+        "dependsOn": []
+      }
+    ],
+    "parameters": {
+      "p_session_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_session_id"
+      },
+      "p_batch_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_batch_id"
+      },
+      "p_run_mode": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_run_mode"
+      },
+      "p_previous_session_id": {
+        "type": "string",
+        "defaultValue": "@pipeline().parameters.p_previous_session_id"
+      }
+    },
+    "concurrency": 3
+  }
+}

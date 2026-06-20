@@ -24,6 +24,13 @@
 
 import uuid
 
+# Disable auto broadcast join to prevent 8GB limit issues on large tables (e.g. 100M records)
+try:
+    spark.conf.set("spark.sql.autoBroadcastJoinThreshold", -1)
+    print("[GOLD AUDIT HELPER] Disabled autoBroadcastJoinThreshold successfully.")
+except Exception as e:
+    print(f"[GOLD AUDIT HELPER WARNING] Failed to set autoBroadcastJoinThreshold: {e}")
+
 def start_table_layer(session_id, source_table_id, source_table_name, layer, batch_id, **kwargs):
     from pyspark.sql import functions as F
     

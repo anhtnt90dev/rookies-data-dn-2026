@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Notebook",
+    "displayName": "nb_append_incremental_crm_data_dev"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a3b081fd-67b2-b8e6-4b99-c7c4fe5d6057"
+  }
+}

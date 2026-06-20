@@ -5,8 +5,7 @@ on:
     branches:
       - dev
     paths:
-      - fabric/**/Reports/**
-      - fabric/**/SemanticModels/**
+      - fabric/Powerbi/**
     types:
       - closed
 

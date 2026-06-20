@@ -5,7 +5,7 @@ from azure.identity import ClientSecretCredential
 
 from fabric_cicd import FabricWorkspace, publish_all_items, change_log_level
 
-change_log_level("INFO")
+change_log_level("DEBUG")
 
 parser = argparse.ArgumentParser()
 

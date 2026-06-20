@@ -299,6 +299,196 @@
             "width": 234
           },
           "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_agent",
+          "nodeLineageTag": "71fa10e2-ca4e-472a-a50b-6ef3e32cc221",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_cancellation_reason",
+          "nodeLineageTag": "109c72b4-599e-4989-a8e0-34e46c260786",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_coverage",
+          "nodeLineageTag": "833ccdb5-cf1d-43bb-bdc6-29a8bacc79ff",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_customer",
+          "nodeLineageTag": "bd2748ad-2043-4d94-a881-5854ef4c2817",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_date",
+          "nodeLineageTag": "48262113-fce8-497f-b573-db0c03d27824",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_package",
+          "nodeLineageTag": "cf4efca6-d53f-4a40-be4c-498f4861ba71",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_payment_method",
+          "nodeLineageTag": "78dcd55a-8362-43a0-af0c-5dda090b669a",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_payment_status",
+          "nodeLineageTag": "dd2e5172-da68-4c03-b16a-f8596fd3b783",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_policy",
+          "nodeLineageTag": "f84c21e0-2db8-4c8d-9281-cbfffc155e5c",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_policy_status",
+          "nodeLineageTag": "fa0944ad-310a-4a99-a380-e2ffde405ae5",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_provider",
+          "nodeLineageTag": "4f96ca7d-dcb3-4cb4-986e-dee6a04c728e",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_quotation",
+          "nodeLineageTag": "97a14b11-26d3-4284-b534-b5b11cbaf897",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_quotation_status",
+          "nodeLineageTag": "7c2e8ab3-b340-403a-bd16-a03bbd70fc10",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold dim_vehicle",
+          "nodeLineageTag": "b36d73ae-df75-416a-9380-f5f3ac01e3c1",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold fact_cancellation",
+          "nodeLineageTag": "556af824-d5dc-4aa3-959f-f47440d7f2d7",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold fact_payment",
+          "nodeLineageTag": "ad1cce1c-21e8-485b-b4eb-83c9a4b2bc65",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold fact_policy",
+          "nodeLineageTag": "ff74e403-2027-4db1-97d4-ff59efb6d129",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold fact_quotation",
+          "nodeLineageTag": "66738a0d-f183-437c-ad8d-d90a81784962",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {},
+          "nodeIndex": "gold fact_quotation_item",
+          "nodeLineageTag": "a8bcc232-f67e-4853-acf2-a5060fc99495",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
         }
       ],
       "name": "All tables",

@@ -172,39 +172,39 @@ TABLE_METADATA = {
     }
 }
 
+# Map conformed ID to source ID dynamically (precomputed globally to avoid redundant Spark jobs)
+GLOBAL_DIM_FACT_TO_SOURCE = {}
+try:
+    df_tables = spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
+    mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
+    src_tables = spark.table("cfg.source_table").select("id", "source_name").collect()
+    
+    df_names = {row["id"]: row["table_name"] for row in df_tables}
+    src_names = {row["id"]: row["source_name"] for row in src_tables}
+    
+    from collections import defaultdict
+    df_to_srcs = defaultdict(list)
+    for row in mappings:
+        df_id = int(row["dim_fact_table_id"])
+        src_id = int(row["source_table_id"])
+        df_to_srcs[df_id].append(src_id)
+        
+    for df_id, src_ids in df_to_srcs.items():
+        df_name = df_names.get(df_id, "").lower()
+        matched_id = None
+        for s_id in src_ids:
+            s_name = src_names.get(s_id, "").lower()
+            s_norm = s_name[:-1] if s_name.endswith('s') else s_name
+            if s_norm in df_name:
+                if matched_id is None or len(s_norm) > len(src_names.get(matched_id, "")):
+                    matched_id = s_id
+        GLOBAL_DIM_FACT_TO_SOURCE[df_id] = matched_id if matched_id is not None else src_ids[0]
+except Exception as e:
+    print(f"[WARNING] Failed to precompute table mappings: {e}")
+
 # Helper to retrieve table_session_id for a given target table
 def get_table_session_id(dim_fact_table_id: int) -> str:
-    # Map conformed ID to source ID dynamically
-    try:
-        df_tables = spark.table("cfg.dim_fact_table").select("id", "table_name").collect()
-        mappings = spark.table("cfg.source_dim_fact").select("dim_fact_table_id", "source_table_id").collect()
-        src_tables = spark.table("cfg.source_table").select("id", "source_name").collect()
-        
-        df_names = {row["id"]: row["table_name"] for row in df_tables}
-        src_names = {row["id"]: row["source_name"] for row in src_tables}
-        
-        from collections import defaultdict
-        df_to_srcs = defaultdict(list)
-        for row in mappings:
-            df_id = int(row["dim_fact_table_id"])
-            src_id = int(row["source_table_id"])
-            df_to_srcs[df_id].append(src_id)
-            
-        dim_fact_to_source = {}
-        for df_id, src_ids in df_to_srcs.items():
-            df_name = df_names.get(df_id, "").lower()
-            matched_id = None
-            for s_id in src_ids:
-                s_name = src_names.get(s_id, "").lower()
-                s_norm = s_name[:-1] if s_name.endswith('s') else s_name
-                if s_norm in df_name:
-                    if matched_id is None or len(s_norm) > len(src_names.get(matched_id, "")):
-                        matched_id = s_id
-            dim_fact_to_source[df_id] = matched_id if matched_id is not None else src_ids[0]
-
-        source_id = dim_fact_to_source.get(dim_fact_table_id)
-    except Exception:
-        source_id = None
+    source_id = GLOBAL_DIM_FACT_TO_SOURCE.get(dim_fact_table_id)
 
     if not source_id:
         return None
@@ -265,24 +265,18 @@ def validate_fact_table(
     # We only check records inserted/updated in the current batch
     batch_gold_df = gold_df.where(F.col("_batch_id") == F.lit(str(batch_id)))
 
-    # Enrich batch_gold_df with parent business keys if missing in Gold schema, sourcing from Silver lineage
+    # Enrich batch_gold_df with parent business keys if missing in Gold schema, sourcing from Silver lineage (uses cached Silver DataFrames)
     if table_name == "gold.fact_quotation":
-        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
-        batch_gold_df = batch_gold_df.join(veh_df, on="customer_id", how="left")
+        batch_gold_df = batch_gold_df.join(silver_vehicle_latest, on="customer_id", how="left")
     elif table_name == "gold.fact_quotation_item":
-        q_df = latest_by_key(spark.table("silver.quotation"), "quotation_id").select("quotation_id", "customer_id", "agent_id", "provider_code")
-        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
-        parent_df = q_df.join(veh_df, on="customer_id", how="left")
+        parent_df = silver_quotation_latest.join(silver_vehicle_latest, on="customer_id", how="left")
         batch_gold_df = batch_gold_df.join(parent_df, on="quotation_id", how="left")
     elif table_name == "gold.fact_policy":
-        q_df = latest_by_key(spark.table("silver.quotation"), "quotation_id").select("quotation_id", "agent_id")
-        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
+        q_df = silver_quotation_latest.select("quotation_id", "agent_id")
         batch_gold_df = batch_gold_df.join(q_df, on="quotation_id", how="left")
-        batch_gold_df = batch_gold_df.join(veh_df, on="customer_id", how="left")
+        batch_gold_df = batch_gold_df.join(silver_vehicle_latest, on="customer_id", how="left")
     elif table_name in ["gold.fact_payment", "gold.fact_cancellation"]:
-        pol_df = latest_by_key(spark.table("silver.policy"), "policy_id").select("policy_id", "customer_id", "provider_code")
-        veh_df = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id")
-        parent_df = pol_df.join(veh_df, on="customer_id", how="left")
+        parent_df = silver_policy_latest.join(silver_vehicle_latest, on="customer_id", how="left")
         batch_gold_df = batch_gold_df.join(parent_df, on="policy_id", how="left")
 
     batch_gold_df = batch_gold_df.cache()
@@ -675,7 +669,7 @@ def validate_fact_table(
             silver_recon_df.unpersist()
 
 # ---------------------------------------------------------------------------
-# Sequenced Execution of Audits
+# Parallel Execution of Audits
 # ---------------------------------------------------------------------------
 
 import json
@@ -690,6 +684,20 @@ fact_name_to_info = {row["table_name"].lower(): (int(row["id"]), bool(row["is_ac
 # Initialize validation statuses for active fact tables
 validation_statuses = {f"{f_id} (gold.{f_name})": "SUCCESS" for f_name, (f_id, is_act) in fact_name_to_info.items() if is_act}
 validation_errors = {}
+
+# Precompute and cache shared silver datasets to optimize joins and avoid redundant shuffles
+try:
+    print("[INFO] Pre-deduplicating and caching shared Silver datasets...")
+    silver_vehicle_latest = latest_by_key(spark.table("silver.vehicle"), "customer_id").select("customer_id", "vehicle_id").cache()
+    silver_quotation_latest = latest_by_key(spark.table("silver.quotation"), "quotation_id").select("quotation_id", "customer_id", "agent_id", "provider_code").cache()
+    silver_policy_latest = latest_by_key(spark.table("silver.policy"), "policy_id").select("policy_id", "customer_id", "provider_code").cache()
+    
+    # Eager caching
+    silver_vehicle_latest.count()
+    silver_quotation_latest.count()
+    silver_policy_latest.count()
+except Exception as e:
+    print(f"[WARNING] Failed to pre-cache Silver datasets: {e}")
 
 def run_validation_safely(
     table_name: str,
@@ -731,157 +739,169 @@ def run_validation_safely(
         validation_statuses[status_key] = "FAILED"
         validation_errors[fact_id] = str(e)
 
-# 1. fact_quotation
-run_validation_safely(
-    table_name="gold.fact_quotation",
-    grain_cols=["quotation_id"],
-    fk_mappings={
-        "quotation_key": "gold.dim_quotation",
-        "customer_key": "gold.dim_customer",
-        "agent_key": "gold.dim_agent",
-        "provider_key": "gold.dim_provider",
-        "package_key": "gold.dim_package",
-        "quotation_status_key": "gold.dim_quotation_status",
-        "vehicle_key": "gold.dim_vehicle"
-    },
-    date_keys=["quotation_date_key", "quotation_expiry_date_key"],
-    silver_table_name="silver.quotation",
-    metric_cols=["premium_amount"],
-    fk_bk_mappings={
-        "quotation_key": "quotation_id",
-        "customer_key": "customer_id",
-        "agent_key": "agent_id",
-        "provider_key": "provider_code",
-        "vehicle_key": "vehicle_id"
-    },
-    scd2_temporal_mappings={
-        "customer_key": ("gold.dim_customer", "quotation_date_key"),
-        "agent_key": ("gold.dim_agent", "quotation_date_key"),
-        "provider_key": ("gold.dim_provider", "quotation_date_key"),
-        "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
-    }
-)
+# Define parallel validation tasks
+from concurrent.futures import ThreadPoolExecutor
 
-# 2. fact_quotation_item
-run_validation_safely(
-    table_name="gold.fact_quotation_item",
-    grain_cols=["quotation_id", "coverage_key"],
-    silver_grain_cols=["quotation_id", "coverage_type"],
-    fk_mappings={
-        "quotation_key": "gold.dim_quotation",
-        "customer_key": "gold.dim_customer",
-        "agent_key": "gold.dim_agent",
-        "provider_key": "gold.dim_provider",
-        "package_key": "gold.dim_package",
-        "quotation_status_key": "gold.dim_quotation_status",
-        "coverage_key": "gold.dim_coverage",
-        "vehicle_key": "gold.dim_vehicle"
+validation_tasks = [
+    {
+        "table_name": "gold.fact_quotation",
+        "grain_cols": ["quotation_id"],
+        "fk_mappings": {
+            "quotation_key": "gold.dim_quotation",
+            "customer_key": "gold.dim_customer",
+            "agent_key": "gold.dim_agent",
+            "provider_key": "gold.dim_provider",
+            "package_key": "gold.dim_package",
+            "quotation_status_key": "gold.dim_quotation_status",
+            "vehicle_key": "gold.dim_vehicle"
+        },
+        "date_keys": ["quotation_date_key", "quotation_expiry_date_key"],
+        "silver_table_name": "silver.quotation",
+        "metric_cols": ["premium_amount"],
+        "fk_bk_mappings": {
+            "quotation_key": "quotation_id",
+            "customer_key": "customer_id",
+            "agent_key": "agent_id",
+            "provider_key": "provider_code",
+            "vehicle_key": "vehicle_id"
+        },
+        "scd2_temporal_mappings": {
+            "customer_key": ("gold.dim_customer", "quotation_date_key"),
+            "agent_key": ("gold.dim_agent", "quotation_date_key"),
+            "provider_key": ("gold.dim_provider", "quotation_date_key"),
+            "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
+        }
     },
-    date_keys=["quotation_date_key"],
-    silver_table_name="silver.quotation_item",
-    metric_cols=["coverage_amount", "deductible_amount"],
-    fk_bk_mappings={
-        "quotation_key": "quotation_id",
-        "customer_key": "customer_id",
-        "agent_key": "agent_id",
-        "provider_key": "provider_code",
-        "vehicle_key": "vehicle_id"
+    {
+        "table_name": "gold.fact_quotation_item",
+        "grain_cols": ["quotation_id", "coverage_key"],
+        "silver_grain_cols": ["quotation_id", "coverage_type"],
+        "fk_mappings": {
+            "quotation_key": "gold.dim_quotation",
+            "customer_key": "gold.dim_customer",
+            "agent_key": "gold.dim_agent",
+            "provider_key": "gold.dim_provider",
+            "package_key": "gold.dim_package",
+            "quotation_status_key": "gold.dim_quotation_status",
+            "coverage_key": "gold.dim_coverage",
+            "vehicle_key": "gold.dim_vehicle"
+        },
+        "date_keys": ["quotation_date_key"],
+        "silver_table_name": "silver.quotation_item",
+        "metric_cols": ["coverage_amount", "deductible_amount"],
+        "fk_bk_mappings": {
+            "quotation_key": "quotation_id",
+            "customer_key": "customer_id",
+            "agent_key": "agent_id",
+            "provider_key": "provider_code",
+            "vehicle_key": "vehicle_id"
+        },
+        "scd2_temporal_mappings": {
+            "customer_key": ("gold.dim_customer", "quotation_date_key"),
+            "agent_key": ("gold.dim_agent", "quotation_date_key"),
+            "provider_key": ("gold.dim_provider", "quotation_date_key"),
+            "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
+        }
     },
-    scd2_temporal_mappings={
-        "customer_key": ("gold.dim_customer", "quotation_date_key"),
-        "agent_key": ("gold.dim_agent", "quotation_date_key"),
-        "provider_key": ("gold.dim_provider", "quotation_date_key"),
-        "vehicle_key": ("gold.dim_vehicle", "quotation_date_key")
+    {
+        "table_name": "gold.fact_policy",
+        "grain_cols": ["policy_id"],
+        "fk_mappings": {
+            "policy_key": "gold.dim_policy",
+            "quotation_key": "gold.dim_quotation",
+            "customer_key": "gold.dim_customer",
+            "provider_key": "gold.dim_provider",
+            "agent_key": "gold.dim_agent",
+            "package_key": "gold.dim_package",
+            "policy_status_key": "gold.dim_policy_status",
+            "vehicle_key": "gold.dim_vehicle"
+        },
+        "date_keys": ["issued_date_key", "policy_start_date_key", "policy_end_date_key"],
+        "silver_table_name": "silver.policy",
+        "metric_cols": ["premium_amount"],
+        "fk_bk_mappings": {
+            "policy_key": "policy_id",
+            "quotation_key": "quotation_id",
+            "customer_key": "customer_id",
+            "provider_key": "provider_code",
+            "agent_key": "agent_id",
+            "vehicle_key": "vehicle_id"
+        },
+        "scd2_temporal_mappings": {
+            "customer_key": ("gold.dim_customer", "policy_start_date_key"),
+            "provider_key": ("gold.dim_provider", "policy_start_date_key"),
+            "agent_key": ("gold.dim_agent", "policy_start_date_key"),
+            "vehicle_key": ("gold.dim_vehicle", "policy_start_date_key")
+        }
+    },
+    {
+        "table_name": "gold.fact_payment",
+        "grain_cols": ["payment_id"],
+        "fk_mappings": {
+            "policy_key": "gold.dim_policy",
+            "payment_status_key": "gold.dim_payment_status",
+            "payment_method_key": "gold.dim_payment_method",
+            "customer_key": "gold.dim_customer",
+            "provider_key": "gold.dim_provider",
+            "vehicle_key": "gold.dim_vehicle"
+        },
+        "date_keys": ["payment_date_key", "issued_date_key"],
+        "silver_table_name": "silver.payment",
+        "metric_cols": ["payment_amount"],
+        "fk_bk_mappings": {
+            "policy_key": "policy_id",
+            "customer_key": "customer_id",
+            "provider_key": "provider_code",
+            "vehicle_key": "vehicle_id"
+        },
+        "scd2_temporal_mappings": {
+            "customer_key": ("gold.dim_customer", "payment_date_key"),
+            "provider_key": ("gold.dim_provider", "payment_date_key"),
+            "vehicle_key": ("gold.dim_vehicle", "payment_date_key")
+        }
+    },
+    {
+        "table_name": "gold.fact_cancellation",
+        "grain_cols": ["cancellation_id"],
+        "fk_mappings": {
+            "policy_key": "gold.dim_policy",
+            "cancellation_reason_key": "gold.dim_cancellation_reason",
+            "customer_key": "gold.dim_customer",
+            "provider_key": "gold.dim_provider",
+            "vehicle_key": "gold.dim_vehicle"
+        },
+        "date_keys": ["cancellation_date_key"],
+        "silver_table_name": "silver.cancellation",
+        "metric_cols": ["refund_amount"],
+        "fk_bk_mappings": {
+            "policy_key": "policy_id",
+            "customer_key": "customer_id",
+            "provider_key": "provider_code",
+            "vehicle_key": "vehicle_id"
+        },
+        "scd2_temporal_mappings": {
+            "customer_key": ("gold.dim_customer", "cancellation_date_key"),
+            "provider_key": ("gold.dim_provider", "cancellation_date_key"),
+            "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
+        }
     }
-)
+]
 
-# 3. fact_policy
-run_validation_safely(
-    table_name="gold.fact_policy",
-    grain_cols=["policy_id"],
-    fk_mappings={
-        "policy_key": "gold.dim_policy",
-        "quotation_key": "gold.dim_quotation",
-        "customer_key": "gold.dim_customer",
-        "provider_key": "gold.dim_provider",
-        "agent_key": "gold.dim_agent",
-        "package_key": "gold.dim_package",
-        "policy_status_key": "gold.dim_policy_status",
-        "vehicle_key": "gold.dim_vehicle"
-    },
-    date_keys=["issued_date_key", "policy_start_date_key", "policy_end_date_key"],
-    silver_table_name="silver.policy",
-    metric_cols=["premium_amount"],
-    fk_bk_mappings={
-        "policy_key": "policy_id",
-        "quotation_key": "quotation_id",
-        "customer_key": "customer_id",
-        "provider_key": "provider_code",
-        "agent_key": "agent_id",
-        "vehicle_key": "vehicle_id"
-    },
-    scd2_temporal_mappings={
-        "customer_key": ("gold.dim_customer", "policy_start_date_key"),
-        "provider_key": ("gold.dim_provider", "policy_start_date_key"),
-        "agent_key": ("gold.dim_agent", "policy_start_date_key"),
-        "vehicle_key": ("gold.dim_vehicle", "policy_start_date_key")
-    }
-)
-
-# 4. fact_payment
-run_validation_safely(
-    table_name="gold.fact_payment",
-    grain_cols=["payment_id"],
-    fk_mappings={
-        "policy_key": "gold.dim_policy",
-        "payment_status_key": "gold.dim_payment_status",
-        "payment_method_key": "gold.dim_payment_method",
-        "customer_key": "gold.dim_customer",
-        "provider_key": "gold.dim_provider",
-        "vehicle_key": "gold.dim_vehicle"
-    },
-    date_keys=["payment_date_key", "issued_date_key"],
-    silver_table_name="silver.payment",
-    metric_cols=["payment_amount"],
-    fk_bk_mappings={
-        "policy_key": "policy_id",
-        "customer_key": "customer_id",
-        "provider_key": "provider_code",
-        "vehicle_key": "vehicle_id"
-    },
-    scd2_temporal_mappings={
-        "customer_key": ("gold.dim_customer", "payment_date_key"),
-        "provider_key": ("gold.dim_provider", "payment_date_key"),
-        "vehicle_key": ("gold.dim_vehicle", "payment_date_key")
-    }
-)
-
-# 5. fact_cancellation
-run_validation_safely(
-    table_name="gold.fact_cancellation",
-    grain_cols=["cancellation_id"],
-    fk_mappings={
-        "policy_key": "gold.dim_policy",
-        "cancellation_reason_key": "gold.dim_cancellation_reason",
-        "customer_key": "gold.dim_customer",
-        "provider_key": "gold.dim_provider",
-        "vehicle_key": "gold.dim_vehicle"
-    },
-    date_keys=["cancellation_date_key"],
-    silver_table_name="silver.cancellation",
-    metric_cols=["refund_amount"],
-    fk_bk_mappings={
-        "policy_key": "policy_id",
-        "customer_key": "customer_id",
-        "provider_key": "provider_code",
-        "vehicle_key": "vehicle_id"
-    },
-    scd2_temporal_mappings={
-        "customer_key": ("gold.dim_customer", "cancellation_date_key"),
-        "provider_key": ("gold.dim_provider", "cancellation_date_key"),
-        "vehicle_key": ("gold.dim_vehicle", "cancellation_date_key")
-    }
-)
+# Run validation tasks in parallel using ThreadPoolExecutor
+try:
+    with ThreadPoolExecutor(max_workers=len(validation_tasks)) as executor:
+        futures = [executor.submit(run_validation_safely, **task) for task in validation_tasks]
+        for future in futures:
+            future.result()
+finally:
+    # Always clean up cache
+    print("[INFO] Cleaning up cached Silver datasets...")
+    try:
+        silver_vehicle_latest.unpersist()
+        silver_quotation_latest.unpersist()
+        silver_policy_latest.unpersist()
+    except Exception as e:
+        print(f"[WARNING] Failed to unpersist cached datasets: {e}")
 
 # Print summary of all table validations
 print("\n" + "=" * 80)

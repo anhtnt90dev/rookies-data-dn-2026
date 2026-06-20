@@ -1,0 +1,63 @@
+table 'gold dim_quotation'
+	lineageTag: 97a14b11-26d3-4284-b534-b5b11cbaf897
+
+	column quotation_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 6c2bc9cd-6b87-4042-bbe1-7319e8225866
+		summarizeBy: sum
+		sourceColumn: quotation_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_id
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 0db758de-d7ed-4ff7-a2ad-5d89bd8c7a44
+		summarizeBy: none
+		sourceColumn: quotation_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column quotation_expiry_date
+		dataType: dateTime
+		formatString: Long Date
+		sourceProviderType: date
+		lineageTag: 23b0c18e-a1a6-4773-88bd-883a93f46f13
+		summarizeBy: none
+		sourceColumn: quotation_expiry_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 291a28e7-1f64-48fd-a40b-d2e1b3b1e321
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 6b14e15f-c2d6-4734-98e3-0ae58ac61eea
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold dim_quotation' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_quotation = Source{[Schema="gold",Item="dim_quotation"]}[Data]
+				in
+				    gold_dim_quotation
+

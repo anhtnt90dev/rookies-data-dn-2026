@@ -13,7 +13,7 @@ queryGroup Measure
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["Measures ","dim_agent","dim_cancellation_reason","dim_coverage","dim_customer","dim_date","dim_package","dim_payment_method","dim_payment_status","dim_policy","dim_policy_status","dim_provider","dim_quotation","dim_quotation_status","dim_vehicle","fact_cancellation","fact_payment","fact_policy","fact_quotation","fact_quotation_item"]
+annotation PBI_QueryOrder = ["Measures ","dim_agent","dim_cancellation_reason","dim_coverage","dim_customer","dim_date","dim_package","dim_payment_method","dim_payment_status","dim_policy","dim_policy_status","dim_provider","dim_quotation","dim_quotation_status","dim_vehicle","fact_cancellation","fact_payment","fact_policy","fact_quotation","fact_quotation_item","gold fact_quotation_item","gold fact_quotation","gold fact_policy","gold fact_payment","gold fact_cancellation","gold dim_quotation_status","gold dim_vehicle","gold dim_quotation","gold dim_provider","gold dim_policy","gold dim_policy_status","gold dim_payment_status","gold dim_payment_method","gold dim_package","gold dim_date","gold dim_customer","gold dim_coverage","gold dim_cancellation_reason","gold dim_agent"]
 
 annotation __TEdtr = 1
 
@@ -43,6 +43,25 @@ ref table fact_quotation_item
 ref table 'Comparison type'
 ref table 'New Calculation Group'
 ref table 'Time Calculation'
+ref table 'gold fact_quotation_item'
+ref table 'gold fact_quotation'
+ref table 'gold fact_policy'
+ref table 'gold fact_payment'
+ref table 'gold fact_cancellation'
+ref table 'gold dim_quotation_status'
+ref table 'gold dim_vehicle'
+ref table 'gold dim_quotation'
+ref table 'gold dim_provider'
+ref table 'gold dim_policy'
+ref table 'gold dim_policy_status'
+ref table 'gold dim_payment_status'
+ref table 'gold dim_payment_method'
+ref table 'gold dim_package'
+ref table 'gold dim_date'
+ref table 'gold dim_customer'
+ref table 'gold dim_coverage'
+ref table 'gold dim_cancellation_reason'
+ref table 'gold dim_agent'
 
 ref cultureInfo en-US
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import styles from "../dashboard.module.css";
@@ -15,6 +15,29 @@ export default function CustomerDashboard() {
   const router = useRouter();
   const [embedConfig, setEmbedConfig] = useState<any>(null);
   const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const reportRef = useRef<any>(null);
+
+  const handleRefresh = useCallback(async () => {
+    if (!reportRef.current || isRefreshing || cooldown > 0) return;
+    try {
+      setIsRefreshing(true);
+      await reportRef.current.refresh();
+      // Start 15s cooldown after successful refresh (Power BI rate limit)
+      setCooldown(15);
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) { clearInterval(timer); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      console.error("Refresh failed:", err);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
+  }, [isRefreshing, cooldown]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -92,12 +115,52 @@ export default function CustomerDashboard() {
           <h1>CarPro Dashboard 1</h1>
           <p>Quotation Conversion & Sales Analytics</p>
         </div>
-        <button onClick={() => {
-          localStorage.removeItem("carpro_userId");
-          router.push("/");
-        }} className="btn-primary" style={{ width: 'auto' }}>
-          Sign Out
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {embedConfig && !embedConfig.devModeFallback && (
+            <button
+              id="btn-refresh-dashboard"
+              onClick={handleRefresh}
+              disabled={isRefreshing || cooldown > 0}
+              title={cooldown > 0 ? `Wait ${cooldown}s` : "Refresh data"}
+              style={{
+                width: cooldown > 0 ? 'auto' : 40,
+                height: 40,
+                padding: cooldown > 0 ? '0 12px' : 0,
+                borderRadius: cooldown > 0 ? '20px' : '50%',
+                border: '1px solid var(--glass-border)',
+                background: 'var(--glass-bg)',
+                cursor: (isRefreshing || cooldown > 0) ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.2s ease',
+                opacity: (isRefreshing || cooldown > 0) ? 0.6 : 1,
+                fontSize: '12px',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              <svg
+                width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                style={{
+                  animation: isRefreshing ? 'spin 0.8s linear infinite' : 'none',
+                }}
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              {cooldown > 0 && <span>{cooldown}s</span>}
+            </button>
+          )}
+          <button onClick={() => {
+            localStorage.removeItem("carpro_userId");
+            router.push("/");
+          }} className="btn-primary" style={{ width: 'auto' }}>
+            Sign Out
+          </button>
+        </div>
       </header>
 
       <div className={`glass-panel ${styles.iframeContainer}`} style={{ display: 'flex', flexDirection: 'column' }}>
@@ -125,6 +188,9 @@ export default function CustomerDashboard() {
             <PowerBIEmbed
               embedConfig={embedConfig}
               cssClassName={styles.powerbiContainer}
+              getEmbeddedComponent={(embeddedReport: any) => {
+                reportRef.current = embeddedReport;
+              }}
             />
           </div>
         )}

@@ -19,9 +19,10 @@ on:
         description: "Target environment"
         required: true
         type: choice
+        default: "UAT"
         options:
-          - DEV
           - UAT
+          - DEV
           - PROD
 
 permissions:
@@ -38,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     environment:
-      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
 
     steps:
       - name: Checkout branch
@@ -63,7 +64,7 @@ jobs:
       - name: Resolve workspace
         id: workspace
         run: |
-          ENV=${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'DEV' }}
+          ENV=${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'UAT' }}
 
           if [ "$ENV" = "PROD" ]; then
             echo "workspace=${{ secrets.PROD_WORKSPACE_ID }}" >> $GITHUB_OUTPUT

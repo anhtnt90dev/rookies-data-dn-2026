@@ -1,0 +1,227 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "5ac42172d234b9eca49d",
+  "position": {
+    "x": 590.890116635973,
+    "y": 217.65500306936769,
+    "z": 1,
+    "height": 349.6623695518723,
+    "width": 543.744628606507,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "columnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_provider"
+                    }
+                  },
+                  "Property": "active_flag"
+                }
+              },
+              "queryRef": "dim_provider.active_flag",
+              "nativeQueryRef": "active_flag",
+              "active": true
+            }
+          ]
+        },
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "month_number"
+                }
+              },
+              "queryRef": "dim_date.month_number",
+              "nativeQueryRef": "month_number"
+            }
+          ]
+        },
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Best Collection Rate Provider"
+                }
+              },
+              "queryRef": "Measures DB2.Best Collection Rate Provider",
+              "nativeQueryRef": "Best Collection Rate Provider"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Cancelled Policies"
+                }
+              },
+              "queryRef": "Measures DB2.Cancelled Policies",
+              "nativeQueryRef": "Cancelled Policies"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Premium per Policy"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Premium per Policy",
+              "nativeQueryRef": "Avg Premium per Policy"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Payment Value"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Payment Value",
+              "nativeQueryRef": "Avg Payment Value"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Measures DB2"
+                  }
+                },
+                "Property": "Cancelled Policies"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "8eeeb72b4200dc530e90",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Cancelled Policies"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "9ef82b42b3dc2a74e61c",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Best Collection Rate Provider"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "7e1bd0a5416d3cb99b5a",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Premium per Policy"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "04df0cbb8c5e003baad5",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Payment Value"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "3164ca01702e031c3090",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_provider"
+              }
+            },
+            "Property": "active_flag"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "ea543ad800000446814e",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_date"
+              }
+            },
+            "Property": "month_number"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

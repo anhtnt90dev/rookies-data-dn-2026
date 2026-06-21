@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
+# META       "default_lakehouse": "f6154ec7-4dbf-44f7-a335-159149f2ae56",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
+# META       "default_lakehouse_workspace_id": "c86fdecc-7ed1-42f4-9ec0-4b0274a76958",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
+# META           "id": "f6154ec7-4dbf-44f7-a335-159149f2ae56"
 # META         }
 # META       ]
 # META     }
@@ -136,6 +136,11 @@ def load_scd2_dimension(
         # 1. Ensure Unknown row (-1)
         ensure_unknown_row_scd2(target_table_name, surrogate_key_col, business_key_col, tracked_cols)
 
+        # Apply incremental batch filtering if applicable
+        if run_mode != "FULL" and batch_id and "_batch_id" in source_df.columns:
+            source_df = source_df.where(F.col("_batch_id") == F.lit(str(batch_id)))
+            print(f"[INFO] Incremental filter applied: _batch_id == {batch_id}")
+
         # 2. Add event_time and row_hash columns to incoming source data
         # Deduplicate to keep only the latest version of each business key in the incoming batch
         window_source = Window.partitionBy(business_key_col).orderBy(F.col("event_time").desc())
@@ -162,23 +167,33 @@ def load_scd2_dimension(
             how="left"
         )
 
-        # Identify updates (records that exist in target but have different hash)
-        records_to_expire = joined.filter(F.col("tgt." + surrogate_key_col).isNotNull() & (F.col("src.row_hash") != F.col("tgt.row_hash")))
+        # Add action type mapping to avoid multiple filter actions
+        joined_action = joined.withColumn(
+            "action_type",
+            F.when(F.col("tgt." + surrogate_key_col).isNull(), "INSERT_NEW")
+             .when(F.col("src.row_hash") != F.col("tgt.row_hash"), "UPDATE_EXPIRE")
+             .otherwise("NO_CHANGE")
+        )
         
-        # Identify inserts:
-        # A. Genuinely new business keys (not in target)
-        new_records = joined.filter(F.col("tgt." + surrogate_key_col).isNull())
-        # B. Changed business keys (new active version of existing records)
-        new_versions = records_to_expire
+        # Cache joined DataFrame since we'll split and count
+        joined_action = joined_action.cache()
 
-        expire_count = records_to_expire.count()
-        new_key_count = new_records.count()
+        # Aggregate counts in a single action to avoid executing the join multiple times
+        status_counts = joined_action.groupBy("action_type").count().collect()
+        expire_count = 0
+        new_key_count = 0
+        for row in status_counts:
+            if row["action_type"] == "INSERT_NEW":
+                new_key_count = row["count"]
+            elif row["action_type"] == "UPDATE_EXPIRE":
+                expire_count = row["count"]
+
         total_inserted = 0
 
         if expire_count > 0 or new_key_count > 0:
             # Step A: Expire old active records (Delta Merge Update)
             if expire_count > 0:
-                expire_df = records_to_expire.select(
+                expire_df = joined_action.filter(F.col("action_type") == "UPDATE_EXPIRE").select(
                     F.col("src." + business_key_col).alias(business_key_col),
                     F.col("src.event_time").alias("expire_time")
                 )
@@ -194,7 +209,10 @@ def load_scd2_dimension(
                     }
                 ).execute()
 
-            # Step B: Insert new versions and new business keys (omitting row_hash)
+            # Step B: Insert new versions and new business keys
+            new_records = joined_action.filter(F.col("action_type") == "INSERT_NEW")
+            new_versions = joined_action.filter(F.col("action_type") == "UPDATE_EXPIRE")
+            
             insert_source_df = new_records.select(
                 F.col("src." + business_key_col).alias(business_key_col),
                 *[F.col("src." + c).alias(c) for c in tracked_cols],
@@ -207,18 +225,36 @@ def load_scd2_dimension(
                 )
             )
 
-            # Generate surrogate keys dynamically based on max key + row_number
+            # Generate surrogate keys dynamically based on max key + row_number using Partition Offset method
             max_key = spark.table(target_table_name).where(F.col(surrogate_key_col) != -1).agg(F.max(surrogate_key_col)).collect()[0][0]
             max_key = int(max_key) if max_key is not None else 0
 
-            window_insert = Window.orderBy(business_key_col)
-            insert_final_df = insert_source_df.withColumn(
-                surrogate_key_col,
-                F.lit(max_key) + F.row_number().over(window_insert).cast("bigint")
-            ).withColumn("effective_to", F.to_timestamp(F.lit("9999-12-31 23:59:59"))) \
-             .withColumn("is_current", F.lit(True)) \
-             .withColumn("created_at", F.current_timestamp()) \
-             .withColumn("updated_at", F.current_timestamp())
+            insert_source_with_pid = insert_source_df.withColumn("_pid", F.spark_partition_id())
+            partition_counts = insert_source_with_pid.groupBy("_pid").count().collect()
+            partition_counts.sort(key=lambda x: x["_pid"])
+            
+            if partition_counts:
+                offsets = {}
+                running_sum = max_key
+                for row in partition_counts:
+                    offsets[row["_pid"]] = running_sum
+                    running_sum += row["count"]
+                
+                offsets_df = spark.createDataFrame([(k, v) for k, v in offsets.items()], ["_pid", "_offset"])
+                window_insert = Window.partitionBy("_pid").orderBy(business_key_col)
+                insert_final_df = insert_source_with_pid.join(F.broadcast(offsets_df), "_pid") \
+                    .withColumn(surrogate_key_col, F.col("_offset") + F.row_number().over(window_insert).cast("bigint")) \
+                    .withColumn("effective_to", F.to_timestamp(F.lit("9999-12-31 23:59:59"))) \
+                    .withColumn("is_current", F.lit(True)) \
+                    .withColumn("created_at", F.current_timestamp()) \
+                    .withColumn("updated_at", F.current_timestamp()) \
+                    .drop("_pid", "_offset")
+            else:
+                insert_final_df = insert_source_df.withColumn(surrogate_key_col, F.lit(None).cast("bigint")) \
+                    .withColumn("effective_to", F.to_timestamp(F.lit("9999-12-31 23:59:59"))) \
+                    .withColumn("is_current", F.lit(True)) \
+                    .withColumn("created_at", F.current_timestamp()) \
+                    .withColumn("updated_at", F.current_timestamp())
 
             total_inserted = insert_final_df.count()
 
@@ -228,6 +264,9 @@ def load_scd2_dimension(
                 "effective_from", "effective_to", "is_current",
                 "created_at", "updated_at"
             ).write.format("delta").mode("append").saveAsTable(target_table_name)
+
+        # Unpersist cache
+        joined_action.unpersist()
 
         # Get final counts
         total_count = spark.table(target_table_name).count()
@@ -248,6 +287,10 @@ def load_scd2_dimension(
 
     except Exception as err:
         print(f"[ERROR] Failed to load SCD2 {target_table_name}: {err}")
+        try:
+            joined_action.unpersist()
+        except:
+            pass
         finish_table_layer(
             table_session_id=table_session_id,
             layer="GOLD",
@@ -274,7 +317,8 @@ if p_table_id is None or p_table_id == dim_customer_id:
         "email",
         "city",
         "district",
-        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
+        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time"),
+        "_batch_id"
     )
     customer_cols = ["full_name", "gender", "dob", "phone_number", "email", "city", "district"]
     load_scd2_dimension("gold.dim_customer", customer_src_df, "customer_id", "customer_key", customer_cols, dim_customer_id)
@@ -289,7 +333,8 @@ if p_table_id is None or p_table_id == dim_agent_id:
         "region",
         "branch",
         "manager_name",
-        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
+        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time"),
+        "_batch_id"
     )
     agent_cols = ["agent_name", "region", "branch", "manager_name"]
     load_scd2_dimension("gold.dim_agent", agent_src_df, "agent_id", "agent_key", agent_cols, dim_agent_id)
@@ -303,7 +348,8 @@ if p_table_id is None or p_table_id == dim_provider_id:
         "provider_name",
         "provider_group",
         F.coalesce(F.col("is_active").cast("integer"), F.lit(1)).alias("active_flag"),
-        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
+        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time"),
+        "_batch_id"
     )
     provider_cols = ["provider_name", "provider_group", "active_flag"]
     load_scd2_dimension("gold.dim_provider", provider_src_df, "provider_code", "provider_key", provider_cols, dim_provider_id)
@@ -320,7 +366,8 @@ if p_table_id is None or p_table_id == dim_vehicle_id:
         "vehicle_model",
         "manufacture_year",
         "vehicle_value",
-        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time")
+        F.coalesce(F.col("updated_at"), F.col("created_at")).alias("event_time"),
+        "_batch_id"
     )
     vehicle_cols = ["customer_id", "plate_number", "vehicle_brand", "vehicle_model", "manufacture_year", "vehicle_value"]
     load_scd2_dimension("gold.dim_vehicle", vehicle_src_df, "vehicle_id", "vehicle_key", vehicle_cols, dim_vehicle_id)

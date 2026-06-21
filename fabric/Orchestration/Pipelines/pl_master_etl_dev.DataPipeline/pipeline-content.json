@@ -397,7 +397,7 @@
             },
             "schema": [],
             "externalReferences": {
-              "connection": "41c94ad4-2c37-4565-8d25-03a700377ef2"
+              "connection": "b648bc8d-767b-4c3f-af74-dbc4b4658446"
             },
             "annotations": []
           },
@@ -527,7 +527,7 @@
         },
         "policy": {
           "timeout": "0.12:00:00",
-          "retry": 0,
+          "retry": 2,
           "retryIntervalInSeconds": 30,
           "secureInput": false,
           "secureOutput": false

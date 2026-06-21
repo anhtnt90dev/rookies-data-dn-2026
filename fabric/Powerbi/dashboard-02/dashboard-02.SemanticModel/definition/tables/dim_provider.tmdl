@@ -1,0 +1,137 @@
+table dim_provider
+	lineageTag: 36b49450-d4f5-4592-9b5a-13ddc4cfb4e7
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: c6778a87-b591-4f3b-8de0-89b21ca8593b
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 16f7f7c0-285f-4efc-9589-d4f9415172b9
+		summarizeBy: none
+		sourceColumn: provider_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 1bf87565-c39f-416c-98a6-4f99e5ef1d0e
+		summarizeBy: none
+		sourceColumn: provider_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_group
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: f68ceb74-3381-48e9-aa24-7d4550de9aee
+		summarizeBy: none
+		sourceColumn: provider_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column active_flag
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 3a64e5df-7452-44af-82b5-f1978d9dd556
+		summarizeBy: sum
+		sourceColumn: active_flag
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_from
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: ebd80186-ee37-498c-99bc-3a43efa717ba
+		summarizeBy: none
+		sourceColumn: effective_from
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_to
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: b55bac86-462d-46a8-badd-b48b14d20180
+		summarizeBy: none
+		sourceColumn: effective_to
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		isHidden
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: ae100fb8-f2a2-4571-8222-747c6b62681d
+		summarizeBy: none
+		sourceColumn: is_current
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: ee1a4b70-fdb2-4e9c-a4f1-c129e8f46522
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: dad2c887-dc7d-48d4-abeb-b9b45f07cd33
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Known Provider' =
+			
+			IF(
+			    dim_provider[provider_name] = "Unknown",
+			    0,
+			    1
+			)
+		formatString: 0
+		lineageTag: bfe90836-3bb1-4454-9da6-9aebdb7e1a1a
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_provider = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_provider = Source{[Schema="gold",Item="dim_provider"]}[Data]
+				in
+				    gold_dim_provider
+

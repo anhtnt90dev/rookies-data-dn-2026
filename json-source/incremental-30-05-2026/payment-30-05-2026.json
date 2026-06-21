@@ -1,0 +1,79 @@
+JSON_F52E2B61-18A1-11d1-B105-00805F49916B
+[{"payment_id":"PAY00062","policy_id":"POL00062","payment_date":"2026-04-21T11:2
+2:50.000","payment_method":"Bank Transfer","payment_status":"PAID","payment_amou
+nt":3107007,"transaction_reference":"TXN00062","last_updated":"2026-04-21T11:22:
+50.000","operation_type":"I","batch_date":"2026-05-30","source_system":"policy_s
+ystem"},{"payment_id":"PAY00063","policy_id":"POL00063","payment_date":"2025-10-
+17T19:15:33.000","payment_method":"E-wallet","payment_status":"PAID","payment_am
+ount":2879051,"transaction_reference":"TXN00063","last_updated":"2025-10-17T19:1
+5:33.000","operation_type":"I","batch_date":"2026-05-30","source_system":"policy
+_system"},{"payment_id":"PAY00064","policy_id":"POL00064","payment_date":"2026-0
+5-17T08:41:05.000","payment_method":"E-wallet","payment_status":"PAID","payment_
+amount":4392706,"transaction_reference":"TXN00064","last_updated":"2026-05-17T08
+:41:05.000","operation_type":"I","batch_date":"2026-05-30","source_system":"poli
+cy_system"},{"payment_id":"PAY00065","policy_id":"POL00065","payment_date":"2026
+-04-17T15:18:08.000","payment_method":"Bank Transfer","payment_status":"PAID","p
+ayment_amount":3960492,"transaction_reference":"TXN00065","last_updated":"2026-0
+4-17T15:18:08.000","operation_type":"I","batch_date":"2026-05-30","source_system
+":"policy_system"},{"payment_id":"PAY00066","policy_id":"POL00066","payment_date
+":"2026-03-27T17:02:21.000","payment_method":"E-wallet","payment_status":"PAID",
+"payment_amount":4193276,"transaction_reference":"TXN00066","last_updated":"2026
+-03-27T17:02:21.000","operation_type":"I","batch_date":"2026-05-30","source_syst
+em":"policy_system"},{"payment_id":"PAY00067","policy_id":"POL00067","payment_da
+te":"2026-03-15T08:42:33.000","payment_method":"Credit Card","payment_status":"P
+AID","payment_amount":3014830,"transaction_reference":"TXN00067","last_updated":
+"2026-03-15T08:42:33.000","operation_type":"I","batch_date":"2026-05-30","source
+_system":"policy_system"},{"payment_id":"PAY00068","policy_id":"POL00068","payme
+nt_date":"2026-05-02T21:50:10.000","payment_method":"Credit Card","payment_statu
+s":"FAILED","payment_amount":6126005,"transaction_reference":"TXN00068","last_up
+dated":"2026-05-02T21:50:10.000","operation_type":"I","batch_date":"2026-05-30",
+"source_system":"policy_system"},{"payment_id":"PAY00069","policy_id":"POL00069"
+,"payment_date":"2026-03-19T05:13:51.000","payment_method":"Bank Transfer","paym
+ent_status":"PAID","payment_amount":4120509,"transaction_reference":"TXN00069","
+last_updated":"2026-03-19T05:13:51.000","operation_type":"I","batch_date":"2026-
+05-30","source_system":"policy_system"},{"payment_id":"PAY00070","policy_id":"PO
+L00070","payment_date":"2026-05-11T23:28:48.000","payment_method":"Credit Card",
+"payment_status":"PAID","payment_amount":2945834,"transaction_reference":"TXN000
+70","last_updated":"2026-05-11T23:28:48.000","operation_type":"I","batch_date":"
+2026-05-30","source_system":"policy_system"},{"payment_id":"PAY00071","policy_id
+":"POL00071","payment_date":"2026-04-26T00:41:36.000","payment_method":"Bank Tra
+nsfer","payment_status":"FAILED","payment_amount":6034392,"transaction_reference
+":"TXN00071","last_updated":"2026-04-26T00:41:36.000","operation_type":"I","batc
+h_date":"2026-05-30","source_system":"policy_system"},{"payment_id":"PAY00072","
+policy_id":"POL00072","payment_date":"2026-03-19T16:48:28.000","payment_method":
+"E-wallet","payment_status":"PAID","payment_amount":4916259,"transaction_referen
+ce":"TXN00072","last_updated":"2026-03-19T16:48:28.000","operation_type":"I","ba
+tch_date":"2026-05-30","source_system":"policy_system"},{"payment_id":"PAY00073"
+,"policy_id":"POL00073","payment_date":"2026-04-06T17:31:16.000","payment_method
+":"Credit Card","payment_status":"PAID","payment_amount":3005990,"transaction_re
+ference":"TXN00073","last_updated":"2026-04-06T17:31:16.000","operation_type":"I
+","batch_date":"2026-05-30","source_system":"policy_system"},{"payment_id":"PAY0
+0074","policy_id":"POL00074","payment_date":"2026-04-10T16:45:00.000","payment_m
+ethod":"Bank Transfer","payment_status":"PAID","payment_amount":2876193,"transac
+tion_reference":"TXN00074","last_updated":"2026-04-10T16:45:00.000","operation_t
+ype":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"payment_id
+":"PAY00075","policy_id":"POL00075","payment_date":"2026-05-13T23:04:50.000","pa
+yment_method":"Bank Transfer","payment_status":"PAID","payment_amount":4816937,"
+transaction_reference":"TXN00075","last_updated":"2026-05-13T23:04:50.000","oper
+ation_type":"I","batch_date":"2026-05-30","source_system":"policy_system"},{"pay
+ment_id":"PAY00076","policy_id":"POL00076","payment_date":"2026-05-02T00:25:24.0
+00","payment_method":"Bank Transfer","payment_status":"PAID","payment_amount":29
+38537,"transaction_reference":"TXN00076","last_updated":"2026-05-02T00:25:24.000
+","operation_type":"I","batch_date":"2026-05-30","source_system":"policy_system"
+},{"payment_id":"PAY00077","policy_id":"POL00077","payment_date":"2026-03-19T12:
+45:03.000","payment_method":"E-wallet","payment_status":"PAID","payment_amount":
+4647021,"transaction_reference":"TXN00077","last_updated":"2026-03-19T12:45:03.0
+00","operation_type":"I","batch_date":"2026-05-30","source_system":"policy_syste
+m"},{"payment_id":"PAY00078","policy_id":"POL00078","payment_date":"2026-05-02T1
+1:56:32.000","payment_method":"E-wallet","payment_status":"PAID","payment_amount
+":4011506,"transaction_reference":"TXN00078","last_updated":"2026-05-02T11:56:32
+.000","operation_type":"I","batch_date":"2026-05-30","source_system":"policy_sys
+tem"},{"payment_id":"PAY00079","policy_id":"POL00079","payment_date":"2026-03-29
+T22:53:29.000","payment_method":"E-wallet","payment_status":"PAID","payment_amou
+nt":2838403,"transaction_reference":"TXN00079","last_updated":"2026-03-29T22:53:
+29.000","operation_type":"I","batch_date":"2026-05-30","source_system":"policy_s
+ystem"},{"payment_id":"PAY00080","policy_id":"POL00080","payment_date":"2026-02-
+10T10:09:38.000","payment_method":"Credit Card","payment_status":"PAID","payment
+_amount":5029468,"transaction_reference":"TXN00080","last_updated":"2026-02-10T1
+0:09:38.000","operation_type":"I","batch_date":"2026-05-30","source_system":"pol
+icy_system"}]

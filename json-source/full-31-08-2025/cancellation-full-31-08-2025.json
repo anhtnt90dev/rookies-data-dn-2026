@@ -1,0 +1,12 @@
+JSON_F52E2B61-18A1-11d1-B105-00805F49916B
+[{"cancellation_id":"CAN00001","policy_id":"POL00028","cancellation_date":"2025-
+07-01T00:00:00.000","cancellation_reason":"CustomerRequest","refund_amount":8656
+98,"last_updated":"2025-07-01T00:00:00.000","operation_type":"I","batch_date":"2
+025-08-31","source_system":"policy_system"},{"cancellation_id":"CAN00002","polic
+y_id":"POL00029","cancellation_date":"2025-08-25T00:00:00.000","cancellation_rea
+son":"VehicleSold","refund_amount":2686216,"last_updated":"2025-08-25T00:00:00.0
+00","operation_type":"I","batch_date":"2025-08-31","source_system":"policy_syste
+m"},{"cancellation_id":"CAN00003","policy_id":"POL00035","cancellation_date":"20
+25-06-27T12:46:24.000","cancellation_reason":"Financial Difficulty","refund_amou
+nt":1965959,"last_updated":"2025-06-27T12:46:24.000","operation_type":"I","batch
+_date":"2025-08-31","source_system":"policy_system"}]

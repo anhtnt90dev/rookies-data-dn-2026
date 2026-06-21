@@ -1,0 +1,9 @@
+role ROLE_CUSTOMER
+	modelPermission: read
+
+	tablePermission dim_agent
+
+	tablePermission dim_customer = TRUE()
+
+	annotation PBI_Id = f444dde84a754c31bf99e183f3ddf997
+

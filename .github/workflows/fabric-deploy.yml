@@ -1,11 +1,11 @@
 name: Deploy Fabric
-
 on:
   pull_request:
     branches:
       - dev
     paths:
-      - fabric/**
+      - 'fabric/**'
+      - '!fabric/Powerbi/**'
     types: [closed]
 
   # Manual deployment
@@ -160,7 +160,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
@@ -204,7 +204,7 @@ jobs:
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
 
         run: |
-          python cicd/scripts/github-action/deploy.py \
+          python cicd/scripts/github-action/deploy_pipeline.py \
           --aztenantid "$AZURE_TENANT_ID" \
           --azclientid "$AZURE_CLIENT_ID" \
           --azspsecret "$AZURE_CLIENT_SECRET" \

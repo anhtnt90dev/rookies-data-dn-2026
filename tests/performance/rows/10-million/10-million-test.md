@@ -5,7 +5,7 @@
 
 ## Execution Time
 
-~20 minutes 55 seconds
+~20 minutes 39 seconds
 
 ![Execution Time](time.png)
 

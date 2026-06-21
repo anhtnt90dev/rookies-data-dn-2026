@@ -1,0 +1,275 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 6464.6781073068432,
+        "y": 1246.3153466490596
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 9469.2026339184322,
+            "y": 1681.037231688947
+          },
+          "nodeIndex": "Measures ",
+          "nodeLineageTag": "437f0056-7589-43a7-98fc-793adb84f474",
+          "size": {
+            "height": 104,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 5328.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_coverage",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 5612.7824179386671,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "dim_customer",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 17
+        },
+        {
+          "location": {
+            "x": 5896.7824179386671,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "dim_date",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 16
+        },
+        {
+          "location": {
+            "x": 6180.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_package",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 15
+        },
+        {
+          "location": {
+            "x": 6464.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_payment_method",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 6748.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_payment_status",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 6
+        },
+        {
+          "location": {
+            "x": 7032.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_policy",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 14
+        },
+        {
+          "location": {
+            "x": 7316.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_policy_status",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 20
+        },
+        {
+          "location": {
+            "x": 7600.7824179386671,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "dim_provider",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 7
+        },
+        {
+          "location": {
+            "x": 7884.7824179386671,
+            "y": 1234.6683037628118
+          },
+          "nodeIndex": "dim_quotation",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 13
+        },
+        {
+          "location": {
+            "x": 8168.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_quotation_status",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 8
+        },
+        {
+          "location": {
+            "x": 8452.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "dim_vehicle",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 18
+        },
+        {
+          "location": {
+            "x": 8736.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "fact_cancellation",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 9
+        },
+        {
+          "location": {
+            "x": 9020.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "fact_payment",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 21
+        },
+        {
+          "location": {
+            "x": 9304.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "fact_policy",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 19
+        },
+        {
+          "location": {
+            "x": 9588.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "fact_quotation",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 10
+        },
+        {
+          "location": {
+            "x": 9872.7824179386662,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "fact_quotation_item",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 11
+        },
+        {
+          "location": {
+            "x": 10903.95146353183,
+            "y": 1714.2388195497824
+          },
+          "nodeIndex": "Measures DB2",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 12
+        },
+        {
+          "location": {
+            "x": 4760.7824179386671,
+            "y": 1184.6683037628118
+          },
+          "nodeIndex": "dim_agent",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 5044.7824179386671,
+            "y": 1246.6683037628118
+          },
+          "nodeIndex": "dim_cancellation_reason",
+          "size": {
+            "height": 176,
+            "width": 234
+          },
+          "zIndex": 2
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 128.6993700521011,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

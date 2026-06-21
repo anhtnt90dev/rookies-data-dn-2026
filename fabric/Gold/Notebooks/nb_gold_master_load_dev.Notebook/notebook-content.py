@@ -8,14 +8,18 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
+# META       "default_lakehouse": "f6154ec7-4dbf-44f7-a335-159149f2ae56",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
+# META       "default_lakehouse_workspace_id": "c86fdecc-7ed1-42f4-9ec0-4b0274a76958",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
+# META           "id": "f6154ec7-4dbf-44f7-a335-159149f2ae56"
 # META         }
 # META       ]
+# META     },
+# META     "environment": {
+# META       "environmentId": "0519000f-54ce-ab89-4a90-a6f539ba103a",
+# META       "workspaceId": "00000000-0000-0000-0000-000000000000"
 # META     }
 # META   }
 # META }
@@ -131,7 +135,7 @@ try:
     dim_failures = []
     with ThreadPoolExecutor(max_workers=15) as executor:
         futures = {
-            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            executor.submit(mssparkutils.notebook.run, nb_name, 3600, args): (nb_name, table_id)
             for nb_name, args, table_id in dim_tasks
         }
         for future in as_completed(futures):
@@ -160,7 +164,7 @@ try:
     fact_failures = []
     with ThreadPoolExecutor(max_workers=5) as executor:
         futures = {
-            executor.submit(mssparkutils.notebook.run, nb_name, 1800, args): (nb_name, table_id)
+            executor.submit(mssparkutils.notebook.run, nb_name, 3600, args): (nb_name, table_id)
             for nb_name, args, table_id in fact_tasks
         }
         for future in as_completed(futures):

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "757e248d43c900ca977a",
+  "position": {
+    "x": 206.31090487238978,
+    "y": 471.92575406032483,
+    "z": 2000,
+    "height": 216.3341067285383,
+    "width": 501.9953596287703,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "funnel",
+    "query": {
+      "queryState": {
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_policy"
+                        }
+                      },
+                      "Property": "policy_id"
+                    }
+                  },
+                  "Function": 2
+                }
+              },
+              "queryRef": "CountNonNull(fact_policy.policy_id)",
+              "nativeQueryRef": "Policies Issued",
+              "displayName": "Policies Issued"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_payment"
+                        }
+                      },
+                      "Property": "payment_id"
+                    }
+                  },
+                  "Function": 2
+                }
+              },
+              "queryRef": "CountNonNull(fact_payment.payment_id)",
+              "nativeQueryRef": "Payments Received",
+              "displayName": "Payments Received"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Active Policies"
+                }
+              },
+              "queryRef": "Measures DB2.Active Policies",
+              "nativeQueryRef": "Active Policies"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Cancelled Policies"
+                }
+              },
+              "queryRef": "Measures DB2.Cancelled Policies",
+              "nativeQueryRef": "Cancelled Policies"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Aggregation": {
+                "Expression": {
+                  "Column": {
+                    "Expression": {
+                      "SourceRef": {
+                        "Entity": "fact_policy"
+                      }
+                    },
+                    "Property": "policy_id"
+                  }
+                },
+                "Function": 2
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'POLICY LIFECYCLE FUNNEL'"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

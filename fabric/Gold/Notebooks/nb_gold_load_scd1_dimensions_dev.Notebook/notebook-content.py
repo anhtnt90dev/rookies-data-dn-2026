@@ -8,12 +8,12 @@
 # META   },
 # META   "dependencies": {
 # META     "lakehouse": {
-# META       "default_lakehouse": "cf1b63ae-986e-4368-a13e-ed5eed5fd990",
+# META       "default_lakehouse": "f6154ec7-4dbf-44f7-a335-159149f2ae56",
 # META       "default_lakehouse_name": "lh_insurance_dev",
-# META       "default_lakehouse_workspace_id": "82a15c8e-ce8d-4f2c-827e-94b17659ecd8",
+# META       "default_lakehouse_workspace_id": "c86fdecc-7ed1-42f4-9ec0-4b0274a76958",
 # META       "known_lakehouses": [
 # META         {
-# META           "id": "cf1b63ae-986e-4368-a13e-ed5eed5fd990"
+# META           "id": "f6154ec7-4dbf-44f7-a335-159149f2ae56"
 # META         }
 # META       ]
 # META     }
@@ -124,6 +124,11 @@ def load_scd1_dimension(
         # 1. Ensure Unknown row (-1)
         ensure_unknown_row(target_table_name, surrogate_key_col)
 
+        # Apply incremental batch filtering if applicable
+        if run_mode != "FULL" and batch_id and "_batch_id" in source_df.columns:
+            source_df = source_df.where(F.col("_batch_id") == F.lit(str(batch_id)))
+            print(f"[INFO] Incremental filter applied: _batch_id == {batch_id}")
+
         # 2. Get current maximum surrogate key
         max_key = spark.table(target_table_name).where(F.col(surrogate_key_col) != -1).agg(F.max(surrogate_key_col)).collect()[0][0]
         max_key = int(max_key) if max_key is not None else 0
@@ -149,11 +154,27 @@ def load_scd1_dimension(
         )
 
         new_records_only = merged_prep.filter(F.col(surrogate_key_col).isNull())
-        window_spec = Window.orderBy("src_" + business_key_col)
-        new_records_with_keys = new_records_only.withColumn(
-            "resolved_key",
-            F.lit(max_key) + F.row_number().over(window_spec).cast("bigint")
-        ).withColumn("is_new", F.lit(True))
+        
+        # Optimize key generation with Partition Offset method to prevent single-partition OOM/timeout
+        new_records_with_pid = new_records_only.withColumn("_pid", F.spark_partition_id())
+        partition_counts = new_records_with_pid.groupBy("_pid").count().collect()
+        partition_counts.sort(key=lambda x: x["_pid"])
+        
+        if partition_counts:
+            offsets = {}
+            running_sum = max_key
+            for row in partition_counts:
+                offsets[row["_pid"]] = running_sum
+                running_sum += row["count"]
+            offsets_df = spark.createDataFrame([(k, v) for k, v in offsets.items()], ["_pid", "_offset"])
+            window_spec = Window.partitionBy("_pid").orderBy("src_" + business_key_col)
+            new_records_with_keys = new_records_with_pid.join(F.broadcast(offsets_df), "_pid") \
+                .withColumn("resolved_key", F.col("_offset") + F.row_number().over(window_spec)) \
+                .withColumn("is_new", F.lit(True)) \
+                .drop("_pid", "_offset")
+        else:
+            new_records_with_keys = new_records_only.withColumn("resolved_key", F.lit(None).cast("bigint")) \
+                .withColumn("is_new", F.lit(True))
 
         existing_records = merged_prep.filter(F.col(surrogate_key_col).isNotNull())\
                                       .withColumn("resolved_key", F.col(surrogate_key_col))\
@@ -167,6 +188,9 @@ def load_scd1_dimension(
             *[F.col("src_" + c).alias(c) for c in attr_cols],
             F.col("is_new")
         )
+        
+        # Cache final_merge_df to prevent multiple evaluations during merges/counts
+        final_merge_df = final_merge_df.cache()
 
         # Delta Merge
         delta_table = DeltaTable.forName(spark, target_table_name)
@@ -197,10 +221,19 @@ def load_scd1_dimension(
             }
         ).execute()
 
-        # Update stats
+        # Optimize stats retrieval with a single action aggregation on cached final_merge_df
         total_count = spark.table(target_table_name).count()
-        inserted_count = final_merge_df.filter(F.col("is_new") == True).count()
-        updated_count = final_merge_df.filter(F.col("is_new") == False).count()
+        stats_df = final_merge_df.groupBy("is_new").count().collect()
+        inserted_count = 0
+        updated_count = 0
+        for row in stats_df:
+            if row["is_new"]:
+                inserted_count = row["count"]
+            else:
+                updated_count = row["count"]
+                
+        # Unpersist cache
+        final_merge_df.unpersist()
 
         finish_table_layer(
             table_session_id=table_session_id,
@@ -218,6 +251,10 @@ def load_scd1_dimension(
 
     except Exception as err:
         print(f"[ERROR] Failed to load {target_table_name}: {err}")
+        try:
+            final_merge_df.unpersist()
+        except:
+            pass
         finish_table_layer(
             table_session_id=table_session_id,
             layer="GOLD",
@@ -235,14 +272,14 @@ def load_scd1_dimension(
 dim_package_id = dim_fact_lookup["dim_package"]
 if p_table_id is None or p_table_id == dim_package_id:
     print("[LOAD] Processing dim_package...")
-    package_source_df = spark.table("silver.quotation").select("package_code")
+    package_source_df = spark.table("silver.quotation").select("package_code", "_batch_id")
     load_scd1_dimension("gold.dim_package", package_source_df, "package_code", "package_key", [], dim_package_id)
 
 # 2. dim_coverage (Source: silver.quotation_item)
 dim_coverage_id = dim_fact_lookup["dim_coverage"]
 if p_table_id is None or p_table_id == dim_coverage_id:
     print("[LOAD] Processing dim_coverage...")
-    coverage_source_df = spark.table("silver.quotation_item").select("coverage_type")
+    coverage_source_df = spark.table("silver.quotation_item").select("coverage_type", "_batch_id")
     load_scd1_dimension("gold.dim_coverage", coverage_source_df, "coverage_type", "coverage_key", [], dim_coverage_id)
 
 # 3. dim_quotation (Source: silver.quotation)
@@ -251,7 +288,8 @@ if p_table_id is None or p_table_id == dim_quotation_id:
     print("[LOAD] Processing dim_quotation...")
     quotation_source_df = spark.table("silver.quotation").select(
         "quotation_id",
-        F.to_date("quotation_expiry_at").alias("quotation_expiry_date")
+        F.to_date("quotation_expiry_at").alias("quotation_expiry_date"),
+        "_batch_id"
     )
     load_scd1_dimension("gold.dim_quotation", quotation_source_df, "quotation_id", "quotation_key", ["quotation_expiry_date"], dim_quotation_id)
 
@@ -259,40 +297,41 @@ if p_table_id is None or p_table_id == dim_quotation_id:
 dim_policy_id = dim_fact_lookup["dim_policy"]
 if p_table_id is None or p_table_id == dim_policy_id:
     print("[LOAD] Processing dim_policy...")
-    policy_source_df = spark.table("silver.policy").select("policy_id")
+    policy_source_df = spark.table("silver.policy").select("policy_id", "_batch_id")
     load_scd1_dimension("gold.dim_policy", policy_source_df, "policy_id", "policy_key", [], dim_policy_id)
 
 # 5. dim_quotation_status (Source: silver.quotation)
 dim_qstatus_id = dim_fact_lookup["dim_quotation_status"]
 if p_table_id is None or p_table_id == dim_qstatus_id:
     print("[LOAD] Processing dim_quotation_status...")
-    qstatus_source_df = spark.table("silver.quotation").select(F.col("quotation_status").alias("quotation_status_code"))
+    qstatus_source_df = spark.table("silver.quotation").select(F.col("quotation_status").alias("quotation_status_code"), "_batch_id")
     load_scd1_dimension("gold.dim_quotation_status", qstatus_source_df, "quotation_status_code", "quotation_status_key", [], dim_qstatus_id)
 
 # 6. dim_policy_status (Source: silver.policy)
 dim_pstatus_id = dim_fact_lookup["dim_policy_status"]
 if p_table_id is None or p_table_id == dim_pstatus_id:
     print("[LOAD] Processing dim_policy_status...")
-    pstatus_source_df = spark.table("silver.policy").select(F.col("policy_status").alias("policy_status_code"))
+    pstatus_source_df = spark.table("silver.policy").select(F.col("policy_status").alias("policy_status_code"), "_batch_id")
     load_scd1_dimension("gold.dim_policy_status", pstatus_source_df, "policy_status_code", "policy_status_key", [], dim_pstatus_id)
 
 # 7. dim_payment_status (Source: silver.payment)
 dim_paystatus_id = dim_fact_lookup["dim_payment_status"]
 if p_table_id is None or p_table_id == dim_paystatus_id:
     print("[LOAD] Processing dim_payment_status...")
-    paystatus_source_df = spark.table("silver.payment").select(F.col("payment_status").alias("payment_status_code"))
+    paystatus_source_df = spark.table("silver.payment").select(F.col("payment_status").alias("payment_status_code"), "_batch_id")
     load_scd1_dimension("gold.dim_payment_status", paystatus_source_df, "payment_status_code", "payment_status_key", [], dim_paystatus_id)
 
 # 8. dim_payment_method (Source: silver.payment)
 dim_paymethod_id = dim_fact_lookup["dim_payment_method"]
 if p_table_id is None or p_table_id == dim_paymethod_id:
     print("[LOAD] Processing dim_payment_method...")
-    raw_payment_method_df = spark.table("silver.payment").select("payment_method")
+    raw_payment_method_df = spark.table("silver.payment").select("payment_method", "_batch_id")
     payment_method_df = raw_payment_method_df.select(
         F.when(F.col("payment_method") == "Bank Transfer", "BANK_TRANSFER")
          .when(F.col("payment_method") == "Credit Card", "CREDIT_CARD")
          .when(F.col("payment_method") == "E-wallet", "E_WALLET")
-         .otherwise(F.upper(F.col("payment_method"))).alias("payment_method_code")
+         .otherwise(F.upper(F.col("payment_method"))).alias("payment_method_code"),
+        "_batch_id"
     )
     load_scd1_dimension("gold.dim_payment_method", payment_method_df, "payment_method_code", "payment_method_key", [], dim_paymethod_id)
 
@@ -300,7 +339,7 @@ if p_table_id is None or p_table_id == dim_paymethod_id:
 dim_cancelreason_id = dim_fact_lookup["dim_cancellation_reason"]
 if p_table_id is None or p_table_id == dim_cancelreason_id:
     print("[LOAD] Processing dim_cancellation_reason...")
-    cancel_source_df = spark.table("silver.cancellation").select("cancellation_reason")
+    cancel_source_df = spark.table("silver.cancellation").select("cancellation_reason", "_batch_id")
     load_scd1_dimension("gold.dim_cancellation_reason", cancel_source_df, "cancellation_reason", "cancellation_reason_key", [], dim_cancelreason_id)
 
 # METADATA ********************

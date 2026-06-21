@@ -1,0 +1,51 @@
+table 'gold dim_package'
+	lineageTag: cf4efca6-d53f-4a40-be4c-498f4861ba71
+
+	column package_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 11acc2f2-6bb4-4bbf-ac98-c904b86852c5
+		summarizeBy: sum
+		sourceColumn: package_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column package_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 4290ade1-17c7-4a51-8d64-c6309a830b2d
+		summarizeBy: none
+		sourceColumn: package_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 47c693cf-5c26-44b0-b684-623d16c4b436
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 29cfaee9-8098-49c9-815a-c9b1d93d87d5
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'gold dim_package' = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_package = Source{[Schema="gold",Item="dim_package"]}[Data]
+				in
+				    gold_dim_package
+

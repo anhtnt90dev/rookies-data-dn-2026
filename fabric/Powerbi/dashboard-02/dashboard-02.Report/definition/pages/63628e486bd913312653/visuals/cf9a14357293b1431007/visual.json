@@ -351,67 +351,6 @@
             }
           ]
         }
-      },
-      {
-        "name": "d270a9a28c93b404a176",
-        "field": {
-          "HierarchyLevel": {
-            "Expression": {
-              "Hierarchy": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "dim_date"
-                  }
-                },
-                "Hierarchy": "full_date_hierachy"
-              }
-            },
-            "Level": "month_number"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "3072c4e753014212d100",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Policies Issued"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "58f0e9d52e0860697955",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Cancelled Policies"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "3a09bb1a39a968b650b2",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Total Collected Premium"
-          }
-        },
-        "type": "Advanced"
       }
     ]
   }

@@ -1,0 +1,109 @@
+table dim_provider
+	lineageTag: 91ab234e-db40-4716-aa7b-68de7a313a43
+
+	column provider_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: 4ab7a0a8-7dcb-4228-9da2-552674a57457
+		summarizeBy: none
+		sourceColumn: provider_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: ffffe200-ee9e-4ff9-9024-06d40777437e
+		summarizeBy: none
+		sourceColumn: provider_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_name
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: ff50011c-70b5-4382-9817-2fb00b13b31c
+		summarizeBy: none
+		sourceColumn: provider_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column provider_group
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: adbecd1f-b0bd-4aac-aba4-eeee73adb9ca
+		summarizeBy: none
+		sourceColumn: provider_group
+
+		annotation SummarizationSetBy = Automatic
+
+	column active_flag
+		dataType: int64
+		formatString: 0
+		sourceProviderType: int
+		lineageTag: 3d6e4057-6654-4f7a-873f-42d2fece62d6
+		summarizeBy: sum
+		sourceColumn: active_flag
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_from
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 85b90105-337a-413a-9e61-3f36193c7180
+		summarizeBy: none
+		sourceColumn: effective_from
+
+		annotation SummarizationSetBy = Automatic
+
+	column effective_to
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 4dc22492-cbe6-4ba6-83e5-92c1383a8dad
+		summarizeBy: none
+		sourceColumn: effective_to
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_current
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		sourceProviderType: bit
+		lineageTag: 1c48c0cc-c50a-41e1-abdf-06d72be412a8
+		summarizeBy: none
+		sourceColumn: is_current
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 000e99e2-7e8b-4f96-af6f-2c9c14a19d49
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: f71cc1b7-e4c5-4941-af2e-f3ce4029462f
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_provider = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_provider = Source{[Schema="gold",Item="dim_provider"]}[Data]
+				in
+				    gold_dim_provider
+

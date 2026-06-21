@@ -1,0 +1,263 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "55ad06bf900ceec9b441",
+  "position": {
+    "x": 180.26954177897574,
+    "y": 136.28032345013477,
+    "z": 2000,
+    "height": 564.09703504043125,
+    "width": 1080.7547169811321,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cancellation"
+                    }
+                  },
+                  "Property": "cancellation_id"
+                }
+              },
+              "queryRef": "fact_cancellation.cancellation_id",
+              "nativeQueryRef": "CANCELLATION ID",
+              "displayName": "CANCELLATION ID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_cancellation"
+                    }
+                  },
+                  "Property": "policy_id"
+                }
+              },
+              "queryRef": "fact_cancellation.policy_id",
+              "nativeQueryRef": "POLICY ID",
+              "displayName": "POLICY ID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_customer"
+                    }
+                  },
+                  "Property": "full_name"
+                }
+              },
+              "queryRef": "dim_customer.full_name",
+              "nativeQueryRef": "CUSTOMER",
+              "displayName": "CUSTOMER"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_provider"
+                    }
+                  },
+                  "Property": "provider_name"
+                }
+              },
+              "queryRef": "dim_provider.provider_name",
+              "nativeQueryRef": "PROVIDER",
+              "displayName": "PROVIDER"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_cancellation_reason"
+                    }
+                  },
+                  "Property": "cancellation_reason"
+                }
+              },
+              "queryRef": "dim_cancellation_reason.cancellation_reason",
+              "nativeQueryRef": "REASON",
+              "displayName": "REASON"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "fact_cancellation"
+                        }
+                      },
+                      "Property": "refund_amount"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(fact_cancellation.refund_amount)",
+              "nativeQueryRef": "REFUND AMOUNT (VND)",
+              "displayName": "REFUND AMOUNT (VND)"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "175.26145273818554D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_cancellation_reason.cancellation_reason"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "164.42428471737614D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Sum(fact_cancellation.refund_amount)"
+          }
+        }
+      ],
+      "columnHeaders": [
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0.6
+                    }
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 1,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            },
+            "bold": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'CANCELLATION DETAIL TABLE'"
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "background": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "stylePreset": [
+        {
+          "properties": {
+            "name": {
+              "expr": {
+                "Literal": {
+                  "Value": "'BoldHeader'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

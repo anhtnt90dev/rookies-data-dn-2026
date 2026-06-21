@@ -3,12 +3,12 @@
 
 ## Execution Time
 
-~1 hour 50 minutes 29 seconds *(Note: Run failed during Gold Ingestion stage)*
+~3 hour 9 minutes 25 seconds *(Note: Run failed during Gold Ingestion stage)*
 
 ![Execution Time](time.png)
 
 ### Medallion Layer Durations:
-*   **Bronze (ingestion)**: 46m 56s
-*   **Silver (nb_process_transform_silver_layer)**: 28m 52s
-*   **Gold (nb_ingestion_gold)**: 34m 11s *(Failed)*
-*   **Validation**: N/A *(Aborted due to Gold layer failure)*
+*   **Bronze (ingestion)**: 43m 4s
+*   **Silver**: 27m 47s
+*   **Gold**: 42m 17s
+*   **Validation**: 01h 16m 17s

@@ -3,7 +3,7 @@ import argparse
 
 from azure.identity import ClientSecretCredential
 
-from fabric_cicd import FabricWorkspace, publish_all_items, change_log_level
+from fabric_cicd import FabricWorkspace, publish_all_items, change_log_level, unpublish_all_orphan_items
 
 change_log_level("DEBUG")
 
@@ -52,6 +52,13 @@ print("Publishing PowerBI artifacts...")
 
 
 publish_all_items(workspace)
+
+
+
+
+print("Un-publishing PowerBI artifacts...")
+
+unpublish_all_orphan_items(target_workspace)
 
 
 print("PowerBI deployment completed")

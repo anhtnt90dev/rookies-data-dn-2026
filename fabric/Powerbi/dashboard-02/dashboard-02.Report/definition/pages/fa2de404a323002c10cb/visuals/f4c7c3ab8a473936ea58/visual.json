@@ -1,52 +1,20 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "20d49ca3d473c440b490",
+  "name": "f4c7c3ab8a473936ea58",
   "position": {
-    "x": 20.429711479435234,
-    "y": 8.6433394720687531,
-    "z": 0,
+    "x": 31.430325352977285,
+    "y": 337.87599754450582,
+    "z": 2,
     "height": 279.72989564149782,
-    "width": 279.72989564149782,
-    "tabOrder": 0
+    "width": 280.51565377532228,
+    "tabOrder": 2
   },
   "visual": {
-    "visualType": "lineChart",
+    "visualType": "pieChart",
     "query": {
       "queryState": {
-        "Tooltips": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Best Collection Rate Provider"
-                }
-              },
-              "queryRef": "Measures DB2.Best Collection Rate Provider",
-              "nativeQueryRef": "Best Collection Rate Provider"
-            }
-          ]
-        },
         "Y": {
           "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Active Policies"
-                }
-              },
-              "queryRef": "Measures DB2.Active Policies",
-              "nativeQueryRef": "Active Policies"
-            },
             {
               "field": {
                 "Measure": {
@@ -60,6 +28,34 @@
               },
               "queryRef": "Measures DB2.Average Payment Time (Days)",
               "nativeQueryRef": "Average Payment Time (Days)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Payment Value"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Payment Value",
+              "nativeQueryRef": "Avg Payment Value"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Premium per Policy"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Premium per Policy",
+              "nativeQueryRef": "Avg Premium per Policy"
             }
           ]
         }
@@ -74,7 +70,7 @@
                     "Entity": "Measures DB2"
                   }
                 },
-                "Property": "Active Policies"
+                "Property": "Average Payment Time (Days)"
               }
             },
             "direction": "Descending"
@@ -88,21 +84,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "16d4eb540432d4011e4d",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Active Policies"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "bb9a67c9005e10e113c4",
+        "name": "4034d9cdae2b4d032b64",
         "field": {
           "Measure": {
             "Expression": {
@@ -116,7 +98,7 @@
         "type": "Advanced"
       },
       {
-        "name": "a3a359d2d5093e13be78",
+        "name": "7f92640bc27e42c6e32b",
         "field": {
           "Measure": {
             "Expression": {
@@ -124,7 +106,21 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Best Collection Rate Provider"
+            "Property": "Avg Payment Value"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "3ecf2aecc5aa741d1022",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Premium per Policy"
           }
         },
         "type": "Advanced"

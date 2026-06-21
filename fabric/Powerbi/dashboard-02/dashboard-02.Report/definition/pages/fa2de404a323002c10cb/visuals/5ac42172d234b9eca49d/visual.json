@@ -2,15 +2,15 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "5ac42172d234b9eca49d",
   "position": {
-    "x": 590.890116635973,
-    "y": 217.65500306936769,
+    "x": 311.94597912829954,
+    "y": 8.6433394720687531,
     "z": 1,
-    "height": 349.6623695518723,
-    "width": 543.744628606507,
+    "height": 279.72989564149782,
+    "width": 691.46715776550025,
     "tabOrder": 1
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "stackedAreaChart",
     "query": {
       "queryState": {
         "Category": {
@@ -47,24 +47,6 @@
               },
               "queryRef": "dim_date.month_number",
               "nativeQueryRef": "month_number"
-            }
-          ]
-        },
-        "Tooltips": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Best Collection Rate Provider"
-                }
-              },
-              "queryRef": "Measures DB2.Best Collection Rate Provider",
-              "nativeQueryRef": "Best Collection Rate Provider"
             }
           ]
         },
@@ -139,63 +121,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "8eeeb72b4200dc530e90",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Cancelled Policies"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "9ef82b42b3dc2a74e61c",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Best Collection Rate Provider"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "7e1bd0a5416d3cb99b5a",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Avg Premium per Policy"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "04df0cbb8c5e003baad5",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Avg Payment Value"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "3164ca01702e031c3090",
+        "name": "c20e732ae46206e918ba",
         "field": {
           "Column": {
             "Expression": {
@@ -209,7 +135,7 @@
         "type": "Advanced"
       },
       {
-        "name": "ea543ad800000446814e",
+        "name": "093a12d0178302420880",
         "field": {
           "Column": {
             "Expression": {
@@ -218,6 +144,48 @@
               }
             },
             "Property": "month_number"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "82223ec0ad8d7e9e4112",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Cancelled Policies"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "31750a4f10824db72a8d",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Premium per Policy"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "d5578188012d3245a37b",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Payment Value"
           }
         },
         "type": "Advanced"

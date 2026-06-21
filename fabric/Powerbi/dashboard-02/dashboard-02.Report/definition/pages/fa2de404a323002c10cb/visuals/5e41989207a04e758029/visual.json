@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "20d49ca3d473c440b490",
+  "name": "5e41989207a04e758029",
   "position": {
-    "x": 20.429711479435234,
-    "y": 8.6433394720687531,
-    "z": 0,
-    "height": 279.72989564149782,
-    "width": 279.72989564149782,
-    "tabOrder": 0
+    "x": 398.37937384898709,
+    "y": 337.09023941068136,
+    "z": 3,
+    "height": 280.51565377532228,
+    "width": 690.68139963167584,
+    "tabOrder": 3
   },
   "visual": {
-    "visualType": "lineChart",
+    "visualType": "hundredPercentStackedAreaChart",
     "query": {
       "queryState": {
         "Tooltips": {
@@ -23,11 +23,25 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Best Collection Rate Provider"
+                  "Property": "Growth Avg Payment Value %"
                 }
               },
-              "queryRef": "Measures DB2.Best Collection Rate Provider",
-              "nativeQueryRef": "Best Collection Rate Provider"
+              "queryRef": "Measures DB2.Growth Avg Payment Value %",
+              "nativeQueryRef": "Growth Avg Payment Value %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Growth Avg Premium per Policy %"
+                }
+              },
+              "queryRef": "Measures DB2.Growth Avg Premium per Policy %",
+              "nativeQueryRef": "Growth Avg Premium per Policy %"
             }
           ]
         },
@@ -41,25 +55,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Active Policies"
+                  "Property": "Growth Avg Payment Value"
                 }
               },
-              "queryRef": "Measures DB2.Active Policies",
-              "nativeQueryRef": "Active Policies"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Average Payment Time (Days)"
-                }
-              },
-              "queryRef": "Measures DB2.Average Payment Time (Days)",
-              "nativeQueryRef": "Average Payment Time (Days)"
+              "queryRef": "Measures DB2.Growth Avg Payment Value",
+              "nativeQueryRef": "Growth Avg Payment Value"
             }
           ]
         }
@@ -74,7 +74,7 @@
                     "Entity": "Measures DB2"
                   }
                 },
-                "Property": "Active Policies"
+                "Property": "Growth Avg Payment Value"
               }
             },
             "direction": "Descending"
@@ -88,7 +88,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "16d4eb540432d4011e4d",
+        "name": "ce6c8daaad1e8c67974a",
         "field": {
           "Measure": {
             "Expression": {
@@ -96,13 +96,13 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Active Policies"
+            "Property": "Growth Avg Payment Value"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "bb9a67c9005e10e113c4",
+        "name": "73b89d34112016070cb7",
         "field": {
           "Measure": {
             "Expression": {
@@ -110,13 +110,13 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Average Payment Time (Days)"
+            "Property": "Growth Avg Payment Value %"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "a3a359d2d5093e13be78",
+        "name": "2476812b0a54edd3c04d",
         "field": {
           "Measure": {
             "Expression": {
@@ -124,7 +124,7 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Best Collection Rate Provider"
+            "Property": "Growth Avg Premium per Policy %"
           }
         },
         "type": "Advanced"

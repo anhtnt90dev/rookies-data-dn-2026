@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_provider.provider_name",
-              "nativeQueryRef": "provider_name",
-              "active": true
+              "nativeQueryRef": "Provider",
+              "active": true,
+              "displayName": "Provider"
             }
           ]
         },
@@ -94,6 +95,13 @@
         {
           "properties": {
             "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "gridlineShow": {
               "expr": {
                 "Literal": {
                   "Value": "false"
@@ -173,5 +181,51 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "f7a2020beb855c0b6d33",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_provider"
+              }
+            },
+            "Property": "provider_name"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "81771de4a0b484469b99",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Conversion Rate"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "43d672abc77cc4d90074",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Avg Written Premium per Policy (VND)"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

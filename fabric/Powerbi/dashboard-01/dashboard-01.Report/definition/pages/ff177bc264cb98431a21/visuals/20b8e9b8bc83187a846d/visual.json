@@ -257,5 +257,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "555b53ef47b45a982e29",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Total Quotations"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

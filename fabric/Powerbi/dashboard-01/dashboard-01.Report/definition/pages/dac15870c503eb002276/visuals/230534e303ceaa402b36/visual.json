@@ -186,5 +186,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "876d117497ca0d28e5e1",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Top Agent Name (Policies)"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

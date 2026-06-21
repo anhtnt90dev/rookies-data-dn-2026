@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "1ed9c3023c3ea873c030",
   "position": {
-    "x": 798.7467362924283,
-    "y": 367.62402088772848,
+    "x": 789.09420176725894,
+    "y": 367.05030130827117,
     "z": 11000,
-    "height": 66.840731070496091,
-    "width": 162.088772845953,
+    "height": 67.782808255534391,
+    "width": 182.88569019889468,
     "tabOrder": 11000
   },
   "visual": {
@@ -146,13 +146,63 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "Measures "
+                    "Conditional": {
+                      "Cases": [
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 1,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Avg Premium Change % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#5ECBC8'"
+                            }
+                          }
+                        },
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 3,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Avg Premium Change % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#EB5757'"
+                            }
+                          }
                         }
-                      },
-                      "Property": "Avg Premium Change % YoY Color"
+                      ]
                     }
                   }
                 }
@@ -161,7 +211,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "'0'"
+                  "Value": "' '"
                 }
               }
             },

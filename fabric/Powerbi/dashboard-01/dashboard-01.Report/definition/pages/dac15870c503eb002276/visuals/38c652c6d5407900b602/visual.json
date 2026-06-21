@@ -288,6 +288,20 @@
             }
           ]
         }
+      },
+      {
+        "name": "14249add3555242d130b",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Agent vs Regional Benchmark"
+          }
+        },
+        "type": "Advanced"
       }
     ]
   }

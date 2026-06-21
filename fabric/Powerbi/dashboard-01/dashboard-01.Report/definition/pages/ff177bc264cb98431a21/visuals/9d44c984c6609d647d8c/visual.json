@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "9d44c984c6609d647d8c",
   "position": {
-    "x": 261.67050099819375,
-    "y": 191.58018823082043,
+    "x": 239.15821026009306,
+    "y": 191.83813657226716,
     "z": 10000,
-    "height": 66.975187755490069,
-    "width": 168.21675064169597,
+    "height": 66.503887345052618,
+    "width": 191.83813657226716,
     "tabOrder": 10000
   },
   "visual": {
@@ -153,13 +153,63 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "Measures "
+                    "Conditional": {
+                      "Cases": [
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 1,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Quotation Growth % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#5ECBC8'"
+                            }
+                          }
+                        },
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 3,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Quotation Growth % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#EB5757'"
+                            }
+                          }
                         }
-                      },
-                      "Property": "Quotation Growth % YoY Color"
+                      ]
                     }
                   }
                 }
@@ -168,7 +218,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "'0'"
+                  "Value": "' '"
                 }
               }
             },

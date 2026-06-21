@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
-  "name": "5273c1fe4da3034aac19",
+  "name": "a07c0a28804cc11d0ceb",
   "position": {
     "x": 21.546134663341647,
     "y": 362.69326683291769,
-    "z": 8000,
+    "z": 11001,
     "height": 61.945137157107233,
     "width": 131.07231920199501,
-    "tabOrder": 7000
+    "tabOrder": 11001
   },
   "visual": {
     "visualType": "slicer",
@@ -283,7 +283,7 @@
       ]
     },
     "syncGroup": {
-      "groupName": "year_month",
+      "groupName": "year_number",
       "fieldChanges": true,
       "filterChanges": true
     },
@@ -292,7 +292,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "059625a90d3663b22a08",
+        "name": "1f9e33a270c829400e98",
         "field": {
           "Column": {
             "Expression": {
@@ -341,6 +341,13 @@
                       {
                         "Literal": {
                           "Value": "2026L"
+                        }
+                      }
+                    ],
+                    [
+                      {
+                        "Literal": {
+                          "Value": "2027L"
                         }
                       }
                     ]

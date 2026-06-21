@@ -50,15 +50,30 @@ table 'Measures '
 		formatString: 0
 		lineageTag: 289cfb97-cb55-4480-a6f6-bc399175abb0
 
-	measure 'Quotation Count by Month' = CALCULATE([Total Quotations], DATESMTD(dim_date[full_date]))
+	measure 'Quotation Count by Month' =
+			
+			COALESCE(
+			    CALCULATE([Total Quotations], DATESMTD(dim_date[full_date])),
+			    0
+			)
 		formatString: 0
 		lineageTag: 251f8c59-b672-461e-9d63-cffca98c8fc2
 
-	measure 'Policies Issued by Month' = CALCULATE([Policies Issued], DATESMTD(dim_date[full_date]))
+	measure 'Policies Issued by Month' =
+			
+			COALESCE(
+			    CALCULATE([Policies Issued], DATESMTD(dim_date[full_date])),
+			    0
+			)
 		formatString: 0
 		lineageTag: be6dd683-d862-4391-9720-0b28ca5256cb
 
-	measure 'Conversion Rate by Month' = CALCULATE([Conversion Rate], DATESMTD(dim_date[full_date]))
+	measure 'Conversion Rate by Month' =
+			
+			COALESCE(
+			    CALCULATE([Conversion Rate], DATESMTD(dim_date[full_date])),
+			    0
+			)
 		lineageTag: 7d784dda-175e-40f5-a5d4-08c2c39447ba
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -69,13 +84,19 @@ table 'Measures '
 
 	measure 'Rejected + Expired Rate by Month' =
 			
-			DIVIDE(
+			COALESCE(
 			    CALCULATE(
-			        [Total Quotations],
-			        dim_quotation_status[quotation_status_code]
-			            IN {"REJECTED", "EXPIRED"}
+			        DIVIDE(
+			            CALCULATE(
+			                [Total Quotations],
+			                dim_quotation_status[quotation_status_code]
+			                    IN {"REJECTED", "EXPIRED"}
+			            ),
+			            [Total Quotations],
+			            0
+			        ),
+			        DATESMTD(dim_date[full_date])
 			    ),
-			    [Total Quotations],
 			    0
 			)
 		lineageTag: f54130e1-c66f-4cd9-9c51-9279a297bbe1
@@ -309,7 +330,7 @@ table 'Measures '
 			    IF(
 			        ISBLANK(PY),
 			        BLANK(),
-			        CY - PY
+			        (CY - PY)*100
 			    )
 		lineageTag: a1461cdb-9050-4f61-834d-9c08e3338657
 
@@ -407,15 +428,6 @@ table 'Measures '
 			    )
 		lineageTag: fd733183-6c6e-4c96-902e-837d2ba680a5
 
-	measure 'Quotation Growth % YoY Color' =
-			
-			IF(
-			    [Quotation Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: dd0ed532-f4ca-4906-880e-8f1778f7f8af
-
 	measure 'Avg Premium Change % YoY Display' =
 			
 			VAR _pct = [Avg Premium Change % YoY]
@@ -427,15 +439,6 @@ table 'Measures '
 			            & " vs PY"
 			    )
 		lineageTag: b309603a-fd2b-4fce-a33e-2bb48c075ea7
-
-	measure 'Avg Premium Change % YoY Color' =
-			
-			IF(
-			    [Avg Premium Change % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: c94d27b4-8de2-4485-8d79-d50b6c562d56
 
 	measure 'Premium Growth % YoY Display' =
 			
@@ -449,15 +452,6 @@ table 'Measures '
 			    )
 		lineageTag: ea7cb0c8-80b6-426b-aae9-dd21395f2e97
 
-	measure 'Premium Growth % YoY Color' =
-			
-			IF(
-			    [Premium Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 639e6b8f-e568-4bd0-b9e4-cad823417dfd
-
 	measure 'Active Customer Growth % YoY Display' =
 			
 			VAR _pct = [Active Customer Growth % YoY]
@@ -470,15 +464,6 @@ table 'Measures '
 			    )
 		lineageTag: 7a10b3a3-4ccf-4b49-93af-df8fca1b88c8
 
-	measure 'Active Customer Growth % YoY Color' =
-			
-			IF(
-			    [Active Customer Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 2843495a-c812-40f3-8dda-5a70a8dbd23f
-
 	measure 'Conversion Rate Change YoY Display' =
 			
 			VAR _pts = [Conversion Rate Change YoY]
@@ -490,15 +475,6 @@ table 'Measures '
 			            & " vs PY"
 			    )
 		lineageTag: e493d69c-5ce2-4168-9961-89ab21bec160
-
-	measure 'Conversion Rate Change YoY Color' =
-			
-			IF(
-			    [Conversion Rate Change YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 1a894217-00a8-4660-aae9-3488c5a18be3
 
 	measure 'Policies Issued Growth % YoY' =
 			
@@ -530,15 +506,6 @@ table 'Measures '
 			    )
 		lineageTag: ed99f5aa-5602-42d1-8c7d-933751c7ea3a
 
-	measure 'Policies Issued Growth % YoY Color' =
-			
-			IF(
-			    [Policies Issued Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: a1cd1f00-3fa4-46ba-b78e-0b101de7696c
-
 	measure 'Accepted Quotations Growth % YoY' =
 			
 			VAR CurrentYear = MAX(dim_date[year_number])
@@ -569,15 +536,6 @@ table 'Measures '
 			    )
 		lineageTag: d4fc0ffb-52f8-47bd-a888-44a07e8a4dce
 
-	measure 'Accepted Quotations Growth % YoY Color' =
-			
-			IF(
-			    [Accepted Quotations Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 8fefc73b-994b-4252-a8e3-6d0b34e74d9a
-
 	measure 'Policies In Force Growth % YoY' =
 			
 			VAR CurrentYear = MAX(dim_date[year_number])
@@ -595,15 +553,6 @@ table 'Measures '
 		lineageTag: a37ab553-1387-4ef1-8355-22262ecf1faf
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
-
-	measure 'Policies In Force Growth % YoY Color' =
-			
-			IF(
-			    [Policies In Force Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 007b3b17-ad18-4442-8e3b-c2d8fb26f921
 
 	measure 'Policies In Force Growth % YoY Display' =
 			

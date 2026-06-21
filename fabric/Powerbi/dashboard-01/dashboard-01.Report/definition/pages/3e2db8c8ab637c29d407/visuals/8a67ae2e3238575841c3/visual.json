@@ -194,5 +194,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "0fd1309f62a34420b037",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Expired Quotations"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

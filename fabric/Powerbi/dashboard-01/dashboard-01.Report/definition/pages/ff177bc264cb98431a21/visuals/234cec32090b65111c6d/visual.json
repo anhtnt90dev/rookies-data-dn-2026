@@ -194,5 +194,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "0cd715d0e43e8b3cba08",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Active Customers"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

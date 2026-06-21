@@ -234,5 +234,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "663561d1928486921902",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Total Written Premium (VND)"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

@@ -186,5 +186,23 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "e7c395cd2ab8940127b4",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures "
+              }
+            },
+            "Property": "Best Conv Rate Agent Name"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

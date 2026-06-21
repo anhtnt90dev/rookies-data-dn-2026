@@ -153,13 +153,63 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Measure": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Entity": "Measures "
+                    "Conditional": {
+                      "Cases": [
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 1,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Policies In Force Growth % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#5ECBC8'"
+                            }
+                          }
+                        },
+                        {
+                          "Condition": {
+                            "Comparison": {
+                              "ComparisonKind": 3,
+                              "Left": {
+                                "Measure": {
+                                  "Expression": {
+                                    "SourceRef": {
+                                      "Entity": "Measures "
+                                    }
+                                  },
+                                  "Property": "Policies In Force Growth % YoY"
+                                }
+                              },
+                              "Right": {
+                                "Literal": {
+                                  "Value": "0D"
+                                }
+                              }
+                            }
+                          },
+                          "Value": {
+                            "Literal": {
+                              "Value": "'#EB5757'"
+                            }
+                          }
                         }
-                      },
-                      "Property": "Policies In Force Growth % YoY Color"
+                      ]
                     }
                   }
                 }
@@ -175,7 +225,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "'0'"
+                  "Value": "' '"
                 }
               }
             }

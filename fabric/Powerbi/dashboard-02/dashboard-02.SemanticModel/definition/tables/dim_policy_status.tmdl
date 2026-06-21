@@ -1,0 +1,71 @@
+table dim_policy_status
+	lineageTag: f28515fd-69f7-49e9-a542-c793f574fc68
+
+	column policy_status_key
+		dataType: int64
+		formatString: 0
+		sourceProviderType: bigint
+		lineageTag: fd4aed09-7fef-4215-bcfb-1f66d006e19b
+		summarizeBy: none
+		sourceColumn: policy_status_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column policy_status_code
+		dataType: string
+		sourceProviderType: varchar(8000)
+		lineageTag: 9c99528b-9e96-483b-9a5a-0a4c1817f79f
+		summarizeBy: none
+		sourceColumn: policy_status_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: 0ade8a06-5587-4b24-9220-4b044f6034d1
+		summarizeBy: none
+		sourceColumn: created_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		isHidden
+		formatString: General Date
+		sourceProviderType: datetime2
+		lineageTag: d7b47d21-a92a-4160-a0a9-3506ece0262b
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		changedProperty = IsHidden
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Is Known Policy Status' =
+			
+			IF(
+			    dim_policy_status[policy_status_code] = "Unknown"
+			        || ISBLANK(dim_policy_status[policy_status_code]),
+			    0,
+			    1
+			)
+		formatString: 0
+		lineageTag: c6369978-9fdf-4007-be7f-f80940e2eb31
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_policy_status = m
+		mode: directQuery
+		source =
+				let
+				    Source = Sql.Database("3ukzqa5oadlurln3behjhxf4ae-rzokdaunzywe7at6ssyxmwpm3a.datawarehouse.fabric.microsoft.com", "lh_insurance_dev"),
+				    gold_dim_policy_status = Source{[Schema="gold",Item="dim_policy_status"]}[Data]
+				in
+				    gold_dim_policy_status
+

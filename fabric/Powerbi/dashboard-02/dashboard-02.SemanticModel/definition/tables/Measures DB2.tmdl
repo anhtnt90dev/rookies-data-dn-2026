@@ -1,0 +1,985 @@
+table 'Measures DB2'
+	lineageTag: b94ef46e-b5ff-4104-9d78-e866acf98a07
+
+	measure 'Active Policies' = CALCULATE(COUNTROWS(fact_policy), dim_policy_status[policy_status_code]="ACTIVE")
+		formatString: 0
+		lineageTag: dbb19e59-0ca3-4555-bbac-8b02d08338a0
+
+	measure 'Cancelled Policies' =
+			
+			COALESCE(
+			    CALCULATE(COUNTROWS(fact_cancellation)),
+			    0
+			)
+		formatString: 0
+		lineageTag: 5c3fb1de-9700-4cbe-baad-e89c6c81e522
+
+	measure 'Payment Collection Rate' = DIVIDE(CALCULATE(COUNTROWS(fact_payment), dim_payment_status[payment_status_code] = "PAID"), COUNTROWS(fact_payment), 0)
+		lineageTag: 955b88a5-af90-4dca-ab81-319ca3511f0c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Written Premium' =
+			
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_policy[premium_amount]),
+			        dim_policy_status[policy_status_code] IN {"ACTIVE", "EXPIRED"}
+			    ),
+			    0
+			)
+		lineageTag: e01b5eeb-9a53-4b97-83e5-8200907ca861
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Collected Premium' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PAID"
+			)
+			+ 0
+		lineageTag: b3f97019-72b4-42dc-87c8-d1f6d3cfe6d8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Payments (VND)' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING")
+		lineageTag: e8a6a32b-6951-4411-a010-ddd026f6275d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Failed Payment Rate' = DIVIDE(CALCULATE(COUNTROWS(fact_payment), dim_payment_status[payment_status_code] = "FAILED"), COUNTROWS(fact_payment), 0)
+		lineageTag: 6140f700-81f4-4c85-bb8a-e4268d253add
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure '% Change Active vs Prior Year' = DIVIDE([Active Policies] - CALCULATE([Active Policies], SAMEPERIODLASTYEAR(dim_date[full_date])), CALCULATE([Active Policies], SAMEPERIODLASTYEAR(dim_date[full_date])), 0) * 100
+		lineageTag: 0a8da42b-1c32-4709-9c26-dcd9884bf94a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Policy Status Distribution' = DIVIDE(CALCULATE(COUNTROWS(fact_policy)), CALCULATE(COUNTROWS(fact_policy), ALL(dim_policy_status)), 0)
+		lineageTag: cffb7db5-d921-4eb1-8b0b-eec66b8efaee
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Monthly Collected Amount' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PAID")
+		lineageTag: 3fa7b7ef-fd04-4440-8c3b-a4a4becdaee7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Monthly Pending Amount' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING")
+		lineageTag: c55bbd38-6fd2-43b7-b39c-dae32af7ec12
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Monthly Failed Amount' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="FAILED")
+		lineageTag: 5d308912-cf38-4fb5-ba5c-ff0523a58b25
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Monthly Policies Issued' = CALCULATE(COUNTROWS(fact_policy))
+		formatString: 0
+		lineageTag: ec8f647e-dea4-4a24-bf24-756df372787a
+
+	measure 'Monthly Cancellations' = CALCULATE(COUNTROWS(fact_cancellation))
+		formatString: 0
+		lineageTag: df7ad85f-1af2-4151-bda2-efa177943dc6
+
+	measure 'Pending Aging 0-7 Days' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PENDING",
+			    FILTER(
+			        fact_payment,
+			        [aging_days] <= 7
+			    )
+			)
+		lineageTag: bf455ebd-479d-4cb9-a44a-3e9fb9a7a655
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Aging 8-30 Days' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PENDING",
+			    FILTER(
+			        fact_payment,
+			        [aging_days] >= 8 &&
+			        [aging_days] <= 30
+			    )
+			)
+		lineageTag: bfb37189-a89a-42f9-9174-7f541caa7e9f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Aging 31-60 Days' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PENDING",
+			    FILTER(
+			        fact_payment,
+			        [aging_days] >= 31 &&
+			        [aging_days] <= 60
+			    )
+			)
+		lineageTag: b3eee685-b447-4a58-853a-4723cfdde8b7
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Aging 61-90 Days' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PENDING",
+			    FILTER(
+			        fact_payment,
+			        [aging_days] >= 61 &&
+			        [aging_days] <= 90
+			    )
+			)
+		lineageTag: 154ec5bc-cf87-4994-b02d-2dbb2e447a7f
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending Aging > 90 Days' =
+			
+			CALCULATE(
+			    SUM(fact_payment[payment_amount]),
+			    dim_payment_status[payment_status_code] = "PENDING",
+			    FILTER(
+			        fact_payment,
+			        [aging_days] > 90
+			    )
+			)
+		lineageTag: 0b562d21-c992-42c3-a68e-9382f60ac4bf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Payment Collection Rate by Provider' = CALCULATE([Payment Collection Rate])
+		lineageTag: 3fc518fb-1040-40a8-80e5-377cb1245b2e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Average Payment Time (Days)' =
+			
+			AVERAGEX(
+			    FILTER(
+			        fact_payment,
+			        fact_payment[payment_amount] > 0
+			            && RELATED(dim_payment_status[payment_status_code]) = "PAID"
+			    ),
+			    VAR IssuedDate =
+			        CALCULATE(
+			            MAX(dim_date[full_date]),
+			            USERELATIONSHIP(
+			                fact_payment[issued_date_key],
+			                dim_date[date_key]
+			            )
+			        )
+			    VAR PaymentDate =
+			        CALCULATE(
+			            MAX(dim_date[full_date]),
+			            USERELATIONSHIP(
+			                fact_payment[payment_date_key],
+			                dim_date[date_key]
+			            )
+			        )
+			    RETURN
+			        DATEDIFF(
+			            IssuedDate,
+			            PaymentDate,
+			            DAY
+			        )
+			)
+		lineageTag: 6f548470-c147-48f7-8684-fd885aabc49e
+
+	measure 'Policy Cancellation Rate' =
+			
+			DIVIDE(
+			    COALESCE(CALCULATE(COUNTROWS(fact_cancellation)), 0),
+			    COALESCE(CALCULATE(COUNTROWS(fact_policy)), 0),
+			    0
+			)
+		lineageTag: a5af4251-80ff-4102-a275-52b78967bb2e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Policies Expiring Soon' = CALCULATE(COUNTROWS(fact_policy), dim_policy_status[policy_status_code]="ACTIVE", USERELATIONSHIP(fact_policy[policy_end_date_key], dim_date[date_key]), dim_date[full_date] <= TODAY() + 30)
+		formatString: 0
+		lineageTag: d86ab97f-a732-4be7-b047-beeb20215f61
+
+	measure 'Refund Amount' = CALCULATE(SUM(fact_cancellation[refund_amount]))
+		lineageTag: 345f7ba4-c3df-459c-a5a9-5b8d54901123
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Refund Rate' = DIVIDE([Refund Amount], [Refund Amount] + [Total Collected Premium], 0) * 100
+		lineageTag: 429311f4-48e2-4d35-bb1e-d80786c4acf4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure aging_days =
+			VAR PaymentDate =
+			    CALCULATE(
+			        MAX(dim_date[full_date]),
+			        USERELATIONSHIP(fact_payment[payment_date_key], dim_date[date_key])
+			    )
+			RETURN
+			    DATEDIFF(PaymentDate, TODAY(), DAY)
+		lineageTag: 10afdf85-f577-40b0-9211-c0df71abbabc
+
+	measure 'Expired Policies' = CALCULATE(COUNTROWS(fact_policy), dim_policy_status[policy_status_code]="EXPIRED")
+		formatString: 0
+		lineageTag: 5c7c3eed-7cab-42a7-974b-d16f6e7d83bb
+
+	measure 'Successful Payment Rate' =
+			
+			DIVIDE(
+			    CALCULATE(
+			        COUNTROWS(fact_payment),
+			        dim_payment_status[payment_status_code] = "PAID"
+			    ),
+			    COUNTROWS(fact_payment)
+			)
+		lineageTag: c553e997-f96e-48e5-bcf7-4d2c92c55add
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Avg Payment Value' =
+			
+			DIVIDE(
+			    SUM(fact_payment[payment_amount]),
+			    COUNTROWS(fact_payment)
+			)
+		lineageTag: 62bfae53-3c70-40b3-a093-7fd02dd3163d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Pending Premium' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="PENDING")
+		lineageTag: 11192050-305f-4bb9-9e0a-106206e0973a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Failed Premium' = CALCULATE(SUM(fact_payment[payment_amount]), dim_payment_status[payment_status_code]="FAILED")
+		lineageTag: 1fcf0036-761e-4e45-a219-b49c937aabcf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Top Premium Provider' =
+			
+			CALCULATE(
+			    SELECTEDVALUE(dim_provider[provider_name]),
+			    TOPN(
+			        1,
+			        FILTER(
+			            ALL(dim_provider[provider_name]),
+			            dim_provider[provider_name] <> "UNKNOWN"
+			                && NOT ISBLANK(dim_provider[provider_name])
+			        ),
+			        CALCULATE(SUM(fact_policy[premium_amount])),
+			        DESC
+			    )
+			)
+		lineageTag: cd2b32c8-d966-4951-b72d-b680908cc8be
+
+	measure 'Best Collection Rate Provider' =
+			
+			VAR TopRate =
+			    MAXX(
+			        ALL(dim_provider),
+			        [Payment Collection Rate by Provider]
+			    )
+			
+			RETURN
+			    CONCATENATEX(
+			        FILTER(
+			            ALL(dim_provider),
+			            [Payment Collection Rate by Provider] = TopRate
+			        ),
+			        dim_provider[provider_name],
+			        ", "
+			    )
+		lineageTag: 4865493f-e8e3-4ed9-be8c-41e43e81850f
+
+	measure 'Highest Cancel Rate Provider' =
+			
+			CALCULATE(
+			    SELECTEDVALUE(dim_provider[provider_name]),
+			    TOPN(
+			        1,
+			        FILTER(
+			            ALL(dim_provider[provider_name]),
+			            dim_provider[provider_name] <> "UNKNOWN"
+			        ),
+			        [Total Collected Premium],
+			        DESC
+			    )
+			)
+		lineageTag: 8ce93e8c-1cca-4c39-b3e6-1fb70dfc3baa
+
+	measure 'Policy Start Date' =
+			
+			CALCULATE(
+			    MIN(dim_date[full_date]),
+			    USERELATIONSHIP(fact_policy[policy_start_date_key], dim_date[date_key])
+			)
+		formatString: General Date
+		lineageTag: d75bb841-ef79-4b75-bb92-5b73f9abf272
+
+	measure 'Avg Premium per Policy' =
+			
+			DIVIDE(
+			    SUM(fact_policy[premium_amount]),
+			    COUNTROWS(fact_policy)
+			)
+		lineageTag: 30fbcee4-bac6-4b5f-89ba-a3b7ad990bd1
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Amount' =
+			
+			SUM(fact_payment[payment_amount]) + 0
+		lineageTag: 0f74bcd4-bf3d-4ce6-9148-3f52c265f04e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Total Written Premium %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Written Premium (VND)]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Written Premium (VND)],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),          
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                
+			        )
+			    )
+			```
+		lineageTag: 7e6f98a3-e713-452c-8597-0b2ec05f6dd1
+
+	measure 'Growth Total Collected Premium %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Collected Premium]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Collected Premium],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),        
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			        )
+			    )
+			```
+		lineageTag: 6bf1eb8c-a8e6-4ff3-a793-e9e87d8aff21
+
+	measure 'Growth Payment Collection Rate Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Payment Collection Rate]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Payment Collection Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: aefefc58-e741-4df6-b518-ae540b5445e6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Expired Policies %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Expired Policies]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Expired Policies],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+			```
+		lineageTag: 1341c592-ed99-4eee-bd64-cca8ffe240fa
+
+	measure 'Growth Active Policies %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Active Policies]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Active Policies],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),            
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                 
+			        )
+			    )
+			```
+		lineageTag: 028f006a-c005-424e-80c9-2c8aaf6db079
+
+	measure 'Growth Avg Premium per Policy %' =
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Avg Premium per Policy]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Avg Premium per Policy],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue =
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),
+			            GrowthValue > 0,
+			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0,
+			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+		lineageTag: bb4ea275-2c6a-4ec9-a490-e7b4c2503f19
+
+	measure 'Active Providers' =
+			
+			CALCULATE(
+			    DISTINCTCOUNT('dim_provider'[provider_code]),
+			    'dim_provider'[active_flag] = 1,
+			    NOT 'dim_provider'[provider_code] IN {"Unknown", BLANK()}
+			)
+		formatString: 0
+		lineageTag: f078bb56-8792-4c29-ae89-27c58b18a405
+
+	measure 'Total payment' = COUNT(fact_payment[payment_id])
+		formatString: 0
+		lineageTag: c9d4b87d-6b8b-40e9-8a3a-cbc479cfff84
+
+	measure 'Growth Total Payment %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Payment]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Payment],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),            
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			        )
+			    )
+			```
+		lineageTag: 39a46f74-6add-4c39-b3a1-d20f94c2f32f
+
+	measure 'Growth Total Written Premium Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Written Premium (VND)]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Written Premium (VND)],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: 696607d2-1c6f-4593-98ac-1a15a6e29948
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Payment Collection Rate %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Payment Collection Rate]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Payment Collection Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),           
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"       
+			        )
+			    )
+			```
+		lineageTag: 0dc86e52-fc2c-45bf-aeb0-afd1e703b804
+
+	measure 'Growth Total Collected Premium Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Collected Premium]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Collected Premium],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: 0b19c94b-3820-4f04-b792-6d8c751f6119
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Policy Cancellation Rate Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Policy Cancellation Rate]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Policy Cancellation Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    CurrentValue - PreviousValue
+		lineageTag: 43fe71f2-1b16-4649-a15e-323de5579860
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Policy Cancellation Rate %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Policy Cancellation Rate]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Policy Cancellation Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),        
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			        )
+			    )
+			```
+		lineageTag: 64e7c597-e931-41ae-8a5e-997da7c6433c
+
+	measure 'Growth Expired Policies Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Expired Policies]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Expired Policies],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: 6d64a0b9-d2b8-4548-9404-d1b7ca53e844
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Active Policies Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Active Policies]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Active Policies],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: 7b45d99e-8f55-4daa-a672-fd301c2d4035
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Avg Premium per Policy Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Avg Premium per Policy]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Avg Premium per Policy],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+		lineageTag: adf47347-3995-45fa-bbde-6429f17feda9
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Total Payment Amount %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Total Amount]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Amount],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			VAR GrowthValue = 
+			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),            
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			        )
+			    )
+			```
+		lineageTag: bc88866f-aef9-44e5-8de3-0f239d6397a3
+
+	measure 'Growth Total Payment Amount Value' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			
+			VAR CurrentValue =
+			    [Total Amount]
+			
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Total Amount],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			
+			RETURN
+			    DIVIDE(
+			        CurrentValue - PreviousValue,
+			        PreviousValue
+			    )
+		lineageTag: f0b7c152-8123-441b-878d-9b30fd4e0db2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Successful Payment Rate Value' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			
+			VAR CurrentValue =
+			    [Successful Payment Rate]
+			
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Successful Payment Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			
+			RETURN
+			    DIVIDE(
+			        CurrentValue - PreviousValue,
+			        PreviousValue
+			    )
+		lineageTag: eb594db0-404f-4fff-ab9b-f59640603ed6
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Successful Payment Rate %' =
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR GrowthValue =
+			    [Growth Successful Payment Rate Value]
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),
+			            GrowthValue > 0,
+			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0,
+			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+		lineageTag: 9f0ebf71-5cc6-4381-b5f1-bcae74450f26
+
+	measure 'Growth Failed Payment Rate Value' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			
+			VAR CurrentValue =
+			    [Failed Payment Rate]
+			
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Failed Payment Rate],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			
+			RETURN
+			    DIVIDE(
+			        CurrentValue - PreviousValue,
+			        PreviousValue
+			    )
+		lineageTag: 48337b39-cf5c-4db4-b969-d2853def438a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Failed Payment Rate %' =
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR GrowthValue =
+			    [Growth Failed Payment Rate Value]
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),
+			            GrowthValue > 0,
+			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0,
+			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+		lineageTag: f1f4e901-cc81-4c68-8b4d-33f60cf1fbcb
+
+	measure 'Growth Avg Payment Value' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			
+			VAR CurrentValue =
+			    [Avg Payment Value]
+			
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Avg Payment Value],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			
+			RETURN
+			    DIVIDE(
+			        CurrentValue - PreviousValue,
+			        PreviousValue
+			    )
+		lineageTag: 56022ccb-5291-4744-a5d6-836a1ba35e6b
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Avg Payment Value %' =
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR GrowthValue =
+			    [Growth Avg Payment Value]
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), BLANK(),
+			            GrowthValue > 0,
+			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0,
+			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+		lineageTag: 6a84393d-76fb-4dae-9213-c7507e0538f4
+
+	column Dummy
+		lineageTag: 74378107-e74b-4ea1-8b5e-f418b945bc8f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Dummy]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Measures DB2' = calculated
+		mode: import
+		source = DATATABLE("Dummy", STRING, {{"x"}})
+
+	annotation PBI_Id = 9396c32880234acbb2dbf7a89ed4e388
+

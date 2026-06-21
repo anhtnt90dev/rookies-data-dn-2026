@@ -266,23 +266,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "04fa3578a08abeb2e523",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Growth Policies Issued %"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -385,6 +385,72 @@
             }
           ]
         }
+      },
+      {
+        "name": "7bf0b3dc8dd6448becca",
+        "field": {
+          "HierarchyLevel": {
+            "Expression": {
+              "Hierarchy": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_date"
+                  }
+                },
+                "Hierarchy": "full_date_hierachy"
+              }
+            },
+            "Level": "month_number"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "7a1417742a821d044e2a",
+        "field": {
+          "HierarchyLevel": {
+            "Expression": {
+              "Hierarchy": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "dim_date"
+                  }
+                },
+                "Hierarchy": "full_date_hierachy"
+              }
+            },
+            "Level": "quarter_number"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "e6d33850e7672c4295d6",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Total Written Premium"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "3f95e0d9db1c2c0094e0",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Total Collected Premium"
+          }
+        },
+        "type": "Advanced"
       }
     ]
   }

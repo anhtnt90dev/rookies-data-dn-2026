@@ -12,7 +12,7 @@ Rather than hardcoding the list of dimension and fact notebooks, the master note
 graph TD
     Master["Master Notebook:<br/>nb_gold_master_load_dev"] -->|Query active configurations| ConfigTable[("Table Configuration<br/>(cfg.dim_fact_table)")]
     ConfigTable -->|Parse Table Type| Stages{Split into Tasks}
-    Stages -->|table_type = DIM| Stage1["Stage 1: Dimensions ThreadPool"]
+    Stages -->|table_type = DIM| Stage1["Stage 1: Dimensions<br/>ThreadPool"]
     Stages -->|table_type = FACT| Stage2["Stage 2: Facts ThreadPool"]
 ```
 
@@ -58,12 +58,12 @@ graph TD
     Stage2 --> F1 & F2 & F3 & F4 & F5
     
     F1 & F2 & F3 & F4 & F5 -->|Any Failed| Halt2[Halt and Abort immediately]
-    F1 & F2 & F3 & F4 & F5 -->|All Succeeded| Stage3[Stage 3: Post-Ingestion Audit & Reset run mode to NEW]
+    F1 & F2 & F3 & F4 & F5 -->|All Succeeded| Stage3[Stage 3: Post-Ingestion<br/>Audit & Reset run mode<br/>to NEW]
     
-    Stage3 -->|nb_ingestion_gold Succeeded| Stage4[Pipeline Stage: Validation Suite]
+    Stage3 -->|nb_ingestion_gold Succeeded| Stage4[Pipeline Stage: Validation<br/>Suite]
     
     subgraph "Pipeline Stage: Validation Activity (Dedicated Sequential Activity)"
-        V1[nb_gold_validate_reconciliation_dev]
+        V1[nb_gold_validate_<br/>reconciliation_dev]
     end
     Stage4 --> V1
     

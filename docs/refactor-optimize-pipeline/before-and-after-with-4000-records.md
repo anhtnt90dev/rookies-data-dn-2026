@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document summarizes the performance analysis and optimization process for a Microsoft Fabric Medallion Data Pipeline processing **1,000 records**. It includes the execution performance before optimization, identified bottlenecks, optimization strategies, and the resulting performance improvements.
+This document summarizes the performance analysis and optimization process for a Microsoft Fabric Medallion Data Pipeline processing **4,000 records in total (1,000 records per table)**. It includes the execution performance before optimization, identified bottlenecks, optimization strategies, and the resulting performance improvements.
 
 ---
 
@@ -14,7 +14,7 @@ This document summarizes the performance analysis and optimization process for a
 | ---------------------- | ----------------: |
 | Actual Execution Time  |       **64m 37s** |
 | Average Execution Time |   **~65 minutes** |
-| Dataset Size           | **1,000 records** |
+| Dataset Size           | **4,000 records (1,000 per table)** |
 
 ---
 
@@ -172,7 +172,7 @@ Instead of updating audit logs after every table, execution results were accumul
 | Metric                 |             Value |
 | ---------------------- | ----------------: |
 | Average Execution Time |   **~16 minutes** |
-| Dataset Size           | **1,000 records** |
+| Dataset Size           | **4,000 records (1,000 per table)** |
 
 ---
 
@@ -227,4 +227,4 @@ The key architectural improvements include:
 * Batch audit logging
 * Dedicated Validation & Reconciliation stage
 
-These improvements resulted in a faster, more scalable, and easier-to-maintain Microsoft Fabric data pipeline capable of processing **1,000 records** in approximately **16 minutes**, representing an overall performance improvement of approximately **75%**.
+These improvements resulted in a faster, more scalable, and easier-to-maintain Microsoft Fabric data pipeline capable of processing **4,000 records in total (1,000 per table)** in approximately **16 minutes**, representing an overall performance improvement of approximately **75%**.

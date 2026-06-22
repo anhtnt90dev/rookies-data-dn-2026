@@ -13,7 +13,7 @@ queryGroup Measure
 
 annotation __PBI_TimeIntelligenceEnabled = 1
 
-annotation PBI_QueryOrder = ["Measures ","dim_agent","dim_cancellation_reason","dim_coverage","dim_customer","dim_date","dim_package","dim_payment_method","dim_payment_status","dim_policy","dim_policy_status","dim_provider","dim_quotation","dim_quotation_status","dim_vehicle","fact_cancellation","fact_payment","fact_policy","fact_quotation","fact_quotation_item"]
+annotation PBI_QueryOrder = ["Measures ","dim_agent","dim_cancellation_reason","dim_coverage","dim_customer","dim_date","dim_package","dim_payment_method","dim_payment_status","dim_policy","dim_policy_status","dim_provider","dim_quotation","dim_quotation_status","dim_vehicle","fact_cancellation","fact_payment","fact_policy","fact_quotation","fact_quotation_item","pending_payment"]
 
 annotation __TEdtr = 1
 

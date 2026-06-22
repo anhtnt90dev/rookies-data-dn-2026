@@ -104,21 +104,41 @@ Upon completion, the Gold notebook calls `finish_table_layer` to append audit st
 
 ## 4. Post-Ingestion Validation Suite
 
-Executed by the dedicated pipeline activity `nb_validation_gold` (running `nb_gold_validate_reconciliation_dev`) upon successful completion of the master load notebook, this suite enforces data quality and metrics consistency:
+Executed by the dedicated pipeline activity `nb_validation_gold` (running the PySpark notebook [nb_gold_validate_reconciliation_dev](../../fabric/Gold/Notebooks/nb_gold_validate_reconciliation_dev.Notebook/notebook-content.py)) upon successful completion of the master load notebook, this suite enforces data quality, referential integrity, and metrics consistency across the Gold layer.
+
+### 4.1. The 9 Core Validation Checks
+For each active fact table, the runner executes a suite of 9 distinct QA checks:
 
 1.  **Grain Uniqueness Check**:
-    - Verifies that target primary keys are unique.
-    - Example: Validates that `quotation_id` in `gold.fact_quotation` has 0 duplicate rows.
-2.  **Date Validity Check**:
-    - Ensures all date foreign keys map to a valid date key in `gold.dim_date` (or `-1` fallback).
-    - Checks that date keys are not null or out of calendar ranges.
-3.  **Referential Integrity Check**:
-    - Verifies that dimension surrogate keys (e.g. `customer_key`, `agent_key`) map to existing rows in target dimensions.
-    - Checks for unmatched keys that incorrectly resolved to `-1` but should have matched.
-4.  **Reconciliation Verification**:
-    - Compares row counts and measure totals between Silver source tables and Gold target tables.
-    - Compares sum of premium amounts, payment amounts, and refund amounts (handling soft deletes).
-5.  **Anomaly Logging & Auditing**:
-    - If validation checks fail, the notebook calls `finish_table_layer` to record the `"FAILED"` status in `log.audit_detail` under the `"GOLD"` layer for the affected fact table session.
-    - It writes the specific record key and validation error details to `log.invalid_record` via `log_invalid_record`.
-    - It returns a JSON status map of all checks. Since this notebook runs as a dedicated activity downstream, a validation failure fails the pipeline run for visibility without triggering automatic `RECOVERY` run mode updates (which have already been reset to `NEW` by the completed orchestrator).
+    *   Verifies that target records are unique at the primary key/grain levels (e.g., `quotation_id` for `fact_quotation`, `quotation_id` + `coverage_key` for `fact_quotation_item`).
+    *   Fails if any duplicate records exist (threshold: `max_count = 0`).
+2.  **Null Business Keys Check**:
+    *   Ensures core source business keys (such as `policy_id`, `payment_id`, `cancellation_id`) are populated and not null.
+3.  **Foreign Key Integrity Check**:
+    *   Verifies conformed foreign keys (excluding `-1` default values) resolve to active primary keys inside the conformed dimension tables.
+4.  **Unresolved Keys Check**:
+    *   Detects if conformed foreign keys resolved to `-1` (Unknown) despite a valid non-null source business key being present in Silver.
+    *   Evaluates the failure ratio against severity thresholds (`critical = 0%`, `important = 1%`, `optional = 5%` maximum allowable unresolved keys).
+5.  **Temporal Integrity Check**:
+    *   Validates SCD Type 2 point-in-time joins by verifying that the fact transaction date falls chronologically on or after the matched dimension record's `effective_from` date.
+6.  **Date Key Validity Check**:
+    *   Ensures conformed date foreign keys (e.g., `issued_date_key`, `payment_date_key`) resolve to a valid date key in `gold.dim_date`.
+7.  **Soft Delete Auditing Check**:
+    *   Ensures that records with `is_deleted = true` have fully populated deletion lineage metadata (`deleted_at` and `delete_batch_id`).
+8.  **Row Count Reconciliation Check**:
+    *   Reconciles the total row count of the Gold target table against the deduplicated, latest-version-by-key Silver source table for the current batch.
+    *   Fails if there is any mismatch (allowable ratio threshold: `max_ratio = 0%`).
+9.  **Metric Reconciliation Check**:
+    *   Reconciles the sum of financial and operational metrics (e.g., `premium_amount`, `payment_amount`, `refund_amount`, `coverage_amount`, `deductible_amount`) between Gold target tables and Silver source tables (excluding soft-deleted records).
+    *   Enforces a strict variance tolerance of `0.0001` (representing rounding differences).
+
+### 4.2. Performance & Execution Architecture
+To optimize execution performance under high data volumes, the validation suite implements:
+*   **Shared Silver Dataset Caching**: Pre-deduplicates and caches core lookup tables (`silver_vehicle_latest`, `silver_quotation_latest`, `silver_policy_latest`) in Spark memory to prevent redundant shuffles and speed up joins.
+*   **Parallel Execution**: Invokes fact table validations concurrently using a Python `ThreadPoolExecutor` (with `max_workers` scaled to the number of tasks).
+
+### 4.3. Anomaly Logging & Auditing Output
+*   **Layer Status Auditing**: Calls `finish_table_layer` to record the final execution status (`SUCCESS` or `FAILED`) in `log.audit_table_session` under the `"GOLD"` layer for the affected table.
+*   **Detailed Anomaly Logging**: When a check fails, logs the specific violating record primary key, raw row data, and error reason into `log.invalid_record` via `log_invalid_record` for troubleshooting.
+*   **Exit Payload**: The notebook exits returning a JSON-formatted dictionary mapping table names to their validation status (e.g., `{"gold.fact_policy": "SUCCESS", ...}`) via `mssparkutils.notebook.exit()`. This payload can be evaluated by downstream pipeline orchestrators to trigger alerts or workflow forks.
+

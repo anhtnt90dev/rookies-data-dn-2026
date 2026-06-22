@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "cf9a14357293b1431007",
   "position": {
-    "x": 743.48808030112923,
-    "y": 465.24466750313672,
+    "x": 743.55822881211043,
+    "y": 464.723893007569,
     "z": 3000,
-    "height": 236.68757841907151,
-    "width": 496.86323713927226,
+    "height": 236.81820301207628,
+    "width": 496.55429663822446,
     "tabOrder": 3000
   },
   "visual": {
@@ -86,24 +86,6 @@
               },
               "queryRef": "Measures DB2.Cancelled Policies",
               "nativeQueryRef": "Cancelled Policies"
-            }
-          ]
-        },
-        "Y2": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Total Collected Premium"
-                }
-              },
-              "queryRef": "Measures DB2.Total Collected Premium",
-              "nativeQueryRef": "Total Collected Premium"
             }
           ]
         }
@@ -230,6 +212,27 @@
             }
           }
         }
+      ],
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 6,
+                      "Percent": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "Measures DB2.Cancelled Policies"
+          }
+        }
       ]
     },
     "visualContainerObjects": {
@@ -351,67 +354,6 @@
             }
           ]
         }
-      },
-      {
-        "name": "d270a9a28c93b404a176",
-        "field": {
-          "HierarchyLevel": {
-            "Expression": {
-              "Hierarchy": {
-                "Expression": {
-                  "SourceRef": {
-                    "Entity": "dim_date"
-                  }
-                },
-                "Hierarchy": "full_date_hierachy"
-              }
-            },
-            "Level": "month_number"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "3072c4e753014212d100",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Policies Issued"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "58f0e9d52e0860697955",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Cancelled Policies"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "3a09bb1a39a968b650b2",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures DB2"
-              }
-            },
-            "Property": "Total Collected Premium"
-          }
-        },
-        "type": "Advanced"
       }
     ]
   }

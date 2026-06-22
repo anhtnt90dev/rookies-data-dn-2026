@@ -88,13 +88,16 @@ table 'Measures DB2'
 
 	measure 'Pending Aging 0-7 Days' =
 			
-			CALCULATE(
-			    SUM(fact_payment[payment_amount]),
-			    dim_payment_status[payment_status_code] = "PENDING",
-			    FILTER(
-			        fact_payment,
-			        [aging_days] <= 7
-			    )
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_payment[payment_amount]),
+			        dim_payment_status[payment_status_code] = "PENDING",
+			        FILTER(
+			            fact_payment,
+			            [aging_days] <= 7
+			        )
+			    ),
+			    0
 			)
 		lineageTag: bf455ebd-479d-4cb9-a44a-3e9fb9a7a655
 
@@ -102,14 +105,17 @@ table 'Measures DB2'
 
 	measure 'Pending Aging 8-30 Days' =
 			
-			CALCULATE(
-			    SUM(fact_payment[payment_amount]),
-			    dim_payment_status[payment_status_code] = "PENDING",
-			    FILTER(
-			        fact_payment,
-			        [aging_days] >= 8 &&
-			        [aging_days] <= 30
-			    )
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_payment[payment_amount]),
+			        dim_payment_status[payment_status_code] = "PENDING",
+			        FILTER(
+			            fact_payment,
+			            [aging_days] >= 8 &&
+			            [aging_days] <= 30
+			        )
+			    ),
+			    0
 			)
 		lineageTag: bfb37189-a89a-42f9-9174-7f541caa7e9f
 
@@ -117,14 +123,17 @@ table 'Measures DB2'
 
 	measure 'Pending Aging 31-60 Days' =
 			
-			CALCULATE(
-			    SUM(fact_payment[payment_amount]),
-			    dim_payment_status[payment_status_code] = "PENDING",
-			    FILTER(
-			        fact_payment,
-			        [aging_days] >= 31 &&
-			        [aging_days] <= 60
-			    )
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_payment[payment_amount]),
+			        dim_payment_status[payment_status_code] = "PENDING",
+			        FILTER(
+			            fact_payment,
+			            [aging_days] >= 31 &&
+			            [aging_days] <= 60
+			        )
+			    ),
+			    0
 			)
 		lineageTag: b3eee685-b447-4a58-853a-4723cfdde8b7
 
@@ -132,14 +141,17 @@ table 'Measures DB2'
 
 	measure 'Pending Aging 61-90 Days' =
 			
-			CALCULATE(
-			    SUM(fact_payment[payment_amount]),
-			    dim_payment_status[payment_status_code] = "PENDING",
-			    FILTER(
-			        fact_payment,
-			        [aging_days] >= 61 &&
-			        [aging_days] <= 90
-			    )
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_payment[payment_amount]),
+			        dim_payment_status[payment_status_code] = "PENDING",
+			        FILTER(
+			            fact_payment,
+			            [aging_days] >= 61 &&
+			            [aging_days] <= 90
+			        )
+			    ),
+			    0
 			)
 		lineageTag: 154ec5bc-cf87-4994-b02d-2dbb2e447a7f
 
@@ -147,13 +159,16 @@ table 'Measures DB2'
 
 	measure 'Pending Aging > 90 Days' =
 			
-			CALCULATE(
-			    SUM(fact_payment[payment_amount]),
-			    dim_payment_status[payment_status_code] = "PENDING",
-			    FILTER(
-			        fact_payment,
-			        [aging_days] > 90
-			    )
+			COALESCE(
+			    CALCULATE(
+			        SUM(fact_payment[payment_amount]),
+			        dim_payment_status[payment_status_code] = "PENDING",
+			        FILTER(
+			            fact_payment,
+			            [aging_days] > 90
+			        )
+			    ),
+			    0
 			)
 		lineageTag: 0b562d21-c992-42c3-a68e-9382f60ac4bf
 
@@ -315,7 +330,7 @@ table 'Measures DB2'
 			            ALL(dim_provider[provider_name]),
 			            dim_provider[provider_name] <> "UNKNOWN"
 			        ),
-			        [Total Collected Premium],
+			        [Policy Cancellation Rate],
 			        DESC
 			    )
 			)
@@ -347,70 +362,46 @@ table 'Measures DB2'
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Growth Total Written Premium %' = ```
+	measure 'Growth Total Written Premium %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Total Written Premium (VND)]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Total Written Premium (VND)],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Total Written Premium Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),          
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
-			```
 		lineageTag: 7e6f98a3-e713-452c-8597-0b2ec05f6dd1
 
-	measure 'Growth Total Collected Premium %' = ```
+	measure 'Growth Total Collected Premium %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Total Collected Premium]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Total Collected Premium],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Total Collected Premium Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),        
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
-			```
 		lineageTag: 6bf1eb8c-a8e6-4ff3-a793-e9e87d8aff21
 
 	measure 'Growth Payment Collection Rate Value %' =
@@ -428,72 +419,52 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        CurrentValue - PreviousValue
+			    )
+		formatString: 0.0%;-0.0%;0.0%
 		lineageTag: aefefc58-e741-4df6-b518-ae540b5445e6
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
-
-	measure 'Growth Expired Policies %' = ```
+	measure 'Growth Expired Policies %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Expired Policies]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Expired Policies],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Expired Policies Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
 			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
 			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
 			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
-			```
 		lineageTag: 1341c592-ed99-4eee-bd64-cca8ffe240fa
 
 	measure 'Growth Active Policies %' = ```
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Active Policies]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Active Policies],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
 			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    [Growth Active Policies Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),            
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                 
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
 			```
@@ -503,31 +474,18 @@ table 'Measures DB2'
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Avg Premium per Policy]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Avg Premium per Policy],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
 			VAR GrowthValue =
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    [Growth Avg Premium per Policy Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),
-			            GrowthValue > 0,
-			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            GrowthValue < 0,
-			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
 			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
@@ -547,39 +505,6 @@ table 'Measures DB2'
 		formatString: 0
 		lineageTag: c9d4b87d-6b8b-40e9-8a3a-cbc479cfff84
 
-	measure 'Growth Total Payment %' = ```
-			
-			VAR SelectedYears =
-			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Total Payment]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Total Payment],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
-			RETURN
-			    IF(
-			        SelectedYears <> 1,
-			        BLANK(),
-			        SWITCH(
-			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),            
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
-			        )
-			    )
-			```
-		lineageTag: 39a46f74-6add-4c39-b3a1-d20f94c2f32f
-
 	measure 'Growth Total Written Premium Value %' =
 			
 			VAR CurrentYear =
@@ -595,42 +520,34 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: 696607d2-1c6f-4593-98ac-1a15a6e29948
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Growth Payment Collection Rate %' = ```
+	measure 'Growth Payment Collection Rate %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Payment Collection Rate]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Payment Collection Rate],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Payment Collection Rate Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),           
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"       
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            "▬ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY"
 			        )
 			    )
-			```
 		lineageTag: 0dc86e52-fc2c-45bf-aeb0-afd1e703b804
 
 	measure 'Growth Total Collected Premium Value %' =
@@ -648,7 +565,11 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: 0b19c94b-3820-4f04-b792-6d8c751f6119
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -668,42 +589,33 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    CurrentValue - PreviousValue
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        CurrentValue - PreviousValue
+			    )
+		formatString: 0.0%;-0.0%;0.0%
 		lineageTag: 43fe71f2-1b16-4649-a15e-323de5579860
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
-
-	measure 'Growth Policy Cancellation Rate %' = ```
+	measure 'Growth Policy Cancellation Rate %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Policy Cancellation Rate]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Policy Cancellation Rate],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Policy Cancellation Rate Value %]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),        
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            "▬ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY"
 			        )
 			    )
-			```
 		lineageTag: 64e7c597-e931-41ae-8a5e-997da7c6433c
 
 	measure 'Growth Expired Policies Value %' =
@@ -721,7 +633,11 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: 6d64a0b9-d2b8-4548-9404-d1b7ca53e844
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -741,7 +657,11 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: 7b45d99e-8f55-4daa-a672-fd301c2d4035
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -761,52 +681,42 @@ table 'Measures DB2'
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: adf47347-3995-45fa-bbde-6429f17feda9
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Growth Total Payment Amount %' = ```
+	measure 'Growth Total Payment Amount %' =
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Total Amount]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Total Amount],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
-			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			VAR GrowthValue =
+			    [Growth Total Payment Amount Value]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),            
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"                    
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
-			```
 		lineageTag: bc88866f-aef9-44e5-8de3-0f239d6397a3
 
 	measure 'Growth Total Payment Amount Value' =
 			
 			VAR CurrentYear =
 			    MAX('dim_date'[year_number])
-			
 			VAR CurrentValue =
 			    [Total Amount]
-			
 			VAR PreviousValue =
 			    CALCULATE(
 			        [Total Amount],
@@ -815,11 +725,11 @@ table 'Measures DB2'
 			            'dim_date'[year_number] = CurrentYear - 1
 			        )
 			    )
-			
 			RETURN
-			    DIVIDE(
-			        CurrentValue - PreviousValue,
-			        PreviousValue
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
 			    )
 		lineageTag: f0b7c152-8123-441b-878d-9b30fd4e0db2
 
@@ -829,10 +739,8 @@ table 'Measures DB2'
 			
 			VAR CurrentYear =
 			    MAX('dim_date'[year_number])
-			
 			VAR CurrentValue =
 			    [Successful Payment Rate]
-			
 			VAR PreviousValue =
 			    CALCULATE(
 			        [Successful Payment Rate],
@@ -841,15 +749,14 @@ table 'Measures DB2'
 			            'dim_date'[year_number] = CurrentYear - 1
 			        )
 			    )
-			
 			RETURN
-			    DIVIDE(
-			        CurrentValue - PreviousValue,
-			        PreviousValue
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        (CurrentValue - PreviousValue) * 100
 			    )
+		formatString: 0.0%;-0.0%;0.0%
 		lineageTag: eb594db0-404f-4fff-ab9b-f59640603ed6
-
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Growth Successful Payment Rate %' =
 			
@@ -863,12 +770,11 @@ table 'Measures DB2'
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),
-			            GrowthValue > 0,
-			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            GrowthValue < 0,
-			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0") & "pts vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0") & "pts vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0") & "pts vs PY"
 			        )
 			    )
 		lineageTag: 9f0ebf71-5cc6-4381-b5f1-bcae74450f26
@@ -877,10 +783,8 @@ table 'Measures DB2'
 			
 			VAR CurrentYear =
 			    MAX('dim_date'[year_number])
-			
 			VAR CurrentValue =
 			    [Failed Payment Rate]
-			
 			VAR PreviousValue =
 			    CALCULATE(
 			        [Failed Payment Rate],
@@ -889,15 +793,14 @@ table 'Measures DB2'
 			            'dim_date'[year_number] = CurrentYear - 1
 			        )
 			    )
-			
 			RETURN
-			    DIVIDE(
-			        CurrentValue - PreviousValue,
-			        PreviousValue
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        CurrentValue - PreviousValue
 			    )
+		formatString: 0.0%;-0.0%;0.0%
 		lineageTag: 48337b39-cf5c-4db4-b969-d2853def438a
-
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	measure 'Growth Failed Payment Rate %' =
 			
@@ -911,12 +814,11 @@ table 'Measures DB2'
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),
-			            GrowthValue > 0,
-			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            GrowthValue < 0,
-			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY",
+			            "▬ " & FORMAT(GrowthValue * 100, "0.0") & "pts vs PY"
 			        )
 			    )
 		lineageTag: f1f4e901-cc81-4c68-8b4d-33f60cf1fbcb
@@ -925,10 +827,8 @@ table 'Measures DB2'
 			
 			VAR CurrentYear =
 			    MAX('dim_date'[year_number])
-			
 			VAR CurrentValue =
 			    [Avg Payment Value]
-			
 			VAR PreviousValue =
 			    CALCULATE(
 			        [Avg Payment Value],
@@ -937,11 +837,11 @@ table 'Measures DB2'
 			            'dim_date'[year_number] = CurrentYear - 1
 			        )
 			    )
-			
 			RETURN
-			    DIVIDE(
-			        CurrentValue - PreviousValue,
-			        PreviousValue
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
 			    )
 		lineageTag: 56022ccb-5291-4744-a5d6-836a1ba35e6b
 
@@ -959,15 +859,77 @@ table 'Measures DB2'
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),
-			            GrowthValue > 0,
-			                "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
-			            GrowthValue < 0,
-			                "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
 			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
 		lineageTag: 6a84393d-76fb-4dae-9213-c7507e0538f4
+
+	measure 'NA Label' = "N/A"
+		lineageTag: 9ee3115d-0cd8-4fc2-9273-55b1c15874a4
+
+	measure 'Growth Policies Expiring Soon Value %' =
+			
+			VAR CurrentYear =
+			    MAX('dim_date'[year_number])
+			VAR CurrentValue =
+			    [Policies Expiring Soon]
+			VAR PreviousValue =
+			    CALCULATE(
+			        [Policies Expiring Soon],
+			        FILTER(
+			            ALL('dim_date'),
+			            'dim_date'[year_number] = CurrentYear - 1
+			        )
+			    )
+			RETURN
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
+		lineageTag: 55e2d23e-1117-411f-837d-23bc26e9c5e0
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Growth Policies Expiring Soon %' = ```
+			
+			VAR SelectedYears =
+			    DISTINCTCOUNT('dim_date'[year_number])
+			VAR GrowthValue = 
+			    [Growth Policies Expiring Soon Value %]
+			RETURN
+			    IF(
+			        SelectedYears <> 1,
+			        BLANK(),
+			        SWITCH(
+			            TRUE(),
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
+			        )
+			    )
+			```
+		lineageTag: 587c91d2-34b7-420b-94be-203d3cee5dfc
+
+	measure 'Pending Aging Amount' =
+			
+			SWITCH(
+			    SELECTEDVALUE(pending_payment[aging_bucket]),
+			    "0 - 7 days",    [Pending Aging 0-7 Days],
+			    "8 - 30 days",   [Pending Aging 8-30 Days],
+			    "31 - 60 days",  [Pending Aging 31-60 Days],
+			    "61 - 90 days",  [Pending Aging 61-90 Days],
+			    "> 90 days",     [Pending Aging > 90 Days]
+			)
+		lineageTag: 6bafb823-fd6f-4ac0-a0b3-3595c63cec36
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
 	column Dummy
 		lineageTag: 74378107-e74b-4ea1-8b5e-f418b945bc8f

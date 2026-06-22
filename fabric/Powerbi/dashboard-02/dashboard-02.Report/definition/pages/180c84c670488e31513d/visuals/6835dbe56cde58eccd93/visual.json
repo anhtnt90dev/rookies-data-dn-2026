@@ -89,7 +89,8 @@
                 }
               },
               "queryRef": "Measures DB2.Total Amount",
-              "nativeQueryRef": "Total Amount"
+              "nativeQueryRef": "Total Amount",
+              "format": "#,0 \"₫\";-#,0 \"₫\";#,0 \"₫\""
             }
           ]
         }

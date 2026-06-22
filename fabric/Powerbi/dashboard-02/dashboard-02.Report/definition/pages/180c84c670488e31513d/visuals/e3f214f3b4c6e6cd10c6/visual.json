@@ -13,6 +13,26 @@
     "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pending_payment"
+                    }
+                  },
+                  "Property": "aging_bucket"
+                }
+              },
+              "queryRef": "pending_payment.aging_bucket",
+              "nativeQueryRef": "Aging Bucket",
+              "active": true,
+              "displayName": "Aging Bucket"
+            }
+          ]
+        },
         "Y": {
           "projections": [
             {
@@ -23,67 +43,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Pending Aging > 90 Days"
+                  "Property": "Pending Aging Amount"
                 }
               },
-              "queryRef": "Measures DB2.Pending Aging: >90 Days",
-              "nativeQueryRef": "Pending Aging > 90 Days"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Pending Aging 0-7 Days"
-                }
-              },
-              "queryRef": "Measures DB2.Pending Aging: 0–7 Days",
-              "nativeQueryRef": "Pending Aging 0-7 Days"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Pending Aging 31-60 Days"
-                }
-              },
-              "queryRef": "Measures DB2.Pending Aging: 31–60 Days",
-              "nativeQueryRef": "Pending Aging 31-60 Days"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Pending Aging 61-90 Days"
-                }
-              },
-              "queryRef": "Measures DB2.Pending Aging: 61–90 Days",
-              "nativeQueryRef": "Pending Aging 61-90 Days"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "Measures DB2"
-                    }
-                  },
-                  "Property": "Pending Aging 8-30 Days"
-                }
-              },
-              "queryRef": "Measures DB2.Pending Aging: 8–30 Days",
-              "nativeQueryRef": "Pending Aging 8-30 Days"
+              "queryRef": "Measures DB2.Pending Aging Amount",
+              "nativeQueryRef": "Pending Aging Amount"
             }
           ]
         }
@@ -98,7 +62,7 @@
                     "Entity": "Measures DB2"
                   }
                 },
-                "Property": "Pending Aging > 90 Days"
+                "Property": "Pending Aging Amount"
               }
             },
             "direction": "Descending"
@@ -162,7 +126,7 @@
             "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             }
@@ -196,7 +160,7 @@
             "showAxisTitle": {
               "expr": {
                 "Literal": {
-                  "Value": "true"
+                  "Value": "false"
                 }
               }
             }

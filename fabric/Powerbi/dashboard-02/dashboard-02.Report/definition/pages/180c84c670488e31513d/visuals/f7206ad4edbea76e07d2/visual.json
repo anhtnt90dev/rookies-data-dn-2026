@@ -23,11 +23,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Growth Total Payment %"
+                  "Property": "Growth Total Payment Amount %"
                 }
               },
-              "queryRef": "Measures DB2.Growth Total Payment %",
-              "nativeQueryRef": "Growth Total Payment %"
+              "queryRef": "Measures DB2.Growth Total Payment Amount %",
+              "nativeQueryRef": "Growth Total Payment Amount %"
             }
           ]
         }

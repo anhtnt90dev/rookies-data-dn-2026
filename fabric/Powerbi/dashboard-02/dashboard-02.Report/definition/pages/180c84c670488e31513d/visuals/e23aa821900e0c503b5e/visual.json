@@ -72,7 +72,8 @@
               },
               "queryRef": "Sum(fact_payment.payment_amount)",
               "nativeQueryRef": "Payment Amount",
-              "displayName": "Payment Amount"
+              "displayName": "Payment Amount",
+              "format": "#,0 \"₫\";-#,0 \"₫\";#,0 \"₫\""
             }
           ]
         }

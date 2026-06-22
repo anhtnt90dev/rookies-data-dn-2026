@@ -58,7 +58,7 @@ publish_all_items(workspace)
 
 print("Un-publishing PowerBI artifacts...")
 
-unpublish_all_orphan_items(target_workspace)
+unpublish_all_orphan_items(workspace)
 
 
 print("PowerBI deployment completed")

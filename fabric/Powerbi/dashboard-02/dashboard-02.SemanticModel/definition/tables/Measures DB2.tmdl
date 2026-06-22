@@ -929,8 +929,6 @@ table 'Measures DB2'
 			)
 		lineageTag: 6bafb823-fd6f-4ac0-a0b3-3595c63cec36
 
-		annotation PBI_FormatHint = {"isGeneralNumber":true}
-
 	column Dummy
 		lineageTag: 74378107-e74b-4ea1-8b5e-f418b945bc8f
 		summarizeBy: none

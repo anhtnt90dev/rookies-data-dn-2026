@@ -1,9 +1,9 @@
 table pending_payment
-	lineageTag: 325ee7dc-9f07-452d-8c06-261e0141ffdf
+	lineageTag: 6e4d97d8-ba32-40b4-bfdb-adf87ec231e5
 
 	column aging_bucket
 		dataType: string
-		lineageTag: 68a42d51-328d-4002-8391-87451efd8336
+		lineageTag: 74657557-c310-4f92-8621-57e0e43bd456
 		summarizeBy: none
 		sourceColumn: aging_bucket
 
@@ -12,7 +12,7 @@ table pending_payment
 	column sort_order
 		dataType: int64
 		formatString: 0
-		lineageTag: 973cfa5f-59b6-46c4-9904-ae1bbbac6551
+		lineageTag: de5ee5c7-8eb7-4abd-825f-20ad0ba08a8b
 		summarizeBy: sum
 		sourceColumn: sort_order
 
@@ -28,6 +28,8 @@ table pending_payment
 				    #"Changed Type"
 
 	changedProperty = Name
+
+	annotation PBI_NavigationStepName = Navigation
 
 	annotation PBI_ResultType = Table
 

@@ -46,7 +46,8 @@
                 }
               },
               "queryRef": "Measures DB2.Pending Aging Amount",
-              "nativeQueryRef": "Pending Aging Amount"
+              "nativeQueryRef": "Pending Aging Amount",
+              "format": "#,0 \"₫\";-#,0 \"₫\";#,0 \"₫\""
             }
           ]
         }
@@ -88,6 +89,13 @@
         {
           "properties": {
             "gridlineShow": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "showAxisTitle": {
               "expr": {
                 "Literal": {
                   "Value": "false"
@@ -145,7 +153,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "cf8a92480bc8650c56ee",
+        "name": "2b6f90f0ba4ebe29ac9b",
         "field": {
           "Column": {
             "Expression": {
@@ -159,7 +167,7 @@
         "type": "Categorical"
       },
       {
-        "name": "b8e016f0507d84760549",
+        "name": "977fa37590031700013a",
         "field": {
           "Measure": {
             "Expression": {

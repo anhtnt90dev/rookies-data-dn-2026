@@ -1,35 +1,38 @@
 table pending_payment
-	lineageTag: 6e4d97d8-ba32-40b4-bfdb-adf87ec231e5
+	lineageTag: ce561964-dc1e-42a0-a2d4-7ce2632807ad
 
 	column aging_bucket
-		dataType: string
-		lineageTag: 74657557-c310-4f92-8621-57e0e43bd456
+		lineageTag: b3c9c9e9-b080-46ce-9faf-3c75eff0c05f
 		summarizeBy: none
-		sourceColumn: aging_bucket
+		isNameInferred
+		sourceColumn: [aging_bucket]
 
 		annotation SummarizationSetBy = Automatic
 
 	column sort_order
-		dataType: int64
 		formatString: 0
-		lineageTag: de5ee5c7-8eb7-4abd-825f-20ad0ba08a8b
+		lineageTag: 7236e1f8-477f-4a75-a95f-afe89928e006
 		summarizeBy: sum
-		sourceColumn: sort_order
+		isNameInferred
+		sourceColumn: [sort_order]
 
 		annotation SummarizationSetBy = Automatic
 
-	partition pending_payment = m
+	partition pending_payment = calculated
 		mode: import
 		source =
-				let
-				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WMlDQVTBXSEmsLFbSUTJUitWJVrIAChkbwMSMwGLGhkBBM7igMVjQDCRoCRc0AQvGlBoYGKciCZsqxcYCAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [aging_bucket = _t, sort_order = _t]),
-				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"aging_bucket", type text}, {"sort_order", Int64.Type}})
-				in
-				    #"Changed Type"
+				
+				DATATABLE(
+				    "aging_bucket", STRING,
+				    "sort_order", INTEGER,
+				    {
+				        { "0 - 7 days",   1 },
+				        { "8 - 30 days",  2 },
+				        { "31 - 60 days", 3 },
+				        { "61 - 90 days", 4 },
+				        { "> 90 days",    5 }
+				    }
+				)
 
-	changedProperty = Name
-
-	annotation PBI_NavigationStepName = Navigation
-
-	annotation PBI_ResultType = Table
+	annotation PBI_Id = 6235f523afb94033a73f79b9a57df16a
 

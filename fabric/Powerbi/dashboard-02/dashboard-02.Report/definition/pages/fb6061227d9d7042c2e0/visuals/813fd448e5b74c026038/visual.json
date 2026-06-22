@@ -1,0 +1,162 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "name": "813fd448e5b74c026038",
+  "position": {
+    "x": 343.29501915708812,
+    "y": 140.99616858237547,
+    "z": 0,
+    "height": 279.54022988505744,
+    "width": 280.76628352490422,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "lineChart",
+    "query": {
+      "queryState": {
+        "Tooltips": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Growth Policies Expiring Soon %"
+                }
+              },
+              "queryRef": "Measures DB2.Growth Policies Expiring Soon %",
+              "nativeQueryRef": "Growth Policies Expiring Soon %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Growth Policy Cancellation Rate %"
+                }
+              },
+              "queryRef": "Measures DB2.Growth Policy Cancellation Rate %",
+              "nativeQueryRef": "Growth Policy Cancellation Rate %"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Payment Value"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Payment Value",
+              "nativeQueryRef": "Avg Payment Value"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Avg Premium per Policy"
+                }
+              },
+              "queryRef": "Measures DB2.Avg Premium per Policy",
+              "nativeQueryRef": "Avg Premium per Policy"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "Measures DB2"
+                  }
+                },
+                "Property": "Avg Payment Value"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "6d87c62face82cb996e5",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Payment Value"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "be5c87f73a11626d2851",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Avg Premium per Policy"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "2358bcd7a5a0c3400dc3",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Growth Policies Expiring Soon %"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "afcf4c42308184eb58b6",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Growth Policy Cancellation Rate %"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

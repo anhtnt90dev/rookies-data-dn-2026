@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.1.0/schema.json",
-  "name": "f04cba3a070e10e44006",
-  "displayName": "Page 1",
+  "name": "fb6061227d9d7042c2e0",
+  "displayName": "Demo CICD Page",
   "displayOption": "FitToPage",
   "height": 720,
   "width": 1280

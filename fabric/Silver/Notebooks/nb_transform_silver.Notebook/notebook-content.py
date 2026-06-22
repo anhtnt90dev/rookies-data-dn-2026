@@ -93,6 +93,8 @@ run_env: str = "dev"
 # Override load type at runtime: 'full' | 'incremental' | '' (use cfg value)
 force_load_type: str = "incremental"
 
+test_demo_varibale: str = "demo 3pm"
+
 
 # METADATA ********************
 

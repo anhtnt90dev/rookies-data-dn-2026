@@ -119,13 +119,6 @@
                   "Value": "false"
                 }
               }
-            },
-            "gridlineShow": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
             }
           }
         }
@@ -200,51 +193,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "12ae383137e725363dc5",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_agent"
-              }
-            },
-            "Property": "agent_name"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "31b18b25cd9e4766e630",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Policies Issued"
-          }
-        },
-        "type": "Advanced"
-      },
-      {
-        "name": "9133a576777040a81834",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Conversion Rate"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

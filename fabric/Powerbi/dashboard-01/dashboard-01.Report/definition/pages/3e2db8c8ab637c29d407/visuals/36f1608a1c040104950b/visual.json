@@ -194,23 +194,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "8c4d3b2b48ced7aa0065",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Rejected Quotations"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

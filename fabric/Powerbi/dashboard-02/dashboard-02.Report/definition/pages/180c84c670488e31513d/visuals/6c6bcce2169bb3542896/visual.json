@@ -1,33 +1,53 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
-  "name": "234cec32090b65111c6d",
+  "name": "6c6bcce2169bb3542896",
   "position": {
-    "x": 1037.6917663617171,
-    "y": 278.33919774806475,
-    "z": 7000,
-    "height": 107.192118226601,
-    "width": 199.07107670654469,
-    "tabOrder": 7000
+    "x": 190.69608519595471,
+    "y": 223.29370659697261,
+    "z": 21001,
+    "height": 234.70287408732887,
+    "width": 337.38538150053529,
+    "tabOrder": 21001
   },
   "visual": {
-    "visualType": "cardVisual",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
-        "Data": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "pending_payment"
+                    }
+                  },
+                  "Property": "aging_bucket"
+                }
+              },
+              "queryRef": "pending_payment.aging_bucket",
+              "nativeQueryRef": "aging_bucket",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
           "projections": [
             {
               "field": {
                 "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "Measures "
+                      "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Active Customers"
+                  "Property": "Pending Aging Amount"
                 }
               },
-              "queryRef": "Measures .Active Customers",
-              "nativeQueryRef": "Active Customers"
+              "queryRef": "Measures DB2.Pending Aging Amount",
+              "nativeQueryRef": "Pending Aging Amount",
+              "format": "#,0 \"₫\";-#,0 \"₫\";#,0 \"₫\""
             }
           ]
         }
@@ -39,10 +59,10 @@
               "Measure": {
                 "Expression": {
                   "SourceRef": {
-                    "Entity": "Measures "
+                    "Entity": "Measures DB2"
                   }
                 },
-                "Property": "Active Customers"
+                "Property": "Pending Aging Amount"
               }
             },
             "direction": "Descending"
@@ -52,93 +72,7 @@
       }
     },
     "objects": {
-      "label": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "fillCustom": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "layout": [
-        {
-          "properties": {
-            "backgroundShow": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "outline": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ],
-      "value": [
-        {
-          "properties": {
-            "horizontalAlignment": {
-              "expr": {
-                "Literal": {
-                  "Value": "'center'"
-                }
-              }
-            },
-            "showBlankAs": {
-              "expr": {
-                "Literal": {
-                  "Value": "'0'"
-                }
-              }
-            }
-          },
-          "selector": {
-            "id": "default"
-          }
-        }
-      ]
-    },
-    "visualContainerObjects": {
-      "title": [
+      "labels": [
         {
           "properties": {
             "show": {
@@ -147,11 +81,52 @@
                   "Value": "true"
                 }
               }
+            }
+          }
+        }
+      ],
+      "valueAxis": [
+        {
+          "properties": {
+            "gridlineShow": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
             },
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryAxis": [
+        {
+          "properties": {
+            "showAxisTitle": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'ACTIVE CUSTOMERS'"
+                  "Value": "'PENDING PAYMENT AGING'"
                 }
               }
             },
@@ -168,31 +143,43 @@
                   "Value": "'''Segoe UI Bold'', wf_segoe-ui_bold, helvetica, arial, sans-serif'"
                 }
               }
-            },
-            "alignment": {
-              "expr": {
-                "Literal": {
-                  "Value": "'center'"
-                }
-              }
-            }
-          }
-        }
-      ],
-      "background": [
-        {
-          "properties": {
-            "show": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
-                }
-              }
             }
           }
         }
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "2b6f90f0ba4ebe29ac9b",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "pending_payment"
+              }
+            },
+            "Property": "aging_bucket"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "977fa37590031700013a",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Pending Aging Amount"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

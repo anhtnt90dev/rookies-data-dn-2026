@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "4a8927aa5224c4e5d2ab",
   "position": {
-    "x": 730.010255703119,
-    "y": 463.84597485198179,
+    "x": 728.58990944372567,
+    "y": 463.64812419146182,
     "z": 4000,
-    "height": 230.15797230098335,
-    "width": 518.208440702214,
+    "height": 230.72013799051314,
+    "width": 518.84432945235017,
     "tabOrder": 4000
   },
   "visual": {
@@ -67,11 +67,11 @@
                       "Entity": "dim_provider"
                     }
                   },
-                  "Property": "provider_name"
+                  "Property": "provider_code"
                 }
               },
-              "queryRef": "dim_provider.provider_name",
-              "nativeQueryRef": "provider_name"
+              "queryRef": "dim_provider.provider_code",
+              "nativeQueryRef": "provider_code"
             }
           ]
         },
@@ -89,7 +89,8 @@
                 }
               },
               "queryRef": "Measures DB2.Total Written Premium",
-              "nativeQueryRef": "Total Written Premium"
+              "nativeQueryRef": "Total Written Premium",
+              "format": "#,0 \"₫\";-#,0 \"₫\";#,0 \"₫\""
             }
           ]
         }

@@ -195,23 +195,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "c10aace1a4a4b207aad2",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Average Conversion Rate (Agent)"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -201,23 +201,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "3f94811526088020b983",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Expired Quotations"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

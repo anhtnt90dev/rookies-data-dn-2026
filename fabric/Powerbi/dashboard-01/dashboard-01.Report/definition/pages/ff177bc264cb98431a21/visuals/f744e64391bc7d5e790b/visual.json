@@ -194,23 +194,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "492a9769c934e534533e",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Avg Written Premium per Policy (VND)"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

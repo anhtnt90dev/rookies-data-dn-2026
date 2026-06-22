@@ -195,23 +195,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "08cd61e0a04798a3e6d7",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Quote-to-Accept Rate"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -112,7 +112,7 @@
                       },
                       "Right": {
                         "Literal": {
-                          "Value": "2028L"
+                          "Value": "2027L"
                         }
                       }
                     }
@@ -277,55 +277,6 @@
                         }
                       },
                       "Property": "Is Known Payment Method"
-                    }
-                  },
-                  "Right": {
-                    "Literal": {
-                      "Value": "1L"
-                    }
-                  }
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      },
-      {
-        "name": "5d438eb989a37d375330",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_policy_status"
-              }
-            },
-            "Property": "Is Known Policy Status"
-          }
-        },
-        "type": "Advanced",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "d",
-              "Entity": "dim_policy_status",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "Comparison": {
-                  "ComparisonKind": 0,
-                  "Left": {
-                    "Column": {
-                      "Expression": {
-                        "SourceRef": {
-                          "Source": "d"
-                        }
-                      },
-                      "Property": "Is Known Policy Status"
                     }
                   },
                   "Right": {

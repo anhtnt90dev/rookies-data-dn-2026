@@ -199,7 +199,7 @@
                           [
                             {
                               "Literal": {
-                                "Value": "2025L"
+                                "Value": "2026L"
                               }
                             }
                           ]
@@ -282,11 +282,6 @@
         }
       ]
     },
-    "syncGroup": {
-      "groupName": "year_number",
-      "fieldChanges": true,
-      "filterChanges": true
-    },
     "drillFilterOtherVisuals": true
   },
   "filterConfig": {
@@ -341,13 +336,6 @@
                       {
                         "Literal": {
                           "Value": "2026L"
-                        }
-                      }
-                    ],
-                    [
-                      {
-                        "Literal": {
-                          "Value": "2027L"
                         }
                       }
                     ]

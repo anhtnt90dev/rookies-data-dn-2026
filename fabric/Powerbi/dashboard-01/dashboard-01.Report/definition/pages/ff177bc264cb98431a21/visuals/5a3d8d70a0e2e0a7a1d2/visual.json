@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "5a3d8d70a0e2e0a7a1d2",
   "position": {
-    "x": 239.15821026009306,
-    "y": 370.88706403971651,
+    "x": 245.63968668407313,
+    "y": 370.96605744125327,
     "z": 14000,
-    "height": 65.224966434570831,
-    "width": 207.18518749804852,
+    "height": 65.16971279373368,
+    "width": 207.20626631853787,
     "tabOrder": 14000
   },
   "visual": {
@@ -146,63 +146,13 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Conditional": {
-                      "Cases": [
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 1,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Premium Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#5ECBC8'"
-                            }
-                          }
-                        },
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 3,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Premium Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#EB5757'"
-                            }
-                          }
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures "
                         }
-                      ]
+                      },
+                      "Property": "Premium Growth % YoY Color"
                     }
                   }
                 }
@@ -218,7 +168,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "' '"
+                  "Value": "'0'"
                 }
               }
             }

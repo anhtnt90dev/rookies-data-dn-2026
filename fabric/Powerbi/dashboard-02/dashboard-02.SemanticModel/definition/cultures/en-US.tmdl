@@ -5185,7 +5185,7 @@ cultureInfo en-US
 			      "State": "Generated",
 			      "Terms": [
 			        {
-			          "Provider Name": {
+			          "Provider": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",
@@ -5195,7 +5195,7 @@ cultureInfo en-US
 			          }
 			        },
 			        {
-			          "PROVIDER": {
+			          "Provider Name": {
 			            "State": "Suggested",
 			            "Source": {
 			              "Type": "External",
@@ -5456,6 +5456,16 @@ cultureInfo en-US
 			      },
 			      "State": "Generated",
 			      "Terms": [
+			        {
+			          "Policy Status": {
+			            "State": "Suggested",
+			            "Source": {
+			              "Type": "External",
+			              "Agent": "PowerBI.VisualColumnRename"
+			            },
+			            "Weight": 0.9
+			          }
+			        },
 			        {
 			          "Status": {
 			            "State": "Suggested",

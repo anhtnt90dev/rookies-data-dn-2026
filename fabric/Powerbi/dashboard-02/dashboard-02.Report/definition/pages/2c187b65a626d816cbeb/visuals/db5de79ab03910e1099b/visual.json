@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_provider.provider_name",
-              "nativeQueryRef": "provider_name",
-              "active": true
+              "nativeQueryRef": "Provider",
+              "active": true,
+              "displayName": "Provider"
             }
           ]
         },
@@ -46,7 +47,8 @@
                 }
               },
               "queryRef": "dim_package.package_code",
-              "nativeQueryRef": "package_code"
+              "nativeQueryRef": "Package",
+              "displayName": "Package"
             }
           ]
         },

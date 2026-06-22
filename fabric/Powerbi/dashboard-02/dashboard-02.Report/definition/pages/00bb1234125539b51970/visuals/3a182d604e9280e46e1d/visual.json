@@ -159,6 +159,13 @@
                   "Value": "24D"
                 }
               }
+            },
+            "showBlankAs": {
+              "expr": {
+                "Literal": {
+                  "Value": "'0'"
+                }
+              }
             }
           },
           "selector": {

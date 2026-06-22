@@ -27,9 +27,8 @@
                 }
               },
               "queryRef": "dim_package.package_code",
-              "nativeQueryRef": "Package",
-              "active": true,
-              "displayName": "Package"
+              "nativeQueryRef": "package_code",
+              "active": true
             }
           ]
         },
@@ -129,37 +128,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "b9ff3b901308d7661d1e",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_package"
-              }
-            },
-            "Property": "package_code"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "97d90d40062948140107",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Total Quotations"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -294,5 +294,42 @@
       ]
     },
     "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "79d09e1b1e77699015c3",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_payment_status"
+              }
+            },
+            "Property": "payment_status_code"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "d1a06753122a30a4422e",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_payment"
+                  }
+                },
+                "Property": "payment_id"
+              }
+            },
+            "Function": 5
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
   }
 }

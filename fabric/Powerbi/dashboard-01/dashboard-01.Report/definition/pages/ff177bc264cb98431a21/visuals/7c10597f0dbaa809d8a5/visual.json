@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "7c10597f0dbaa809d8a5",
   "position": {
-    "x": 1051.272988416024,
-    "y": 372.16598495019826,
+    "x": 1059.4255874673629,
+    "y": 372.63707571801569,
     "z": 15000,
-    "height": 63.946045524089051,
-    "width": 185.44353201985825,
+    "height": 63.498694516971284,
+    "width": 185.48302872062663,
     "tabOrder": 15000
   },
   "visual": {
@@ -146,63 +146,13 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Conditional": {
-                      "Cases": [
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 1,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Active Customer Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#5ECBC8'"
-                            }
-                          }
-                        },
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 3,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Active Customer Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#EB5757'"
-                            }
-                          }
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures "
                         }
-                      ]
+                      },
+                      "Property": "Active Customer Growth % YoY Color"
                     }
                   }
                 }
@@ -218,7 +168,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "' '"
+                  "Value": "'0'"
                 }
               }
             }

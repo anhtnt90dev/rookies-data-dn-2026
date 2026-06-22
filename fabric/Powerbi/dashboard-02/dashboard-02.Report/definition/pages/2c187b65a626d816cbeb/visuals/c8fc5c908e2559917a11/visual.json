@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
-  "name": "e3b03763d230dbe51154",
+  "name": "c8fc5c908e2559917a11",
   "position": {
-    "x": 876.58148539246747,
-    "y": 160.32214009151707,
-    "z": 20000,
-    "height": 62.28342133051742,
-    "width": 164.93572685674059,
-    "tabOrder": 20000
+    "x": 1087.7777777777778,
+    "y": 158.88888888888889,
+    "z": 21000,
+    "height": 61.111111111111107,
+    "width": 168.88888888888889,
+    "tabOrder": 21000
   },
   "visual": {
     "visualType": "cardVisual",
@@ -23,11 +23,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Growth Avg Premium per Policy %"
+                  "Property": "Growth Policies Expiring Soon %"
                 }
               },
-              "queryRef": "Measures DB2.Growth Avg Premium per Policy %",
-              "nativeQueryRef": "Growth Avg Premium per Policy %"
+              "queryRef": "Measures DB2.Growth Policies Expiring Soon %",
+              "nativeQueryRef": "Growth Policies Expiring Soon %"
             }
           ]
         }
@@ -101,7 +101,7 @@
                                       "Entity": "Measures DB2"
                                     }
                                   },
-                                  "Property": "Growth Avg Premium per Policy Value %"
+                                  "Property": "Growth Active Policies Value %"
                                 }
                               },
                               "Right": {
@@ -128,7 +128,7 @@
                                       "Entity": "Measures DB2"
                                     }
                                   },
-                                  "Property": "Growth Avg Premium per Policy Value %"
+                                  "Property": "Growth Active Policies Value %"
                                 }
                               },
                               "Right": {

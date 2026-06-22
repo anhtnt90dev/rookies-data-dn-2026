@@ -50,30 +50,15 @@ table 'Measures '
 		formatString: 0
 		lineageTag: 289cfb97-cb55-4480-a6f6-bc399175abb0
 
-	measure 'Quotation Count by Month' =
-			
-			COALESCE(
-			    CALCULATE([Total Quotations], DATESMTD(dim_date[full_date])),
-			    0
-			)
+	measure 'Quotation Count by Month' = CALCULATE([Total Quotations], DATESMTD(dim_date[full_date]))
 		formatString: 0
 		lineageTag: 251f8c59-b672-461e-9d63-cffca98c8fc2
 
-	measure 'Policies Issued by Month' =
-			
-			COALESCE(
-			    CALCULATE([Policies Issued], DATESMTD(dim_date[full_date])),
-			    0
-			)
+	measure 'Policies Issued by Month' = CALCULATE([Policies Issued], DATESMTD(dim_date[full_date]))
 		formatString: 0
 		lineageTag: be6dd683-d862-4391-9720-0b28ca5256cb
 
-	measure 'Conversion Rate by Month' =
-			
-			COALESCE(
-			    CALCULATE([Conversion Rate], DATESMTD(dim_date[full_date])),
-			    0
-			)
+	measure 'Conversion Rate by Month' = CALCULATE([Conversion Rate], DATESMTD(dim_date[full_date]))
 		lineageTag: 7d784dda-175e-40f5-a5d4-08c2c39447ba
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
@@ -84,19 +69,13 @@ table 'Measures '
 
 	measure 'Rejected + Expired Rate by Month' =
 			
-			COALESCE(
+			DIVIDE(
 			    CALCULATE(
-			        DIVIDE(
-			            CALCULATE(
-			                [Total Quotations],
-			                dim_quotation_status[quotation_status_code]
-			                    IN {"REJECTED", "EXPIRED"}
-			            ),
-			            [Total Quotations],
-			            0
-			        ),
-			        DATESMTD(dim_date[full_date])
+			        [Total Quotations],
+			        dim_quotation_status[quotation_status_code]
+			            IN {"REJECTED", "EXPIRED"}
 			    ),
+			    [Total Quotations],
 			    0
 			)
 		lineageTag: f54130e1-c66f-4cd9-9c51-9279a297bbe1
@@ -330,7 +309,7 @@ table 'Measures '
 			    IF(
 			        ISBLANK(PY),
 			        BLANK(),
-			        (CY - PY)*100
+			        CY - PY
 			    )
 		lineageTag: a1461cdb-9050-4f61-834d-9c08e3338657
 
@@ -466,13 +445,13 @@ table 'Measures '
 
 	measure 'Conversion Rate Change YoY Display' =
 			
-			VAR _pts = [Conversion Rate Change YoY]
+			VAR _pts = [Conversion Rate Change YoY] * 100
 			RETURN
 			    IF(
 			        NOT ISBLANK(_pts),
 			        IF(_pts >= 0, "▲ ", "▼ ")
-			            & FORMAT(_pts, "0.00 pts")
-			            & " vs PY"
+			            & FORMAT(_pts, "0.00")
+			            & " pts vs PY"
 			    )
 		lineageTag: e493d69c-5ce2-4168-9961-89ab21bec160
 
@@ -565,6 +544,78 @@ table 'Measures '
 			            & " vs PY"
 			    )
 		lineageTag: 11721a64-02ac-4288-a4b9-6ecaf43579a0
+
+	measure 'Quotation Growth % YoY Color' =
+			
+			IF(
+			    [Quotation Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: dd0ed532-f4ca-4906-880e-8f1778f7f8af
+
+	measure 'Avg Premium Change % YoY Color' =
+			
+			IF(
+			    [Avg Premium Change % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: c94d27b4-8de2-4485-8d79-d50b6c562d56
+
+	measure 'Premium Growth % YoY Color' =
+			
+			IF(
+			    [Premium Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 639e6b8f-e568-4bd0-b9e4-cad823417dfd
+
+	measure 'Active Customer Growth % YoY Color' =
+			
+			IF(
+			    [Active Customer Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 2843495a-c812-40f3-8dda-5a70a8dbd23f
+
+	measure 'Conversion Rate Change YoY Color' =
+			
+			IF(
+			    [Conversion Rate Change YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 1a894217-00a8-4660-aae9-3488c5a18be3
+
+	measure 'Policies Issued Growth % YoY Color' =
+			
+			IF(
+			    [Policies Issued Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: a1cd1f00-3fa4-46ba-b78e-0b101de7696c
+
+	measure 'Accepted Quotations Growth % YoY Color' =
+			
+			IF(
+			    [Accepted Quotations Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 8fefc73b-994b-4252-a8e3-6d0b34e74d9a
+
+	measure 'Policies In Force Growth % YoY Color' =
+			
+			IF(
+			    [Policies In Force Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 007b3b17-ad18-4442-8e3b-c2d8fb26f921
 
 	partition 'Measures ' = m
 		mode: import

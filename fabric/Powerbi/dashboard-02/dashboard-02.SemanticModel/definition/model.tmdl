@@ -40,6 +40,7 @@ ref table fact_payment
 ref table fact_policy
 ref table fact_quotation
 ref table fact_quotation_item
+ref table pending_payment
 
 ref role ROLE_CUSTOMER
 ref role ROLE_AGENT

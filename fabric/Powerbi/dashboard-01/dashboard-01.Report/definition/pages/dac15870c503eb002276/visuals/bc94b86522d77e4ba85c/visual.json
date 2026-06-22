@@ -194,23 +194,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "f5d6a7cb10ecb5219e57",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Active Agents"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -194,23 +194,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "3006c2250c70aeb93c92",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Policies In Force"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

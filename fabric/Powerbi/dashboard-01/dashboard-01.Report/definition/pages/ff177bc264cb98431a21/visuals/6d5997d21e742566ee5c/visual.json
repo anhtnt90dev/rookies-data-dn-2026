@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "6d5997d21e742566ee5c",
   "position": {
-    "x": 1051.272988416024,
-    "y": 190.55921566178537,
+    "x": 1065.4607956055638,
+    "y": 190.15717196775051,
     "z": 13000,
-    "height": 66.503887345052618,
-    "width": 193.11705748274895,
+    "height": 66.772747408523074,
+    "width": 172.73819438291841,
     "tabOrder": 13000
   },
   "visual": {
@@ -146,63 +146,13 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Conditional": {
-                      "Cases": [
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 1,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Conversion Rate Change YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#5ECBC8'"
-                            }
-                          }
-                        },
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 3,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Conversion Rate Change YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#EB5757'"
-                            }
-                          }
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures "
                         }
-                      ]
+                      },
+                      "Property": "Conversion Rate Change YoY Color"
                     }
                   }
                 }
@@ -211,7 +161,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "' '"
+                  "Value": "'0'"
                 }
               }
             },

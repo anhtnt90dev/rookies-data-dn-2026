@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
   "name": "de6159257e8e9ba885aa",
   "position": {
-    "x": 787.81528085677712,
-    "y": 194.39597839323073,
+    "x": 792.56348010986085,
+    "y": 194.51191636395853,
     "z": 12000,
-    "height": 65.224966434570831,
-    "width": 182.88569019889468,
+    "height": 65.3211659431204,
+    "width": 172.73819438291841,
     "tabOrder": 12000
   },
   "visual": {
@@ -146,63 +146,13 @@
               "solid": {
                 "color": {
                   "expr": {
-                    "Conditional": {
-                      "Cases": [
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 1,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Policies Issued Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#5ECBC8'"
-                            }
-                          }
-                        },
-                        {
-                          "Condition": {
-                            "Comparison": {
-                              "ComparisonKind": 3,
-                              "Left": {
-                                "Measure": {
-                                  "Expression": {
-                                    "SourceRef": {
-                                      "Entity": "Measures "
-                                    }
-                                  },
-                                  "Property": "Policies Issued Growth % YoY"
-                                }
-                              },
-                              "Right": {
-                                "Literal": {
-                                  "Value": "0D"
-                                }
-                              }
-                            }
-                          },
-                          "Value": {
-                            "Literal": {
-                              "Value": "'#EB5757'"
-                            }
-                          }
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "Measures "
                         }
-                      ]
+                      },
+                      "Property": "Policies Issued Growth % YoY Color"
                     }
                   }
                 }
@@ -211,7 +161,7 @@
             "showBlankAs": {
               "expr": {
                 "Literal": {
-                  "Value": "' '"
+                  "Value": "'0'"
                 }
               }
             },

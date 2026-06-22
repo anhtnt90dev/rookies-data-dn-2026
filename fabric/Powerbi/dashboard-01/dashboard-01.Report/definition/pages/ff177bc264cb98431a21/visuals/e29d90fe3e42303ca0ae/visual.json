@@ -209,23 +209,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "2e3c081a408b3a80ee00",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Conversion Rate"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

@@ -194,23 +194,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "a9986c00c2d4020e3e44",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Lost Deal Analysis"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

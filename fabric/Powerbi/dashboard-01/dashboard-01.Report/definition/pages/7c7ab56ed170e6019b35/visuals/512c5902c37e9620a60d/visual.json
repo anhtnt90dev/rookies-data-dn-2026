@@ -27,9 +27,8 @@
                 }
               },
               "queryRef": "dim_provider.provider_name",
-              "nativeQueryRef": "Provider",
-              "active": true,
-              "displayName": "Provider"
+              "nativeQueryRef": "provider_name",
+              "active": true
             }
           ]
         },
@@ -149,37 +148,5 @@
       ]
     },
     "drillFilterOtherVisuals": true
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "ee5bedb8959ba0d2b00b",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_provider"
-              }
-            },
-            "Property": "provider_name"
-          }
-        },
-        "type": "Categorical"
-      },
-      {
-        "name": "acb3b9756d1a11b54400",
-        "field": {
-          "Measure": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "Measures "
-              }
-            },
-            "Property": "Volume Share by Provider"
-          }
-        },
-        "type": "Advanced"
-      }
-    ]
   }
 }

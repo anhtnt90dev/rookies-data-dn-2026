@@ -1,10 +1,10 @@
 flowchart TD
-  A["Developer<br>(feature branch)"] -->|Create PR| B["Pull Request"]
-  B --> C["CI: Validate PR<br>lint for artifact checks"]
-  C --> D["Merge to dev/main"]
-  D --> E["CD: GitHub Actions<br>trigger on merge or manual dispatch"]
-  E --> F["Resolve target workspace &<br>environment secrets"]
-  F --> G["Prepare artifacts by updating notebook metadata and replacing globally unique identifiers (GUIDs) for the target environment"]
-  G --> H["Deploy to Target Workspace<br>fabric-cicd: publish_all_items()"]
-  H --> N["Done"]
+  Dev["Developer (branch: feature/*)"] --> Repo["Git Repository"]
+  Repo --> PR["Pull Request + Review"]
+  PR --> Merge["Merge to DEV branch"]
+  Merge --> Actions["GitHub Actions Pipeline"]
+  Actions --> Fabric["Fabric Pipeline <br> (Notebook, Activity)"]
+  Actions --> PowerBI["Power BI<br>Report<br>Semantic Model<br>Dashboard"]
+  Fabric --> Workspace["Fabric Workspace"]
+  PowerBI --> Workspace
 

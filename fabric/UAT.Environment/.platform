@@ -1,11 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
   "metadata": {
-    "type": "Notebook",
-    "displayName": "nb_crm_full_31-08-2025_dev"
+    "type": "Environment",
+    "displayName": "UAT",
+    "description": "Environment"
   },
   "config": {
     "version": "2.0",
-    "logicalId": "bc02c2ba-1d45-a66f-4379-7cb8bf706e99"
+    "logicalId": "0519000f-54ce-ab89-4a90-a6f539ba103a"
   }
 }

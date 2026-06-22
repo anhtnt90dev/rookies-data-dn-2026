@@ -5477,27 +5477,6 @@ cultureInfo en-US
 			          }
 			        }
 			      ]
-			    },
-			    "pending_payment.aging_bucket": {
-			      "Definition": {
-			        "Binding": {
-			          "ConceptualEntity": "pending_payment",
-			          "ConceptualProperty": "aging_bucket"
-			        }
-			      },
-			      "State": "Generated",
-			      "Terms": [
-			        {
-			          "Aging Bucket": {
-			            "State": "Suggested",
-			            "Source": {
-			              "Type": "External",
-			              "Agent": "PowerBI.VisualColumnRename"
-			            },
-			            "Weight": 0.9
-			          }
-			        }
-			      ]
 			    }
 			  },
 			  "Relationships": {

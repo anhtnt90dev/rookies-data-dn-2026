@@ -1,18 +1,21 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
-  "name": "f4c7c3ab8a473936ea58",
+  "name": "5fc8ea0949da4e4ee6ec",
   "position": {
-    "x": 31.430325352977285,
-    "y": 337.87599754450582,
-    "z": 2,
-    "height": 279.72989564149782,
-    "width": 280.51565377532228,
-    "tabOrder": 2
+    "x": 264.87484208046936,
+    "y": 210.49656324275711,
+    "z": 0,
+    "height": 333.2862251343654,
+    "width": 578.865548917582,
+    "tabOrder": 0
   },
   "visual": {
-    "visualType": "pieChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
+        "Category": {
+          "projections": []
+        },
         "Y": {
           "projections": [
             {
@@ -23,11 +26,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Average Payment Time (Days)"
+                  "Property": "% Change Active vs Prior Year"
                 }
               },
-              "queryRef": "Measures DB2.Average Payment Time (Days)",
-              "nativeQueryRef": "Average Payment Time (Days)"
+              "queryRef": "Measures DB2.% Change Active vs Prior Year",
+              "nativeQueryRef": "% Change Active vs Prior Year"
             },
             {
               "field": {
@@ -37,11 +40,11 @@
                       "Entity": "Measures DB2"
                     }
                   },
-                  "Property": "Avg Payment Value"
+                  "Property": "Active Policies"
                 }
               },
-              "queryRef": "Measures DB2.Avg Payment Value",
-              "nativeQueryRef": "Avg Payment Value"
+              "queryRef": "Measures DB2.Active Policies",
+              "nativeQueryRef": "Active Policies"
             },
             {
               "field": {
@@ -56,6 +59,20 @@
               },
               "queryRef": "Measures DB2.Avg Premium per Policy",
               "nativeQueryRef": "Avg Premium per Policy"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Measures DB2"
+                    }
+                  },
+                  "Property": "Monthly Cancellations"
+                }
+              },
+              "queryRef": "Measures DB2.Monthly Cancellations",
+              "nativeQueryRef": "Monthly Cancellations"
             }
           ]
         }
@@ -70,7 +87,7 @@
                     "Entity": "Measures DB2"
                   }
                 },
-                "Property": "Average Payment Time (Days)"
+                "Property": "% Change Active vs Prior Year"
               }
             },
             "direction": "Descending"
@@ -84,7 +101,7 @@
   "filterConfig": {
     "filters": [
       {
-        "name": "4034d9cdae2b4d032b64",
+        "name": "81bc85b60bab14b0c3ea",
         "field": {
           "Measure": {
             "Expression": {
@@ -92,13 +109,13 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Average Payment Time (Days)"
+            "Property": "% Change Active vs Prior Year"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "7f92640bc27e42c6e32b",
+        "name": "0f195f1538998aa91a17",
         "field": {
           "Measure": {
             "Expression": {
@@ -106,13 +123,13 @@
                 "Entity": "Measures DB2"
               }
             },
-            "Property": "Avg Payment Value"
+            "Property": "Active Policies"
           }
         },
         "type": "Advanced"
       },
       {
-        "name": "3ecf2aecc5aa741d1022",
+        "name": "722a4190090177614a09",
         "field": {
           "Measure": {
             "Expression": {
@@ -121,6 +138,20 @@
               }
             },
             "Property": "Avg Premium per Policy"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "384e1414a55b40a10005",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Measures DB2"
+              }
+            },
+            "Property": "Monthly Cancellations"
           }
         },
         "type": "Advanced"

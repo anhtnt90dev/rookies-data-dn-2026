@@ -1,0 +1,38 @@
+table pending_payment
+	lineageTag: ce561964-dc1e-42a0-a2d4-7ce2632807ad
+
+	column aging_bucket
+		lineageTag: b3c9c9e9-b080-46ce-9faf-3c75eff0c05f
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [aging_bucket]
+
+		annotation SummarizationSetBy = Automatic
+
+	column sort_order
+		formatString: 0
+		lineageTag: 7236e1f8-477f-4a75-a95f-afe89928e006
+		summarizeBy: sum
+		isNameInferred
+		sourceColumn: [sort_order]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition pending_payment = calculated
+		mode: import
+		source =
+				
+				DATATABLE(
+				    "aging_bucket", STRING,
+				    "sort_order", INTEGER,
+				    {
+				        { "0 - 7 days",   1 },
+				        { "8 - 30 days",  2 },
+				        { "31 - 60 days", 3 },
+				        { "61 - 90 days", 4 },
+				        { "> 90 days",    5 }
+				    }
+				)
+
+	annotation PBI_Id = 6235f523afb94033a73f79b9a57df16a
+

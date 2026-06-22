@@ -159,6 +159,13 @@
                   "Value": "'center'"
                 }
               }
+            },
+            "showBlankAs": {
+              "expr": {
+                "Literal": {
+                  "Value": "'0'"
+                }
+              }
             }
           },
           "selector": {

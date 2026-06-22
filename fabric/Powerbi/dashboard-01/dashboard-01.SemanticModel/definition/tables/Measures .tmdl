@@ -407,15 +407,6 @@ table 'Measures '
 			    )
 		lineageTag: fd733183-6c6e-4c96-902e-837d2ba680a5
 
-	measure 'Quotation Growth % YoY Color' =
-			
-			IF(
-			    [Quotation Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: dd0ed532-f4ca-4906-880e-8f1778f7f8af
-
 	measure 'Avg Premium Change % YoY Display' =
 			
 			VAR _pct = [Avg Premium Change % YoY]
@@ -427,15 +418,6 @@ table 'Measures '
 			            & " vs PY"
 			    )
 		lineageTag: b309603a-fd2b-4fce-a33e-2bb48c075ea7
-
-	measure 'Avg Premium Change % YoY Color' =
-			
-			IF(
-			    [Avg Premium Change % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: c94d27b4-8de2-4485-8d79-d50b6c562d56
 
 	measure 'Premium Growth % YoY Display' =
 			
@@ -449,15 +431,6 @@ table 'Measures '
 			    )
 		lineageTag: ea7cb0c8-80b6-426b-aae9-dd21395f2e97
 
-	measure 'Premium Growth % YoY Color' =
-			
-			IF(
-			    [Premium Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 639e6b8f-e568-4bd0-b9e4-cad823417dfd
-
 	measure 'Active Customer Growth % YoY Display' =
 			
 			VAR _pct = [Active Customer Growth % YoY]
@@ -470,35 +443,17 @@ table 'Measures '
 			    )
 		lineageTag: 7a10b3a3-4ccf-4b49-93af-df8fca1b88c8
 
-	measure 'Active Customer Growth % YoY Color' =
-			
-			IF(
-			    [Active Customer Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 2843495a-c812-40f3-8dda-5a70a8dbd23f
-
 	measure 'Conversion Rate Change YoY Display' =
 			
-			VAR _pts = [Conversion Rate Change YoY]
+			VAR _pts = [Conversion Rate Change YoY] * 100
 			RETURN
 			    IF(
 			        NOT ISBLANK(_pts),
 			        IF(_pts >= 0, "▲ ", "▼ ")
-			            & FORMAT(_pts, "0.00 pts")
-			            & " vs PY"
+			            & FORMAT(_pts, "0.00")
+			            & " pts vs PY"
 			    )
 		lineageTag: e493d69c-5ce2-4168-9961-89ab21bec160
-
-	measure 'Conversion Rate Change YoY Color' =
-			
-			IF(
-			    [Conversion Rate Change YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 1a894217-00a8-4660-aae9-3488c5a18be3
 
 	measure 'Policies Issued Growth % YoY' =
 			
@@ -530,15 +485,6 @@ table 'Measures '
 			    )
 		lineageTag: ed99f5aa-5602-42d1-8c7d-933751c7ea3a
 
-	measure 'Policies Issued Growth % YoY Color' =
-			
-			IF(
-			    [Policies Issued Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: a1cd1f00-3fa4-46ba-b78e-0b101de7696c
-
 	measure 'Accepted Quotations Growth % YoY' =
 			
 			VAR CurrentYear = MAX(dim_date[year_number])
@@ -569,15 +515,6 @@ table 'Measures '
 			    )
 		lineageTag: d4fc0ffb-52f8-47bd-a888-44a07e8a4dce
 
-	measure 'Accepted Quotations Growth % YoY Color' =
-			
-			IF(
-			    [Accepted Quotations Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 8fefc73b-994b-4252-a8e3-6d0b34e74d9a
-
 	measure 'Policies In Force Growth % YoY' =
 			
 			VAR CurrentYear = MAX(dim_date[year_number])
@@ -596,15 +533,6 @@ table 'Measures '
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}
 
-	measure 'Policies In Force Growth % YoY Color' =
-			
-			IF(
-			    [Policies In Force Growth % YoY] >= 0,
-			    "#27AE60",
-			    "#E74C3C"
-			)
-		lineageTag: 007b3b17-ad18-4442-8e3b-c2d8fb26f921
-
 	measure 'Policies In Force Growth % YoY Display' =
 			
 			VAR _pct = [Policies In Force Growth % YoY]
@@ -616,6 +544,78 @@ table 'Measures '
 			            & " vs PY"
 			    )
 		lineageTag: 11721a64-02ac-4288-a4b9-6ecaf43579a0
+
+	measure 'Quotation Growth % YoY Color' =
+			
+			IF(
+			    [Quotation Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: dd0ed532-f4ca-4906-880e-8f1778f7f8af
+
+	measure 'Avg Premium Change % YoY Color' =
+			
+			IF(
+			    [Avg Premium Change % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: c94d27b4-8de2-4485-8d79-d50b6c562d56
+
+	measure 'Premium Growth % YoY Color' =
+			
+			IF(
+			    [Premium Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 639e6b8f-e568-4bd0-b9e4-cad823417dfd
+
+	measure 'Active Customer Growth % YoY Color' =
+			
+			IF(
+			    [Active Customer Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 2843495a-c812-40f3-8dda-5a70a8dbd23f
+
+	measure 'Conversion Rate Change YoY Color' =
+			
+			IF(
+			    [Conversion Rate Change YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 1a894217-00a8-4660-aae9-3488c5a18be3
+
+	measure 'Policies Issued Growth % YoY Color' =
+			
+			IF(
+			    [Policies Issued Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: a1cd1f00-3fa4-46ba-b78e-0b101de7696c
+
+	measure 'Accepted Quotations Growth % YoY Color' =
+			
+			IF(
+			    [Accepted Quotations Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 8fefc73b-994b-4252-a8e3-6d0b34e74d9a
+
+	measure 'Policies In Force Growth % YoY Color' =
+			
+			IF(
+			    [Policies In Force Growth % YoY] >= 0,
+			    "#27AE60",
+			    "#E74C3C"
+			)
+		lineageTag: 007b3b17-ad18-4442-8e3b-c2d8fb26f921
 
 	partition 'Measures ' = m
 		mode: import

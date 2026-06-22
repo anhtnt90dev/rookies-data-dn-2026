@@ -67,29 +67,18 @@ table 'Measures '
 			
 			VAR SelectedYears =
 			    DISTINCTCOUNT('dim_date'[year_number])
-			VAR CurrentYear =
-			    MAX('dim_date'[year_number])
-			VAR CurrentValue =
-			    [Policies Issued]
-			VAR PreviousValue =
-			    CALCULATE(
-			        [Policies Issued],
-			        FILTER(
-			            ALL('dim_date'),
-			            'dim_date'[year_number] = CurrentYear - 1
-			        )
-			    )
 			VAR GrowthValue = 
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    [Growth Policies Issued % Value]
 			RETURN
 			    IF(
 			        SelectedYears <> 1,
 			        BLANK(),
 			        SWITCH(
 			            TRUE(),
-			            ISBLANK(GrowthValue), BLANK(),         
-			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",  
-			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY", 
+			            ISBLANK(GrowthValue), "N/A",
+			            GrowthValue = "New", "🆕 New",
+			            GrowthValue > 0, "▲ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
+			            GrowthValue < 0, "▼ " & FORMAT(GrowthValue, "0.0%") & " vs PY",
 			            "▬ " & FORMAT(GrowthValue, "0.0%") & " vs PY"
 			        )
 			    )
@@ -122,7 +111,11 @@ table 'Measures '
 			        )
 			    )
 			RETURN
-			    DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    IF(
+			        PreviousValue = 0,
+			        "New",
+			        DIVIDE(CurrentValue - PreviousValue, PreviousValue)
+			    )
 		lineageTag: 69df36f4-88e9-4ff1-b4ff-27bd35a04b4f
 
 		annotation PBI_FormatHint = {"isGeneralNumber":true}

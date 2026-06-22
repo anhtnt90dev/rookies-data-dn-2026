@@ -1,0 +1,33 @@
+table pending_payment
+	lineageTag: 325ee7dc-9f07-452d-8c06-261e0141ffdf
+
+	column aging_bucket
+		dataType: string
+		lineageTag: 68a42d51-328d-4002-8391-87451efd8336
+		summarizeBy: none
+		sourceColumn: aging_bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column sort_order
+		dataType: int64
+		formatString: 0
+		lineageTag: 973cfa5f-59b6-46c4-9904-ae1bbbac6551
+		summarizeBy: sum
+		sourceColumn: sort_order
+
+		annotation SummarizationSetBy = Automatic
+
+	partition pending_payment = m
+		mode: import
+		source =
+				let
+				    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45WMlDQVTBXSEmsLFbSUTJUitWJVrIAChkbwMSMwGLGhkBBM7igMVjQDCRoCRc0AQvGlBoYGKciCZsqxcYCAA==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [aging_bucket = _t, sort_order = _t]),
+				    #"Changed Type" = Table.TransformColumnTypes(Source,{{"aging_bucket", type text}, {"sort_order", Int64.Type}})
+				in
+				    #"Changed Type"
+
+	changedProperty = Name
+
+	annotation PBI_ResultType = Table
+

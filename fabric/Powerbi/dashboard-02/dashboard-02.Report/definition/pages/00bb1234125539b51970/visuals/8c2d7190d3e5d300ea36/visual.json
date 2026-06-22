@@ -27,8 +27,9 @@
                 }
               },
               "queryRef": "dim_provider.provider_code",
-              "nativeQueryRef": "provider_code",
-              "active": true
+              "nativeQueryRef": "Provider",
+              "active": true,
+              "displayName": "Provider"
             }
           ]
         },
